@@ -3,12 +3,15 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-# 1. Cargar variables de entorno desde .env
-load_dotenv()
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+env_path = BASE_DIR / '.env'
+load_dotenv(env_path)
+print(f"--- DEBUG INFO ---")
+print(f"Buscando .env en: {env_path}")
+print(f"Archivo existe?: {env_path.exists()}")
+print(f"Credenciales File: {os.getenv('GOOGLE_CREDENTIALS_FILE')}")
+print(f"------------------")
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
