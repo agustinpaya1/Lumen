@@ -1,0 +1,16 @@
+/* 1. IMPORTANTE: El @import SIEMPRE arriba del todo */
+@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+
+/* 2. Luego las directivas de Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3. Tus estilos personalizados */
+.font-polaroid {
+  font-family: 'Permanent Marker', cursive;
+}
+
+body {
+  background-color: #f3f4f6;
+}

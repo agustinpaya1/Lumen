@@ -1,31 +1,37 @@
 # api/apps/photos/providers/gdrive.py
 import os
+import json
 from django.conf import settings
-from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
-from io import BytesIO
 
 class GoogleDriveProvider:
     def __init__(self):
-        # Buscamos el archivo JSON en la raíz de api/ (BASE_DIR)
-        creds_path = settings.BASE_DIR / settings.GOOGLE_CREDENTIALS_FILE
+        # 1. Buscamos el token.json que generaste con el script
+        token_path = settings.BASE_DIR / 'token.json'
         
-        if not creds_path.exists():
-            raise FileNotFoundError(f"No encuentro el archivo de credenciales en: {creds_path}")
+        creds = None
+        
+        # Modo Local: Leemos el archivo generado
+        if token_path.exists():
+            creds = Credentials.from_authorized_user_file(token_path, ['https://www.googleapis.com/auth/drive.file'])
+        
+        # Modo Producción (Vercel): Leemos de variable de entorno (lo configuraremos luego)
+        elif os.getenv('GOOGLE_TOKEN_JSON'):
+            token_json = os.getenv('GOOGLE_TOKEN_JSON')
+            info = json.loads(token_json)
+            creds = Credentials.from_authorized_user_info(info)
+        
+        if not creds:
+             raise FileNotFoundError(f"No encuentro el archivo token.json en {token_path}. ¿Has ejecutado generate_token.py?")
 
-        self.credentials = service_account.Credentials.from_service_account_file(
-            creds_path,
-            scopes=['https://www.googleapis.com/auth/drive.file']
-        )
-        self.service = build('drive', 'v3', credentials=self.credentials)
+        self.service = build('drive', 'v3', credentials=creds)
+        
+        # Asegúrate de que settings.GOOGLE_DRIVE_FOLDER_ID tiene valor
         self.folder_id = settings.GOOGLE_DRIVE_FOLDER_ID
 
     def upload_file(self, file_obj, filename, content_type):
-        """
-        Sube un archivo en memoria directamente a Drive.
-        Retorna el ID del archivo en Drive.
-        """
         file_metadata = {
             'name': filename,
             'parents': [self.folder_id]
