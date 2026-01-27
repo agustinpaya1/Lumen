@@ -24,3 +24,24 @@ gunicorn = "^21.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.14.14,<0.15.0)",
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-django (>=4.11.1,<5.0.0)"
+]
+
+[tool.ruff]
+line-length = 88
+exclude = [
+    ".git",
+    ".ruff_cache",
+    ".venv",
+    "__pypackages__",
+    "migrations",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "lumen.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
