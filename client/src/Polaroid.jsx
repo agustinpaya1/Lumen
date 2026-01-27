@@ -1,71 +1,9 @@
-import { useState } from 'react';
-import imageCompression from 'browser-image-compression';
+import { usePhotoUpload } from './hooks/usePhotoUpload';
 
 export default function Polaroid() {
-    const [file, setFile] = useState(null);
-    const [preview, setPreview] = useState(null);
-    const [status, setStatus] = useState('idle'); // idle, compressing, uploading, success, error
-
-    const handleImageSelect = async (e) => {
-        const originalFile = e.target.files[0];
-        if (!originalFile) return;
-
-        // 1. Mostrar preview
-        setPreview(URL.createObjectURL(originalFile));
-        setStatus('compressing');
-
-        // 2. Comprimir imagen (OBLIGATORIO para Vercel/Móvil)
-        const options = {
-            maxSizeMB: 1,              // Máx 1MB
-            maxWidthOrHeight: 1920,    // Full HD
-            useWebWorker: true
-        };
-
-        try {
-            const compressedFile = await imageCompression(originalFile, options);
-            setFile(compressedFile);
-            setStatus('idle');
-            console.log(`Comprimido: ${(originalFile.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
-        } catch (error) {
-            console.error(error);
-            setStatus('error');
-        }
-    };
-
-    const uploadPhoto = async () => {
-        if (!file) return;
-        setStatus('uploading');
-
-        const formData = new FormData();
-        // 'file' es el nombre del parámetro que pusimos en Django Ninja (api.py)
-        formData.append('file', file);
-
-        try {
-            // El proxy redirige esto a http://127.0.0.1:8000/api/photos/upload
-            const res = await fetch('/api/photos/upload', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!res.ok) throw new Error('Error subiendo');
-
-            const data = await res.json();
-            console.log("Respuesta Server:", data);
-
-            setStatus('success');
-
-            // Resetear después de 3 segundos para otra foto
-            setTimeout(() => {
-                setFile(null);
-                setPreview(null);
-                setStatus('idle');
-            }, 3000);
-
-        } catch (err) {
-            console.error(err);
-            setStatus('error');
-        }
-    };
+    const { state, actions } = usePhotoUpload();
+    const { file, preview, status } = state;
+    const { handleImageSelect, uploadPhoto } = actions;
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
