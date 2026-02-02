@@ -1,17 +1,23 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# --- Angular & Node (Frontend) ---
+node_modules/
+dist/
+out-tsc/
+bazel-out/
+/web/dist
+/web/out-tsc
 
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+# IMPORTANTE: Ignorar caché de Angular (la que pedías)
+# Esto cubre tanto la raíz como dentro de /web
+.angular/
 
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
+# --- Seguridad (CRÍTICO) ---
+# Nunca subir claves de API o secretos
+.env
+.env.local
+.env.*.local
+auth_config.json
 
-# IDEs and editors
+# --- IDEs y Editores ---
 .idea/
 .project
 .classpath
@@ -26,19 +32,14 @@ yarn-error.log
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-!.vscode/mcp.json
 .history/*
 
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
+# --- Logs y Errores ---
+npm-debug.log
+yarn-error.log
 testem.log
-/typings
-__screenshots__/
+/libpeerconnection.log
 
-# System files
+# --- Sistema Operativo (Mac/Windows) ---
 .DS_Store
 Thumbs.db

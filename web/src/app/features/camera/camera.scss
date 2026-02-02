@@ -1,0 +1,593 @@
+// ====================
+// Design System Tokens
+// ====================
+
+// Colors
+$bg-soft-gray: #f9fafb;
+$bg-white: #ffffff;
+$text-dark: #111827;
+$text-gray: #6b7280;
+$text-light-gray: #9ca3af;
+$border-gray: #e5e7eb;
+$primary-black: #111827;
+$primary-white: #ffffff;
+$error-red: #ef4444;
+$success-green: #10b981;
+
+// Shadows
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+$shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+$shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+
+// Border Radius
+$rounded-3xl: 2rem; // 32px
+$rounded-full: 9999px;
+$rounded-lg: 1rem; // 16px
+
+// Spacing
+$spacing-unit: 1rem; // 16px
+
+// Touch Targets
+$min-touch-height: 56px;
+
+// Transitions
+$transition-base: all 0.3s ease;
+
+// ====================
+// Global Container
+// ====================
+
+.camera-container {
+    min-height: 100vh;
+    background-color: $bg-soft-gray;
+    padding: $spacing-unit * 1.5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.hidden-canvas {
+    display: none;
+}
+
+// ====================
+// Error Banner
+// ====================
+
+.error-banner {
+    position: fixed;
+    top: $spacing-unit * 2;
+    left: $spacing-unit;
+    right: $spacing-unit;
+    background-color: $error-red;
+    color: $primary-white;
+    padding: $spacing-unit;
+    border-radius: $rounded-lg;
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 0.75;
+    box-shadow: $shadow-xl;
+    z-index: 1000;
+    animation: slideDown 0.3s ease;
+
+    .error-icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+// ====================
+// Typography
+// ====================
+
+.heading {
+    font-size: 2rem; // 32px
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.heading-small {
+    font-size: 1.5rem; // 24px
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 1.125rem; // 18px
+    font-weight: 400;
+    color: $text-gray;
+    margin: $spacing-unit * 0.5 0 0;
+}
+
+.body-text {
+    font-size: 1.125rem; // 18px
+    color: $text-gray;
+    line-height: 1.6;
+    margin: $spacing-unit * 0.75 0 0;
+}
+
+// ====================
+// Cards (Base)
+// ====================
+
+.card {
+    background-color: $bg-white;
+    border-radius: $rounded-3xl;
+    box-shadow: $shadow-xl;
+    padding: $spacing-unit * 2.5;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+// ====================
+// STATE 1: Landing
+// ====================
+
+.state-landing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.welcome-card {
+    .polaroid-icon {
+        font-size: 4rem;
+        margin-bottom: $spacing-unit * 1.5;
+    }
+
+    .photo-count {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: $spacing-unit * 2 0;
+        padding: $spacing-unit * 1.5;
+        background-color: $bg-soft-gray;
+        border-radius: $rounded-lg;
+
+        .count-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: $text-dark;
+            line-height: 1;
+        }
+
+        .count-label {
+            font-size: 1rem;
+            color: $text-gray;
+            margin-top: $spacing-unit * 0.25;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    }
+}
+
+.limit-reached {
+    .limit-icon {
+        font-size: 4rem;
+        margin-bottom: $spacing-unit * 1.5;
+        opacity: 0.5;
+    }
+}
+
+// ====================
+// STATE 2: Viewfinder
+// ====================
+
+.state-viewfinder {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #000;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.viewfinder-header {
+    position: absolute;
+    top: $spacing-unit * 2;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    z-index: 20;
+
+    .count-badge {
+        background-color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: $spacing-unit * 0.75 $spacing-unit * 1.5;
+        border-radius: $rounded-full;
+        display: flex;
+        align-items: center;
+        gap: $spacing-unit * 0.5;
+        box-shadow: $shadow-card;
+
+        .badge-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: $text-dark;
+            line-height: 1;
+        }
+
+        .badge-text {
+            font-size: 0.875rem;
+            color: $text-gray;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    }
+}
+
+.video-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .video-feed {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .frame-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 85%;
+        max-width: 400px;
+        aspect-ratio: 1;
+        border: 4px solid rgba(255, 255, 255, 0.8);
+        border-radius: $spacing-unit;
+        pointer-events: none;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+    }
+}
+
+.viewfinder-footer {
+    padding: $spacing-unit * 2.5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+}
+
+.shutter-button {
+    width: 80px;
+    height: 80px;
+    border-radius: $rounded-full;
+    background-color: $primary-white;
+    border: 4px solid $primary-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: $transition-base;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    &:active {
+        transform: scale(0.92);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .shutter-inner {
+        width: 64px;
+        height: 64px;
+        border-radius: $rounded-full;
+        background-color: $primary-white;
+        border: 2px solid darken($border-gray, 10%);
+    }
+}
+
+// ====================
+// STATE 3: Preview
+// ====================
+
+.state-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-unit * 1.5;
+    width: 100%;
+    max-width: 500px;
+    padding: $spacing-unit * 2 $spacing-unit;
+    animation: fadeInUp 0.4s ease;
+}
+
+.preview-header {
+    width: 100%;
+    text-align: left;
+    margin-bottom: $spacing-unit;
+}
+
+.polaroid-container {
+    background-color: $bg-white;
+    padding: $spacing-unit * 1.5;
+    padding-bottom: $spacing-unit * 4; // Extra bottom padding for Polaroid effect
+    border-radius: $rounded-lg;
+    box-shadow: $shadow-xl;
+    width: 100%;
+
+    .polaroid-photo {
+        width: 100%;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: $spacing-unit * 0.5;
+    }
+
+    .captured-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .polaroid-bottom {
+        height: $spacing-unit * 3;
+        background-color: $bg-white;
+    }
+}
+
+.dedication-section {
+    text-align: left;
+    padding: $spacing-unit * 1.5;
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: $text-dark;
+        margin-bottom: $spacing-unit * 0.5;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: $spacing-unit * 0.875;
+        font-size: 1rem;
+        border: 2px solid $border-gray;
+        border-radius: $rounded-lg;
+        transition: $transition-base;
+        font-family: inherit;
+        box-sizing: border-box;
+
+        &:focus {
+            outline: none;
+            border-color: $primary-black;
+            box-shadow: 0 0 0 3px rgba($primary-black, 0.1);
+        }
+
+        &::placeholder {
+            color: $text-light-gray;
+        }
+    }
+}
+
+.action-buttons {
+    display: flex;
+    gap: $spacing-unit;
+    width: 100%;
+}
+
+// ====================
+// STATE 4: Uploading
+// ====================
+
+.state-uploading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.upload-card {
+    .spinner-container {
+        margin-bottom: $spacing-unit * 1.5;
+    }
+
+    .spinner {
+        width: 64px;
+        height: 64px;
+        border: 4px solid $border-gray;
+        border-top-color: $primary-black;
+        border-radius: $rounded-full;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background-color: $border-gray;
+        border-radius: $rounded-full;
+        margin: $spacing-unit * 1.5 0 $spacing-unit;
+        overflow: hidden;
+
+        .progress-fill {
+            height: 100%;
+            background-color: $primary-black;
+            transition: width 0.3s ease;
+            border-radius: $rounded-full;
+        }
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ====================
+// STATE 5: Success
+// ====================
+
+.state-success {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.success-card {
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        color: $success-green;
+        margin: 0 auto $spacing-unit * 1.5;
+        animation: scaleIn 0.5s ease;
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+// ====================
+// Buttons
+// ====================
+
+.btn-primary,
+.btn-secondary {
+    min-height: $min-touch-height;
+    padding: $spacing-unit $spacing-unit * 2;
+    font-size: 1.125rem;
+    font-weight: 600;
+    border-radius: $rounded-full;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-unit * 0.5;
+    transition: $transition-base;
+    font-family: inherit;
+    flex: 1;
+    box-sizing: border-box;
+
+    .btn-icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+.btn-primary {
+    background-color: $primary-black;
+    color: $primary-white;
+    box-shadow: $shadow-card;
+
+    &:hover {
+        background-color: darken($primary-black, 5%);
+    }
+
+    &:active {
+        box-shadow: none;
+    }
+}
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: $text-dark;
+
+    &:hover {
+        background-color: darken(#f3f4f6, 5%);
+    }
+}
+
+.btn-send {
+    flex: 2; // Make the send button larger
+}
+
+// ====================
+// Responsive Design
+// ====================
+
+@media (max-width: 640px) {
+    .camera-container {
+        padding: $spacing-unit;
+    }
+
+    .card {
+        padding: $spacing-unit * 2;
+    }
+
+    .heading {
+        font-size: 1.75rem;
+    }
+
+    .heading-small {
+        font-size: 1.25rem;
+    }
+
+    .body-text,
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn-send {
+        flex: 1;
+    }
+}
