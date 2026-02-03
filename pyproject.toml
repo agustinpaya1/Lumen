@@ -1,0 +1,20 @@
+[project]
+name = "lumen"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Agustín",email = "apa200310@gmail.com"}
+]
+requires-python = ">=3.14"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.14.14,<0.15.0)"
+]

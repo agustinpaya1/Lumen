@@ -66,13 +66,17 @@ export class CameraComponent {
 
       this.mediaStream = stream;
 
+      // Set state to viewfinder FIRST so the video element gets rendered
+      this.currentState.set('viewfinder');
+
       // Wait for next tick to ensure video element is rendered
       setTimeout(() => {
         const video = this.videoElement()?.nativeElement;
         if (video) {
           video.srcObject = stream;
           video.play();
-          this.currentState.set('viewfinder');
+        } else {
+          console.error('Video element not found after state change');
         }
       }, 100);
 

@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 // ====================
 // Design System Tokens
 // ====================
@@ -315,7 +317,7 @@ $transition-base: all 0.3s ease;
         height: 64px;
         border-radius: $rounded-full;
         background-color: $primary-white;
-        border: 2px solid darken($border-gray, 10%);
+        border: 2px solid color.adjust($border-gray, $lightness: -10%);
     }
 }
 
@@ -536,7 +538,7 @@ $transition-base: all 0.3s ease;
     box-shadow: $shadow-card;
 
     &:hover {
-        background-color: darken($primary-black, 5%);
+        background-color: color.adjust($primary-black, $lightness: -5%);
     }
 
     &:active {
@@ -549,7 +551,7 @@ $transition-base: all 0.3s ease;
     color: $text-dark;
 
     &:hover {
-        background-color: darken(#f3f4f6, 5%);
+        background-color: color.adjust(#f3f4f6, $lightness: -5%);
     }
 }
 
