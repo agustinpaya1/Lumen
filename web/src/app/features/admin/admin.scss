@@ -1,0 +1,567 @@
+@use 'sass:color';
+
+// ====================
+// Design System Tokens (matching camera.scss)
+// ====================
+
+// Colors
+$bg-soft-gray: #f9fafb;
+$bg-white: #ffffff;
+$text-dark: #111827;
+$text-gray: #6b7280;
+$text-light-gray: #9ca3af;
+$border-gray: #e5e7eb;
+$primary-black: #111827;
+$primary-white: #ffffff;
+$error-red: #ef4444;
+$success-green: #10b981;
+$danger-red: #dc2626;
+
+// Shadows
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+$shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+$shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+
+// Border Radius
+$rounded-3xl: 2rem; // 32px
+$rounded-full: 9999px;
+$rounded-lg: 1rem; // 16px
+
+// Spacing
+$spacing-unit: 1rem; // 16px
+
+// Touch Targets
+$min-touch-height: 56px;
+
+// Transitions
+$transition-base: all 0.3s ease;
+
+// ====================
+// Container
+// ====================
+
+.admin-container {
+    min-height: 100vh;
+    background-color: $bg-soft-gray;
+    padding: $spacing-unit * 2;
+    font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+// ====================
+// Error Banner
+// ====================
+
+.error-banner {
+    position: fixed;
+    top: $spacing-unit * 2;
+    left: $spacing-unit;
+    right: $spacing-unit;
+    background-color: $error-red;
+    color: $primary-white;
+    padding: $spacing-unit;
+    border-radius: $rounded-lg;
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 0.75;
+    box-shadow: $shadow-xl;
+    z-index: 1000;
+    animation: slideDown 0.3s ease;
+
+    .error-icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+// ====================
+// Typography
+// ====================
+
+.heading {
+    font-size: 2rem; // 32px
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.heading-small {
+    font-size: 1.5rem; // 24px
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 1.125rem; // 18px
+    font-weight: 400;
+    color: $text-gray;
+    margin: $spacing-unit * 0.5 0 0;
+}
+
+.body-text {
+    font-size: 1.125rem; // 18px
+    color: $text-gray;
+    line-height: 1.6;
+    margin: $spacing-unit * 0.75 0 0;
+}
+
+// ====================
+// Card Base
+// ====================
+
+.card {
+    background-color: $bg-white;
+    border-radius: $rounded-3xl;
+    box-shadow: $shadow-xl;
+    padding: $spacing-unit * 2.5;
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+// ====================
+// AUTH STATE
+// ====================
+
+.auth-card {
+    max-width: 450px;
+    margin: 10vh auto;
+    text-align: center;
+
+    .lock-icon {
+        font-size: 4rem;
+        margin-bottom: $spacing-unit * 1.5;
+    }
+
+    .auth-form {
+        margin-top: $spacing-unit * 2;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-unit * 1.5;
+    }
+
+    .pin-input {
+        width: 100%;
+        padding: $spacing-unit * 1.25;
+        font-size: 1.5rem;
+        text-align: center;
+        letter-spacing: 0.5em;
+        border: 2px solid $border-gray;
+        border-radius: $rounded-lg;
+        transition: $transition-base;
+        font-family: inherit;
+        box-sizing: border-box;
+
+        &:focus {
+            outline: none;
+            border-color: $primary-black;
+            box-shadow: 0 0 0 3px rgba($primary-black, 0.1);
+        }
+
+        &::placeholder {
+            color: $text-light-gray;
+            letter-spacing: normal;
+            font-size: 1rem;
+        }
+    }
+
+    .auth-error {
+        color: $error-red;
+        font-size: 0.875rem;
+        margin: -$spacing-unit 0 0;
+        font-weight: 500;
+    }
+
+    .btn-auth {
+        width: 100%;
+    }
+}
+
+// ====================
+// DASHBOARD
+// ====================
+
+.dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-unit * 3;
+    padding-bottom: $spacing-unit * 2;
+    border-bottom: 2px solid $border-gray;
+
+    .header-content {
+        flex: 1;
+    }
+
+    .btn-logout {
+        display: flex;
+        align-items: center;
+        gap: $spacing-unit * 0.5;
+        padding: $spacing-unit * 0.875 $spacing-unit * 1.5;
+        background-color: $bg-white;
+        border: 2px solid $border-gray;
+        border-radius: $rounded-full;
+        font-size: 1rem;
+        font-weight: 600;
+        color: $text-dark;
+        cursor: pointer;
+        transition: $transition-base;
+        font-family: inherit;
+
+        .logout-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        &:hover {
+            border-color: $primary-black;
+            background-color: $bg-soft-gray;
+        }
+
+        &:active {
+            transform: scale(0.96);
+        }
+    }
+}
+
+// ====================
+// LOADING STATE
+// ====================
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-unit * 6;
+
+    .spinner {
+        width: 64px;
+        height: 64px;
+        border: 4px solid $border-gray;
+        border-top-color: $primary-black;
+        border-radius: $rounded-full;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: $spacing-unit * 2;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ====================
+// EMPTY STATE
+// ====================
+
+.empty-state {
+    max-width: 500px;
+    margin: $spacing-unit * 6 auto;
+    text-align: center;
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: $spacing-unit * 1.5;
+        opacity: 0.5;
+    }
+}
+
+// ====================
+// PHOTO GRID
+// ====================
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: $spacing-unit * 2;
+}
+
+.photo-card {
+    background-color: $bg-white;
+    border-radius: $rounded-lg;
+    overflow: hidden;
+    box-shadow: $shadow-card;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: $shadow-soft;
+    }
+
+    .photo-thumbnail {
+        width: 100%;
+        aspect-ratio: 1;
+        overflow: hidden;
+        background-color: $bg-soft-gray;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+    }
+
+    .photo-info {
+        padding: $spacing-unit * 1.25;
+    }
+
+    .photo-meta {
+        margin-bottom: $spacing-unit;
+
+        .photo-dedication {
+            font-size: 1rem;
+            font-weight: 600;
+            color: $text-dark;
+            margin: 0 0 $spacing-unit * 0.25;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .photo-date {
+            font-size: 0.875rem;
+            color: $text-gray;
+            margin: 0;
+        }
+    }
+
+    .photo-actions {
+        display: flex;
+        gap: $spacing-unit * 0.75;
+    }
+}
+
+// ====================
+// BUTTONS
+// ====================
+
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-download,
+.btn-delete {
+    min-height: $min-touch-height;
+    padding: $spacing-unit $spacing-unit * 2;
+    font-size: 1.125rem;
+    font-weight: 600;
+    border-radius: $rounded-full;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-unit * 0.5;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;
+    font-family: inherit;
+    flex: 1;
+    box-sizing: border-box;
+
+    .btn-icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.btn-primary {
+    background-color: $primary-black;
+    color: $primary-white;
+    box-shadow: $shadow-card;
+
+    &:hover:not(:disabled) {
+        background-color: color.adjust($primary-black, $lightness: -5%);
+    }
+
+    &:active {
+        box-shadow: none;
+    }
+}
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: $text-dark;
+
+    &:hover {
+        background-color: color.adjust(#f3f4f6, $lightness: -5%);
+    }
+}
+
+.btn-danger {
+    background-color: $danger-red;
+    color: $primary-white;
+    box-shadow: $shadow-card;
+
+    &:hover {
+        background-color: color.adjust($danger-red, $lightness: -5%);
+    }
+
+    &:active {
+        box-shadow: none;
+    }
+}
+
+.btn-download {
+    background-color: $success-green;
+    color: $primary-white;
+    min-height: 44px;
+    padding: $spacing-unit * 0.75 $spacing-unit * 1.25;
+    font-size: 1rem;
+
+    &:hover {
+        background-color: color.adjust($success-green, $lightness: -5%);
+    }
+}
+
+.btn-delete {
+    background-color: $error-red;
+    color: $primary-white;
+    min-height: 44px;
+    padding: $spacing-unit * 0.75 $spacing-unit * 1.25;
+    font-size: 1rem;
+
+    &:hover {
+        background-color: color.adjust($error-red, $lightness: -5%);
+    }
+}
+
+// ====================
+// MODAL
+// ====================
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: $spacing-unit;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-card {
+    max-width: 450px;
+    text-align: center;
+    animation: slideUpScale 0.4s ease;
+
+    .modal-icon {
+        font-size: 4rem;
+        margin-bottom: $spacing-unit;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: $spacing-unit;
+        margin-top: $spacing-unit * 2;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpScale {
+    from {
+        transform: translateY(30px) scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+// ====================
+// RESPONSIVE
+// ====================
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: $spacing-unit;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: $spacing-unit;
+
+        .btn-logout {
+            align-self: flex-end;
+        }
+    }
+
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: $spacing-unit * 1.5;
+    }
+
+    .heading {
+        font-size: 1.75rem;
+    }
+
+    .heading-small {
+        font-size: 1.25rem;
+    }
+
+    .modal-card .modal-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .photo-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -166,4 +166,93 @@ export class SupabaseService {
 
     throw lastError;
   }
+
+  // ====================
+  // ADMIN METHODS
+  // ====================
+
+  /**
+   * Fetch all photos from the database (for admin dashboard)
+   * @returns Array of photo objects ordered by created_at descending
+   */
+  async fetchPhotos() {
+    const { data, error } = await this.supabase
+      .from('photos')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  }
+
+  /**
+   * Subscribe to real-time photo inserts (for admin dashboard)
+   * @param callback - Function to call when new photo is inserted
+   * @returns RealtimeChannel for cleanup
+   */
+  subscribeToPhotos(callback: (photo: any) => void) {
+    const channel = this.supabase
+      .channel('photos_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'photos'
+        },
+        (payload) => {
+          callback(payload.new);
+        }
+      )
+      .subscribe();
+
+    return channel;
+  }
+
+  /**
+   * Delete photo from both database and storage (for admin dashboard)
+   * @param photoId - Photo ID to delete from database
+   * @param photoPath - Photo path in storage to delete
+   */
+  async deletePhoto(photoId: number, photoPath: string) {
+    // Delete from storage first
+    const { error: storageError } = await this.supabase.storage
+      .from('photos')
+      .remove([photoPath]);
+
+    if (storageError) {
+      console.error('Storage deletion error:', storageError);
+      throw storageError;
+    }
+
+    // Then delete from database
+    const { error: dbError } = await this.supabase
+      .from('photos')
+      .delete()
+      .eq('id', photoId);
+
+    if (dbError) {
+      throw dbError;
+    }
+  }
+
+  /**
+   * Get signed download URL for a photo (for admin dashboard)
+   * @param path - Photo path in storage
+   * @returns Signed download URL
+   */
+  async getPhotoDownloadUrl(path: string): Promise<string> {
+    const { data, error } = await this.supabase.storage
+      .from('photos')
+      .createSignedUrl(path, 60); // Valid for 60 seconds
+
+    if (error || !data) {
+      throw error || new Error('Failed to generate download URL');
+    }
+
+    return data.signedUrl;
+  }
 }
