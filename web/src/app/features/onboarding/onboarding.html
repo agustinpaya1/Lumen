@@ -1,0 +1,71 @@
+<div class="onboarding-container">
+    <!-- Phase A: Splash Screen -->
+    @if (showSplash()) {
+    <div class="splash-screen">
+        <div class="splash-logo">📸</div>
+    </div>
+    }
+
+    <!-- Phase B: Onboarding Carousel -->
+    @if (!showSplash()) {
+    <div class="carousel-wrapper">
+        <!-- Skip Button (Top-Right) -->
+        <button class="skip-button" (click)="skipTutorial()" aria-label="Skip tutorial">
+            Saltar
+        </button>
+
+        <!-- Carousel Container -->
+        <div class="carousel-track" (scroll)="onCarouselScroll($event)" role="region" aria-label="Onboarding slides">
+
+            <!-- Slide 1: Bienvenido -->
+            @for (slide of slides; track $index) {
+            <div class="carousel-slide">
+                <div class="slide-card">
+                    <!-- Icon -->
+                    <div class="slide-icon">{{ slide.icon }}</div>
+
+                    <!-- Title -->
+                    <h1 class="slide-title">{{ slide.title }}</h1>
+
+                    <!-- Description -->
+                    <p class="slide-description">{{ slide.description }}</p>
+
+                    <!-- Swipe Hint (only on first slide) -->
+                    @if ($index === 0) {
+                    <div class="swipe-hint">
+                        <svg class="swipe-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                        </svg>
+                        <span class="swipe-text">Desliza</span>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Dot Indicators -->
+        <div class="indicators" role="tablist" aria-label="Slide indicators">
+            @for (slide of slides; track $index) {
+            <button class="indicator-dot" [class.active]="currentSlide() === $index" (click)="goToSlide($index)"
+                [attr.aria-label]="'Go to slide ' + ($index + 1)" [attr.aria-selected]="currentSlide() === $index"
+                role="tab">
+            </button>
+            }
+        </div>
+
+        <!-- Next/Empezar Floating Action Button -->
+        <button class="fab-button" (click)="nextSlide()"
+            [attr.aria-label]="currentSlide() === 2 ? 'Start using the app' : 'Next slide'">
+            @if (currentSlide() === slides.length - 1) {
+            <span>Empezar</span>
+            } @else {
+            <svg class="fab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            }
+        </button>
+    </div>
+    }
+</div>

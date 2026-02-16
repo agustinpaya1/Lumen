@@ -8,20 +8,9 @@ const DEFAULT_PHOTO_LIMIT = 10;
 })
 export class PhotoLimitService {
     private readonly photoCountSignal = signal<number>(this.initializeCount());
-
-    /**
-     * Readonly signal exposing the number of photos left
-     */
     readonly photosLeft = this.photoCountSignal.asReadonly();
-
-    /**
-     * Computed signal that returns true if the user can take more photos
-     */
     readonly canTakePhoto = computed(() => this.photoCountSignal() > 0);
 
-    /**
-     * Initialize the photo count from localStorage or use default
-     */
     private initializeCount(): number {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored !== null) {
@@ -31,9 +20,6 @@ export class PhotoLimitService {
         return DEFAULT_PHOTO_LIMIT;
     }
 
-    /**
-     * Decrement the photo count and persist to localStorage
-     */
     decrementCount(): void {
         const currentCount = this.photoCountSignal();
         if (currentCount > 0) {
@@ -43,9 +29,6 @@ export class PhotoLimitService {
         }
     }
 
-    /**
-     * Reset the photo count to the default limit (useful for testing)
-     */
     resetCount(): void {
         this.photoCountSignal.set(DEFAULT_PHOTO_LIMIT);
         localStorage.setItem(STORAGE_KEY, DEFAULT_PHOTO_LIMIT.toString());
