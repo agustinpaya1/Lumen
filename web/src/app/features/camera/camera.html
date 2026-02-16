@@ -19,6 +19,59 @@
   </div>
   }
 
+  <!-- Permission Helper (iOS/Android Specific) -->
+  @if (permissionHelperVisible()) {
+  <div class="permission-helper-overlay">
+    <div class="permission-helper-card card">
+      <button class="close-btn" (click)="dismissPermissionHelper()" aria-label="Close">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <h2 class="heading-small">Camera Access Blocked</h2>
+
+      @if (devicePlatform() === 'ios') {
+      <div class="helper-content">
+        <p class="body-text">To enable camera access on iOS:</p>
+        <ol class="instruction-list">
+          <li>Go to <strong>Settings</strong> app</li>
+          <li>Scroll down and tap <strong>Safari</strong></li>
+          <li>Find <strong>Camera</strong> and select <strong>Allow</strong></li>
+          <li>Return to this page and refresh</li>
+        </ol>
+        <div class="helper-icon">📱</div>
+      </div>
+      } @else if (devicePlatform() === 'android') {
+      <div class="helper-content">
+        <p class="body-text">To enable camera access on Android:</p>
+        <ol class="instruction-list">
+          <li>Tap the <strong>lock icon</strong> in address bar</li>
+          <li>Tap <strong>Permissions</strong></li>
+          <li>Enable <strong>Camera</strong></li>
+          <li>Refresh this page</li>
+        </ol>
+        <div class="helper-icon">🤖</div>
+      </div>
+      } @else {
+      <div class="helper-content">
+        <p class="body-text">To enable camera access:</p>
+        <ol class="instruction-list">
+          <li>Click the camera icon in your browser's address bar</li>
+          <li>Select "Allow" for camera access</li>
+          <li>Refresh this page</li>
+        </ol>
+        <div class="helper-icon">📷</div>
+      </div>
+      }
+
+      <button class="btn-primary" (click)="dismissPermissionHelper()">
+        Got It
+      </button>
+    </div>
+  </div>
+  }
+
   <!-- STATE 1: Landing / Limit Reached -->
   @if (state === 'landing') {
   <div class="state-landing">
@@ -137,6 +190,19 @@
         Send Photo
       </button>
     </div>
+
+    <!-- Manual Retry Button (shown on error) -->
+    @if (error) {
+    <div class="retry-section">
+      <button class="btn-primary btn-retry" (click)="retryUpload()">
+        <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Retry Upload
+      </button>
+    </div>
+    }
   </div>
   }
 
@@ -148,6 +214,18 @@
         <div class="spinner"></div>
       </div>
       <h2 class="heading-small">Sending Photo</h2>
+
+      <!-- Retry Status Toast -->
+      @if (retryMessage()) {
+      <div class="retry-toast">
+        <svg class="retry-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span>{{ retryMessage() }}</span>
+      </div>
+      }
+
       <div class="progress-bar">
         <div class="progress-fill" [style.width.%]="progress"></div>
       </div>

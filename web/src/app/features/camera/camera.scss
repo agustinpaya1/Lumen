@@ -695,4 +695,176 @@ $transition-base: all 0.3s ease;
     .btn-send {
         flex: 1;
     }
+}// ====================
+// Permission Helper Modal
+// ====================
+
+.permission-helper-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: $spacing-unit;
+    animation: fadeIn 0.3s ease;
+}
+
+.permission-helper-card {
+    position: relative;
+    max-width: 450px;
+    animation: slideUpScale 0.4s ease;
+
+    .close-btn {
+        position: absolute;
+        top: $spacing-unit;
+        right: $spacing-unit;
+        width: 32px;
+        height: 32px;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        color: $text-gray;
+        transition: color 0.2s ease;
+        padding: 0;
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        &:hover {
+            color: $text-dark;
+        }
+    }
+
+    .helper-content {
+        margin: $spacing-unit * 1.5 0;
+        text-align: left;
+
+        .body-text {
+            margin-bottom: $spacing-unit;
+        }
+
+        .instruction-list {
+            padding-left: $spacing-unit * 1.5;
+            margin: $spacing-unit 0;
+            color: $text-dark;
+
+            li {
+                margin-bottom: $spacing-unit * 0.5;
+                line-height: 1.6;
+                font-size: 1rem;
+
+                strong {
+                    color: $primary-black;
+                    font-weight: 700;
+                }
+            }
+        }
+
+        .helper-icon {
+            font-size: 4rem;
+            text-align: center;
+            margin-top: $spacing-unit * 1.5;
+            opacity: 0.8;
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpScale {
+    from {
+        transform: translateY(30px) scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+// ====================
+// Retry Toast (Uploading State)
+// ====================
+
+.retry-toast {
+    background-color: #fbbf24;
+    color: #78350f;
+    padding: $spacing-unit * 0.75 $spacing-unit * 1.25;
+    border-radius: $rounded-lg;
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 0.75;
+    margin: $spacing-unit 0;
+    animation: pulseGlow 2s ease-in-out infinite;
+    font-weight: 600;
+    font-size: 0.95rem;
+
+    .retry-icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        animation: rotateRetry 1.5s linear infinite;
+    }
+}
+
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 16px rgba(251, 191, 36, 0.6);
+    }
+}
+
+@keyframes rotateRetry {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ====================
+// Retry Button (Preview State)
+// ====================
+
+.retry-section {
+    width: 100%;
+    margin-top: $spacing-unit;
+}
+
+.btn-retry {
+    width: 100%;
+    background-color: #fbbf24;
+    color: #78350f;
+    font-weight: 700;
+
+    &:hover {
+        background-color: color.adjust(#fbbf24, $lightness: -5%);
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
 }

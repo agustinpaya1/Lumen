@@ -40,6 +40,10 @@ export class CameraComponent {
   readonly capturedImage = signal<CapturedImage | null>(null);
   readonly uploadProgress = signal<number>(0);
   readonly isPhotoRevealing = signal<boolean>(false);
+  readonly isUploading = signal<boolean>(false);
+  readonly retryMessage = signal<string | null>(null);
+  readonly permissionHelperVisible = signal<boolean>(false);
+  readonly devicePlatform = signal<'ios' | 'android' | 'unknown'>('unknown');
 
   // Media stream
   private mediaStream: MediaStream | null = null;
@@ -52,21 +56,99 @@ export class CameraComponent {
   readonly isLimitReached = computed(() => this.photoLimitService.photosLeft() === 0);
   readonly canProceed = computed(() => this.photoLimitService.canTakePhoto());
 
+  // Beforeunload handler reference
+  private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
+
+  constructor() {
+    this.detectDevicePlatform();
+    this.setupBeforeUnloadHandler();
+  }
+
+  /**
+   * Detect the device platform (iOS, Android, or unknown)
+   */
+  private detectDevicePlatform(): void {
+    const userAgent = navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(userAgent)) {
+      this.devicePlatform.set('ios');
+    } else if (/android/.test(userAgent)) {
+      this.devicePlatform.set('android');
+    } else {
+      this.devicePlatform.set('unknown');
+    }
+  }
+
+  /**
+   * Setup beforeunload handler to warn users when leaving during upload
+   */
+  private setupBeforeUnloadHandler(): void {
+    this.beforeUnloadHandler = (e: BeforeUnloadEvent) => {
+      if (this.isUploading()) {
+        const message = 'Photo is still uploading! Are you sure you want to leave?';
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+      }
+      return undefined;
+    };
+
+    window.addEventListener('beforeunload', this.beforeUnloadHandler);
+  }
+
   /**
    * Start the camera and request media permissions
+   * Implements constraint fallback for older devices
    */
   async startCamera(): Promise<void> {
     try {
       this.errorMessage.set(null);
+      this.permissionHelperVisible.set(false);
 
-      const stream = await navigator.mediaDevices.getUserMedia({
+      // Try with ideal constraints first (1920x1080)
+      let constraints: MediaStreamConstraints = {
         video: {
           facingMode: 'environment', // Use back camera on mobile
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         },
         audio: false
-      });
+      };
+
+      let stream: MediaStream | null = null;
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (innerError) {
+        // Handle OverconstrainedError - device doesn't support 1920x1080
+        if (innerError instanceof Error && innerError.name === 'OverconstrainedError') {
+          console.warn('1920x1080 not supported, falling back to 1280x720');
+
+          // Fallback to 1280x720
+          constraints = {
+            video: {
+              facingMode: 'environment',
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
+            audio: false
+          };
+
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+          } catch (fallbackError) {
+            // Final fallback - use any available video
+            if (fallbackError instanceof Error && fallbackError.name === 'OverconstrainedError') {
+              console.warn('1280x720 not supported, using generic video constraints');
+              constraints = { video: true, audio: false };
+              stream = await navigator.mediaDevices.getUserMedia(constraints);
+            } else {
+              throw fallbackError;
+            }
+          }
+        } else {
+          throw innerError;
+        }
+      }
 
       this.mediaStream = stream;
 
@@ -76,7 +158,7 @@ export class CameraComponent {
       // Wait for next tick to ensure video element is rendered
       setTimeout(() => {
         const video = this.videoElement()?.nativeElement;
-        if (video) {
+        if (video && stream) {
           video.srcObject = stream;
           video.play();
         } else {
@@ -88,7 +170,9 @@ export class CameraComponent {
       console.error('Camera access error:', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          this.errorMessage.set('Camera permission denied. Please allow camera access to take photos.');
+          // Permission denied - show device-specific recovery helper
+          this.permissionHelperVisible.set(true);
+          this.errorMessage.set('Camera permission denied. Please follow the instructions below to enable camera access.');
         } else if (error.name === 'NotFoundError') {
           this.errorMessage.set('No camera found on this device.');
         } else {
@@ -96,6 +180,13 @@ export class CameraComponent {
         }
       }
     }
+  }
+
+  /**
+   * Dismiss the permission helper UI
+   */
+  dismissPermissionHelper(): void {
+    this.permissionHelperVisible.set(false);
   }
 
   /**
@@ -161,7 +252,7 @@ export class CameraComponent {
   }
 
   /**
-   * Upload the photo to Supabase with compression
+   * Upload the photo to Supabase with compression and retry logic
    */
   async uploadPhoto(): Promise<void> {
     const captured = this.capturedImage();
@@ -169,7 +260,9 @@ export class CameraComponent {
 
     try {
       this.currentState.set('uploading');
+      this.isUploading.set(true);
       this.errorMessage.set(null);
+      this.retryMessage.set(null);
       this.uploadProgress.set(0);
 
       // Compress the image
@@ -192,26 +285,39 @@ export class CameraComponent {
       const filename = `photo_${timestamp}.jpg`;
       const filepath = `uploads/${filename}`;
 
-      // Upload to Supabase
-      const { error: uploadError } = await this.supabaseService.uploadPhoto(
+      // Upload to Supabase WITH RETRY
+      const { error: uploadError } = await this.supabaseService.uploadPhotoWithRetry(
         compressedFile,
-        filepath
+        filepath,
+        (attempt, maxAttempts) => {
+          // Retry callback - show user-friendly message
+          this.retryMessage.set(`Connection weak. Retrying (${attempt}/${maxAttempts})...`);
+        }
       );
 
       if (uploadError) {
         throw uploadError;
       }
 
+      this.retryMessage.set(null);
       this.uploadProgress.set(75);
 
       // Get the dedication text
       const dedication = this.dedicationModel().dedication || '';
 
-      // Save photo metadata (optional - you can expand this)
+      // Save photo metadata WITH RETRY
       const publicUrl = `${filepath}`;
-      await this.supabaseService.savePhotoData(publicUrl, dedication);
+      await this.supabaseService.savePhotoDataWithRetry(
+        publicUrl,
+        dedication,
+        (attempt, maxAttempts) => {
+          this.retryMessage.set(`Saving metadata. Retrying (${attempt}/${maxAttempts})...`);
+        }
+      );
 
+      this.retryMessage.set(null);
       this.uploadProgress.set(100);
+      this.isUploading.set(false);
 
       // Decrement the photo count
       this.photoLimitService.decrementCount();
@@ -238,9 +344,19 @@ export class CameraComponent {
 
     } catch (error) {
       console.error('Upload error:', error);
-      this.errorMessage.set('Failed to upload photo. Please try again.');
+      this.isUploading.set(false);
+      this.retryMessage.set(null);
+      this.errorMessage.set('Failed to upload photo after multiple attempts. Photo is saved locally - tap "Retry Upload" to try again.');
       this.currentState.set('preview');
     }
+  }
+
+  /**
+   * Manually retry upload after all automatic retries fail
+   */
+  retryUpload(): void {
+    this.errorMessage.set(null);
+    this.uploadPhoto();
   }
 
   /**
@@ -293,6 +409,11 @@ export class CameraComponent {
    */
   ngOnDestroy(): void {
     this.stopCamera();
+
+    // Remove beforeunload handler
+    if (this.beforeUnloadHandler) {
+      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+    }
   }
 }
 
