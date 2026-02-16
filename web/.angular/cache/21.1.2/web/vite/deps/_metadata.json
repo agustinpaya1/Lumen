@@ -1,49 +1,55 @@
 {
-  "hash": "d7798100",
-  "configHash": "ddde61ad",
-  "lockfileHash": "43341a1f",
-  "browserHash": "1136a383",
+  "hash": "756caa00",
+  "configHash": "ac4c481b",
+  "lockfileHash": "0d81a288",
+  "browserHash": "d2cf367f",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "120d9fba",
+      "fileHash": "d5770a3c",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "1de9c659",
+      "fileHash": "2fdd1167",
       "needsInterop": false
     },
     "@angular/forms/signals": {
       "src": "../../../../../../node_modules/@angular/forms/fesm2022/signals.mjs",
       "file": "@angular_forms_signals.js",
-      "fileHash": "5d8625bf",
+      "fileHash": "b44fb0f6",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "19a107f8",
+      "fileHash": "62b3ced7",
       "needsInterop": false
     },
     "@angular/router": {
       "src": "../../../../../../node_modules/@angular/router/fesm2022/router.mjs",
       "file": "@angular_router.js",
-      "fileHash": "1c19c842",
+      "fileHash": "f1f065ec",
       "needsInterop": false
     },
     "@supabase/supabase-js": {
       "src": "../../../../../../node_modules/@supabase/supabase-js/dist/index.mjs",
       "file": "@supabase_supabase-js.js",
-      "fileHash": "469de1b6",
+      "fileHash": "d1b0b15d",
       "needsInterop": false
     },
     "browser-image-compression": {
       "src": "../../../../../../node_modules/browser-image-compression/dist/browser-image-compression.mjs",
       "file": "browser-image-compression.js",
-      "fileHash": "8da2d14a",
+      "fileHash": "b72e5535",
+      "needsInterop": false
+    },
+    "canvas-confetti": {
+      "src": "../../../../../../node_modules/canvas-confetti/dist/confetti.module.mjs",
+      "file": "canvas-confetti.js",
+      "fileHash": "0672f2b4",
       "needsInterop": false
     }
   },

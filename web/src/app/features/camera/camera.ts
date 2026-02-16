@@ -2,8 +2,10 @@ import { Component, signal, computed, viewChild, ElementRef, inject } from '@ang
 import { form, FormField } from '@angular/forms/signals';
 import { CommonModule } from '@angular/common';
 import imageCompression from 'browser-image-compression';
+import confetti from 'canvas-confetti';
 import { PhotoLimitService } from '../../core/services/photo-limit.service';
 import { SupabaseService } from '../../core/services/supabase';
+import { FeedbackService } from '../../core/services/feedback.service';
 
 type CameraState = 'landing' | 'viewfinder' | 'preview' | 'uploading' | 'success';
 
@@ -25,6 +27,7 @@ interface DedicationModel {
 export class CameraComponent {
   // Services
   readonly photoLimitService = inject(PhotoLimitService);
+  readonly feedbackService = inject(FeedbackService);
   private readonly supabaseService = inject(SupabaseService);
 
   // View children
@@ -36,6 +39,7 @@ export class CameraComponent {
   readonly errorMessage = signal<string | null>(null);
   readonly capturedImage = signal<CapturedImage | null>(null);
   readonly uploadProgress = signal<number>(0);
+  readonly isPhotoRevealing = signal<boolean>(false);
 
   // Media stream
   private mediaStream: MediaStream | null = null;
@@ -106,6 +110,12 @@ export class CameraComponent {
       return;
     }
 
+    // Trigger shutter feedback (haptic + audio + flash)
+    this.feedbackService.triggerShutter();
+
+    // Small delay to let flash animation play
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Set canvas dimensions to match video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -126,6 +136,14 @@ export class CameraComponent {
         this.capturedImage.set({ blob, dataUrl });
         this.currentState.set('preview');
 
+        // Start the Polaroid developing animation
+        this.isPhotoRevealing.set(true);
+
+        // Auto-hide reveal text after 2 seconds
+        setTimeout(() => {
+          this.isPhotoRevealing.set(false);
+        }, 2000);
+
         // Stop the video stream temporarily
         this.stopCamera();
       }
@@ -138,6 +156,7 @@ export class CameraComponent {
   discardPhoto(): void {
     this.capturedImage.set(null);
     this.dedicationModel.set({ dedication: '' });
+    this.isPhotoRevealing.set(false);
     this.startCamera();
   }
 
@@ -197,6 +216,10 @@ export class CameraComponent {
       // Decrement the photo count
       this.photoLimitService.decrementCount();
 
+      // Trigger success feedback and confetti
+      this.feedbackService.triggerSuccess();
+      this.triggerConfetti();
+
       // Show success state
       this.currentState.set('success');
 
@@ -204,6 +227,7 @@ export class CameraComponent {
       setTimeout(() => {
         this.capturedImage.set(null);
         this.dedicationModel.set({ dedication: '' });
+        this.isPhotoRevealing.set(false);
 
         if (this.photoLimitService.canTakePhoto()) {
           this.startCamera();
@@ -227,6 +251,41 @@ export class CameraComponent {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
     }
+  }
+
+  /**
+   * Trigger confetti celebration
+   */
+  private triggerConfetti(): void {
+    const duration = 2000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 2000 };
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min;
+    };
+
+    const interval = setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+
+      // Confetti from multiple positions
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      });
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+      });
+    }, 250);
   }
 
   /**
