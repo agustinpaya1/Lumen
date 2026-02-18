@@ -1,0 +1,256 @@
+@let photos = globalPhotos();
+@let personal = myPhotos();
+@let remaining = photoLimitService.photosLeft();
+@let loading = isLoading();
+@let tab = activeTab();
+
+<div class="home-container">
+
+    <!-- ======================== -->
+    <!-- Sticky Header            -->
+    <!-- ======================== -->
+    <header class="home-header">
+        <!-- Top Row: Title + Photo Limit Badge -->
+        <div class="header-top-row">
+            <div class="header-title-group">
+                <span class="live-dot"></span>
+                <h1 class="header-title">Natasha & Lucas</h1>
+            </div>
+            <div class="photo-limit-badge" [class.limit-zero]="remaining === 0">
+                <span class="limit-emoji">📸</span>
+                @if (remaining > 0) {
+                <span class="limit-text">Te quedan <strong>{{ remaining }}</strong> fotos</span>
+                } @else {
+                <span class="limit-text">Sin fotos restantes</span>
+                }
+            </div>
+        </div>
+
+        <!-- Bottom Row: Segmented Control (Tabs) -->
+        <div class="tab-bar">
+            <button class="tab-btn" [class.tab-btn--active]="tab === 'global'" (click)="setTab('global')">
+                Galería Global
+            </button>
+            <button class="tab-btn" [class.tab-btn--active]="tab === 'personal'" (click)="setTab('personal')">
+                Mis Fotos
+            </button>
+        </div>
+    </header>
+
+    <!-- ======================== -->
+    <!-- Content                  -->
+    <!-- ======================== -->
+    <main class="home-content">
+
+        <!-- Loading State -->
+        @if (loading) {
+        <div class="empty-state">
+            <div class="loading-spinner"></div>
+            <p class="empty-text">Cargando galería...</p>
+        </div>
+        }
+
+        <!-- ====== GLOBAL TAB ====== -->
+        @else if (tab === 'global') {
+
+        @if (photos.length === 0) {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="8" y="22" width="64" height="44" rx="8" fill="#FF4747" opacity="0.12" />
+                    <rect x="8" y="22" width="64" height="44" rx="8" stroke="#FF4747" stroke-width="3" />
+                    <circle cx="40" cy="44" r="12" stroke="#FF4747" stroke-width="3" />
+                    <circle cx="40" cy="44" r="6" fill="#FF4747" opacity="0.3" />
+                    <rect x="28" y="14" width="16" height="10" rx="3" fill="#FF4747" opacity="0.2" stroke="#FF4747"
+                        stroke-width="2" />
+                    <path d="M60 12l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#FF4747" opacity="0.6" />
+                </svg>
+            </div>
+            <p class="empty-title">¡Sé el primero en capturar un momento!</p>
+            <p class="empty-text">Toma una foto y aparecerá aquí para todos los invitados 📸</p>
+        </div>
+        } @else {
+        <div class="photo-grid">
+            @for (photo of photos; track photo.id) {
+            <div class="photo-card" (click)="openViewer(photo)">
+                <img [src]="photo.publicUrl" [alt]="photo.event_id || 'Foto de la boda'" class="photo-thumbnail"
+                    loading="lazy" />
+            </div>
+            }
+        </div>
+        }
+
+        }
+
+        <!-- ====== PERSONAL TAB ====== -->
+        @else if (tab === 'personal') {
+
+        @if (personal.length === 0) {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="40" cy="32" r="14" stroke="#FF4747" stroke-width="3" fill="#FF4747" opacity="0.1" />
+                    <path d="M16 68c0-13.255 10.745-24 24-24s24 10.745 24 24" stroke="#FF4747" stroke-width="3"
+                        fill="none" />
+                    <path d="M48 26l2 3 3 1-3 1-2 3-2-3-3-1 3-1z" fill="#FF4747" opacity="0.5" />
+                </svg>
+            </div>
+            <p class="empty-title">Aún no has subido ninguna foto</p>
+            <p class="empty-text">¡Anímate! Toma una foto o sube una desde tu galería 🎉</p>
+        </div>
+        } @else {
+        <div class="photo-grid">
+            @for (photo of personal; track photo.id) {
+            <div class="photo-card" (click)="openViewer(photo)">
+                <img [src]="photo.publicUrl" [alt]="photo.event_id || 'Mi foto'" class="photo-thumbnail"
+                    loading="lazy" />
+            </div>
+            }
+        </div>
+        }
+
+        }
+
+    </main>
+
+    <!-- Hidden file input for gallery upload -->
+    <input type="file" accept="image/jpeg, image/png" [multiple]="false" #fileInput
+        (change)="onGalleryFileSelected($event)" class="hidden" />
+
+    <!-- ========================== -->
+    <!-- Bottom Action Bar (Pill)   -->
+    <!-- ========================== -->
+
+    <div class="action-bar" [class.action-bar--disabled]="remaining === 0">
+
+        <!-- Camera Button (Secondary) -->
+        <button class="action-btn action-btn-camera" (click)="remaining > 0 ? navigateToCamera() : null"
+            [attr.aria-disabled]="remaining === 0" aria-label="Abrir cámara">
+            <svg class="action-btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            @if (remaining > 0) {
+            <span>Cámara</span>
+            } @else {
+            <span>Límite alcanzado</span>
+            }
+        </button>
+
+        <!-- Gallery Button (Primary) -->
+        <button class="action-btn action-btn-gallery" (click)="remaining > 0 ? triggerGalleryUpload() : null"
+            [attr.aria-disabled]="remaining === 0" aria-label="Subir foto de galería">
+            <svg class="action-btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            @if (remaining > 0) {
+            <span>Subir Foto</span>
+            } @else {
+            <span>Límite alcanzado</span>
+            }
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ================================ -->
+<!-- Full-Screen Uploading Overlay    -->
+<!-- ================================ -->
+
+@if (isUploading()) {
+<div class="upload-overlay">
+    <div class="upload-overlay-content">
+        <div class="upload-spinner"></div>
+        <p class="upload-text">Subiendo foto...</p>
+        <p class="upload-subtext">¡No cierres la app!</p>
+    </div>
+</div>
+}
+
+<!-- ======================== -->
+<!-- Full-Screen Photo Viewer -->
+<!-- ======================== -->
+
+@if (selectedPhoto() !== null) {
+<div class="photo-viewer-overlay" (click)="closeViewer()">
+
+    <!-- Top Bar -->
+    <div class="viewer-top-bar">
+        <button class="viewer-close-btn" (click)="closeViewer()" aria-label="Cerrar">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Full-Size Photo -->
+    <div class="viewer-photo-wrapper" (click)="$event.stopPropagation()">
+        <img [src]="selectedPhoto().publicUrl" [alt]="selectedPhoto().event_id || 'Foto'" class="viewer-photo" />
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="viewer-bottom-bar" (click)="$event.stopPropagation()">
+
+        @if (!isConfirmingDelete()) {
+        <!-- Normal Actions -->
+        <div class="viewer-actions">
+            <button class="viewer-action-btn save-btn" (click)="downloadPhoto()" [disabled]="isDownloading()">
+                @if (isDownloading()) {
+                <div class="btn-spinner"></div>
+                <span>Guardando...</span>
+                } @else {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>Guardar</span>
+                }
+            </button>
+
+            @if (selectedPhoto()?.device_id === myDeviceId()) {
+            <button class="viewer-action-btn delete-btn" (click)="confirmDelete()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+                <span>Borrar</span>
+            </button>
+            }
+        </div>
+        }
+
+        @else {
+        <!-- Delete Confirmation (only reachable if isMyPhoto) -->
+        <div class="viewer-confirm-box">
+            <p class="confirm-warning">⚠️ ¿Seguro que quieres borrarla? Esta acción es definitiva.</p>
+            <div class="confirm-actions">
+                <button class="confirm-cancel-btn" (click)="cancelDelete()" [disabled]="isDeleting()">
+                    Cancelar
+                </button>
+                <button class="confirm-delete-btn" (click)="executeDelete()" [disabled]="isDeleting()">
+                    @if (isDeleting()) {
+                    <div class="btn-spinner"></div>
+                    <span>Borrando...</span>
+                    } @else {
+                    <span>Sí, borrar</span>
+                    }
+                </button>
+            </div>
+        </div>
+        }
+
+    </div>
+
+</div>
+}

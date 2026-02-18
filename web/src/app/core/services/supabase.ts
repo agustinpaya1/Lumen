@@ -8,11 +8,53 @@ import { environment } from '../../../environments/environment.development';
 export class SupabaseService {
   private supabase: SupabaseClient;
 
+  /** localStorage key for the anonymous device identifier */
+  private readonly DEVICE_ID_KEY = 'lumen_device_id';
+
+  /** In-memory cache — guarantees the same value across all calls within a session */
+  private cachedDeviceId: string | null = null;
+
   constructor() {
     this.supabase = createClient(
       environment.supabaseUrl,
       environment.supabaseKey
     );
+  }
+
+  // ====================
+  // DEVICE ID
+  // ====================
+
+  /**
+   * Get or generate a unique device ID for anonymous photo ownership.
+   * 1. Returns in-memory cache (prevents multiple localStorage reads).
+   * 2. Falls back to localStorage.
+   * 3. Generates a new UUID v4 only if nothing is stored.
+   * Guarantees the SAME string every time within a browser session.
+   */
+  getDeviceId(): string {
+    // 1. Return cached ID if it exists (avoids localStorage reads on every call)
+    if (this.cachedDeviceId) {
+      return this.cachedDeviceId;
+    }
+
+    // 2. SSR safety guard (pure CSR app, but safe for Vercel edge cases)
+    if (typeof window === 'undefined') {
+      return 'ssr-fallback';
+    }
+
+    // 3. Read from localStorage
+    let storedId = localStorage.getItem(this.DEVICE_ID_KEY);
+
+    // 4. Generate if not found
+    if (!storedId) {
+      storedId = crypto.randomUUID();
+      localStorage.setItem(this.DEVICE_ID_KEY, storedId);
+    }
+
+    // 5. Cache in memory and return
+    this.cachedDeviceId = storedId;
+    return storedId;
   }
 
   get client() {
@@ -107,8 +149,9 @@ export class SupabaseService {
     return this.supabase.from('photos').insert({
       url: url,
       event_id: eventId,
+      device_id: this.getDeviceId(),
       created_at: new Date()
-    });
+    }).select();
   }
 
   /**
@@ -254,5 +297,120 @@ export class SupabaseService {
     }
 
     return data.signedUrl;
+  }
+
+  /**
+   * Download an image as a Blob to force-save on mobile devices.
+   * Using <a download> with cross-origin Supabase URLs fails on mobile
+   * (opens in new tab). This fetches as Blob and triggers a real download.
+   * @param url - Public or signed URL of the image
+   * @param filename - Desired filename for the download
+   */
+  async downloadImageAsBlob(url: string, filename: string): Promise<void> {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    // Small delay before revoking to ensure download starts
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  }
+
+  // ====================
+  // GALLERY METHODS
+  // ====================
+
+  /**
+   * Fetch photos belonging to the current device
+   * @returns Array of photo objects for this device, ordered by newest first
+   */
+  async fetchMyPhotos() {
+    const deviceId = this.getDeviceId();
+    const { data, error } = await this.supabase
+      .from('photos')
+      .select('*')
+      .eq('device_id', deviceId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching my photos:', error);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  /**
+   * Get public URL for a photo in storage
+   * @param path - Photo path in storage (e.g., 'uploads/photo_123.jpg')
+   * @returns Public URL string
+   */
+  getPhotoPublicUrl(path: string): string {
+    const { data } = this.supabase.storage
+      .from('photos')
+      .getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  // ====================
+  // LIVE GALLERY METHODS
+  // ====================
+
+  /**
+   * Fetch ALL photos from all guests, ordered newest first.
+   * Used by the Home "Galería en Vivo" screen.
+   */
+  async fetchAllPhotos() {
+    const { data, error } = await this.supabase
+      .from('photos')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching all photos:', error);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  /**
+   * Subscribe to real-time INSERT and DELETE events on the photos table.
+   * Uses a dedicated channel ('home:photos') so it doesn't collide with admin.
+   * @param onInsert - Called when a new photo is inserted
+   * @param onDelete - Called when a photo is deleted (receives the old row)
+   * @returns RealtimeChannel for cleanup in ngOnDestroy
+   */
+  subscribeToAllPhotos(
+    onInsert: (photo: any) => void,
+    onDelete: (photo: any) => void
+  ) {
+    const channel = this.supabase
+      .channel('home:photos')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'photos' },
+        (payload) => {
+          onInsert(payload.new);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'photos' },
+        (payload) => {
+          onDelete(payload.old);
+        }
+      )
+      .subscribe();
+
+    return channel;
   }
 }

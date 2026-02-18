@@ -1,119 +1,63 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-onboarding',
-    imports: [CommonModule],
+    standalone: true,
     templateUrl: './onboarding.html',
     styleUrl: './onboarding.scss',
 })
-export class OnboardingComponent implements OnInit {
+export class OnboardingComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
+    private autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // State signals
-    readonly showSplash = signal<boolean>(true);
-    readonly currentSlide = signal<number>(0);
-    readonly isComplete = signal<boolean>(false);
+    /** Current step: 1 = branded welcome, 2 = concept explainer */
+    readonly step = signal<number>(1);
 
-    // Slide data
-    readonly slides = [
-        {
-            icon: '💒',
-            title: 'Bienvenido',
-            description: 'Captura los momentos únicos de la boda.'
-        },
-        {
-            icon: '📷',
-            title: 'Estilo Polaroid',
-            description: 'Haz fotos vintage. ¡El revelado es automático!'
-        },
-        {
-            icon: '🔢',
-            title: 'La Regla de Oro',
-            description: 'Solo tienes 10 fotos. ¡Haz que cuenten!'
-        }
-    ];
+    /** Controls fade-out / fade-in transition between steps */
+    readonly transitioning = signal<boolean>(false);
 
     ngOnInit(): void {
-        // Check if user has already seen the tutorial
-        const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
-
-        if (hasSeenTutorial === 'true') {
-            // Navigate directly to camera
-            this.router.navigate(['/camera']);
+        // If already seen, skip straight to camera
+        if (localStorage.getItem('hasSeenTutorial') === 'true') {
+            this.router.navigate(['/home']);
             return;
         }
 
-        // Start splash screen animation sequence
-        this.startSplashSequence();
+        // Auto-advance from step 1 → step 2 after 3 seconds
+        this.autoAdvanceTimer = setTimeout(() => {
+            this.goToStep2();
+        }, 3000);
     }
 
-    /**
-     * Start the splash screen animation
-     * Fades in logo, holds for 1.5s, then transitions to carousel
-     */
-    private startSplashSequence(): void {
-        // Hide splash after 2.5 seconds (animation duration)
+    ngOnDestroy(): void {
+        if (this.autoAdvanceTimer) {
+            clearTimeout(this.autoAdvanceTimer);
+        }
+    }
+
+    /** Transition from splash → explainer */
+    goToStep2(): void {
+        if (this.step() === 2) return;
+
+        // Clear the auto-advance timer if user tapped manually
+        if (this.autoAdvanceTimer) {
+            clearTimeout(this.autoAdvanceTimer);
+            this.autoAdvanceTimer = null;
+        }
+
+        this.transitioning.set(true);
+
+        // Wait for fade-out, then swap content & fade-in
         setTimeout(() => {
-            this.showSplash.set(false);
-        }, 2500);
+            this.step.set(2);
+            this.transitioning.set(false);
+        }, 400);
     }
 
-    /**
-     * Navigate to next slide or complete onboarding
-     */
-    nextSlide(): void {
-        const current = this.currentSlide();
-
-        if (current < this.slides.length - 1) {
-            this.currentSlide.set(current + 1);
-        } else {
-            this.completeOnboarding();
-        }
-    }
-
-    /**
-     * Skip tutorial and go directly to camera
-     */
-    skipTutorial(): void {
-        this.completeOnboarding();
-    }
-
-    /**
-     * Mark onboarding as complete and navigate to camera
-     */
-    private completeOnboarding(): void {
+    /** Complete onboarding and navigate to camera */
+    startShooting(): void {
         localStorage.setItem('hasSeenTutorial', 'true');
-        this.isComplete.set(true);
-        this.router.navigate(['/camera']);
-    }
-
-    /**
-     * Handle carousel scroll event to update indicator
-     */
-    onCarouselScroll(event: Event): void {
-        const container = event.target as HTMLElement;
-        const slideWidth = container.offsetWidth;
-        const scrollLeft = container.scrollLeft;
-        const slideIndex = Math.round(scrollLeft / slideWidth);
-
-        this.currentSlide.set(slideIndex);
-    }
-
-    /**
-     * Scroll to specific slide
-     */
-    goToSlide(index: number): void {
-        this.currentSlide.set(index);
-
-        // Scroll to the slide
-        const container = document.querySelector('.carousel-track') as HTMLElement;
-        if (container) {
-            container.scrollTo({
-                left: index * container.offsetWidth,
-                behavior: 'smooth'
-            });
-        }
+        this.router.navigate(['/home']);
     }
 }

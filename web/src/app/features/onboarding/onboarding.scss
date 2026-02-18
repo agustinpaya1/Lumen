@@ -1,333 +1,351 @@
-@use 'sass:color';
-
-// Design System Variables (Science Action Style)
+// ===================================
+// DESIGN TOKENS
+// ===================================
 $brand-accent: #FF4747;
-$bg-base: #f9fafb; // bg-gray-50
+$bg-base: #f5f5f0; // warm off-white
 $card-bg: #ffffff;
-$text-primary: #1f2937;
+$text-primary: #1a1a1a;
 $text-secondary: #6b7280;
-$indicator-inactive: #e5e7eb;
+$text-muted: #9ca3af;
 
-// Container
+// ===================================
+// CONTAINER
+// ===================================
 .onboarding-container {
     width: 100%;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     background-color: $bg-base;
-}
-
-.splash-screen {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: splash-fade 2.5s ease-in-out forwards;
-}
-
-.splash-logo {
-    font-size: 8rem; // text-9xl
-    animation: logo-sequence 2.5s ease-in-out forwards;
-}
-
-// Splash Animations
-@keyframes splash-fade {
-
-    0%,
-    60% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0;
-    }
-}
-
-@keyframes logo-sequence {
-    0% {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-
-    20% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    80% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(-50px) scale(1.1);
-    }
-}
-
-// ===================================
-// PHASE B: ONBOARDING CAROUSEL
-// ===================================
-
-.carousel-wrapper {
-    width: 100%;
-    height: 100%;
     position: relative;
+}
+
+// ===================================
+// SHARED STEP SCREEN
+// ===================================
+.step-screen {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    padding-top: 3rem;
-    padding-bottom: 6rem;
-}
-
-// Skip Button (Top-Right)
-.skip-button {
-    position: absolute;
-    top: 1.5rem; // top-6
-    right: 1.5rem; // right-6
-    z-index: 20;
-    font-size: 0.875rem; // text-sm
-    font-weight: 500; // font-medium
-    padding: 0.5rem 1rem; // px-4 py-2
-    border-radius: 9999px; // rounded-full
-    color: $text-secondary;
-    background-color: transparent;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-
-    &:hover {
-        color: $text-primary;
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    &:active {
-        transform: scale(0.95);
-    }
-}
-
-// Carousel Track (Scroll Snap Container)
-.carousel-track {
-    display: flex;
-    overflow-x: auto;
-    overflow-y: hidden;
-    flex: 1 1 0%;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-
-    // Hide scrollbar
-    scrollbar-width: none; // Firefox
-
-    &::-webkit-scrollbar {
-        display: none; // Chrome, Safari, Edge
-    }
-}
-
-// Individual Slide
-.carousel-slide {
-    flex-shrink: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
     align-items: center;
     justify-content: center;
-    padding-left: 1.5rem; // px-6
-    padding-right: 1.5rem; // px-6
-    scroll-snap-align: start;
+    padding: 2rem;
 }
 
-// Slide Card (White Card with Extra Rounding)
-.slide-card {
-    width: 100%;
-    max-width: 28rem; // max-w-md
-    background-color: $card-bg;
-    padding: 3rem; // p-12
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    border-radius: 2.5rem; // Extra rounded
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+// ===================================
+// TRANSITIONS
+// ===================================
+.fade-out {
+    animation: fadeOut 0.4s ease-out forwards;
 }
 
-// Slide Icon
-.slide-icon {
-    font-size: 6rem; // text-8xl
-    margin-bottom: 2rem; // mb-8
-    animation: icon-float 3s ease-in-out infinite;
+.fade-in {
+    animation: fadeIn 0.5s ease-in forwards;
 }
 
-@keyframes icon-float {
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
 
-    0%,
-    100% {
+    to {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
         transform: translateY(0);
     }
+}
 
-    50% {
-        transform: translateY(-10px);
+// ===================================
+// STEP 1: BRANDED WELCOME
+// ===================================
+.step-welcome {
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+
+    // Entrance animation
+    animation: welcomeEntrance 1s ease-out;
+}
+
+@keyframes welcomeEntrance {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 
-// Slide Title
-.slide-title {
-    font-size: 2.25rem; // text-4xl
-    font-weight: 700; // font-bold
-    margin-bottom: 1rem; // mb-4
+.welcome-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.kicker {
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: $text-muted;
+    margin: 0;
+    animation: kickerSlideUp 0.8s ease-out 0.3s both;
+}
+
+@keyframes kickerSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.wedding-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-weight: 700;
+    line-height: 1.15;
     color: $text-primary;
+    margin: 0.25rem 0;
+    letter-spacing: -0.02em;
+    animation: titleReveal 1s ease-out 0.5s both;
 }
 
-// Slide Description
-.slide-description {
-    font-size: 1.125rem; // text-lg
-    line-height: 1.75; // leading-relaxed
+@keyframes titleReveal {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.wedding-date {
+    font-size: 1.1rem;
+    font-weight: 400;
     color: $text-secondary;
+    letter-spacing: 0.08em;
+    margin: 0.5rem 0 0;
+    animation: dateReveal 0.8s ease-out 0.9s both;
 }
 
-// Swipe Hint (Slide 1 Only)
-.swipe-hint {
+@keyframes dateReveal {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.continue-hint {
+    position: absolute;
+    bottom: 3rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem; // gap-2
-    margin-top: 2rem; // mt-8
-    font-size: 0.875rem; // text-sm
-    font-weight: 500; // font-medium
-    color: $brand-accent;
-    animation: swipe-pulse 2s ease-in-out infinite;
+    gap: 0.35rem;
+    background: none;
+    border: none;
+    color: $text-muted;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    padding: 0.75rem 1.25rem;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    animation: hintPulse 2.5s ease-in-out infinite, hintFadeIn 0.6s ease-out 1.5s both;
+
+    &:hover {
+        color: $text-secondary;
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    svg {
+        transition: transform 0.2s ease;
+    }
+
+    &:hover svg {
+        transform: translateX(2px);
+    }
 }
 
-.swipe-icon {
-    width: 1.5rem; // w-6
-    height: 1.5rem; // h-6
-    transform: rotate(180deg); // Point left
-}
-
-.swipe-text {
-    text-transform: uppercase; // uppercase
-    letter-spacing: 0.05em; // tracking-wide
-}
-
-@keyframes swipe-pulse {
+@keyframes hintPulse {
 
     0%,
     100% {
         opacity: 0.6;
-        transform: translateX(0);
     }
 
     50% {
         opacity: 1;
-        transform: translateX(-8px);
+    }
+}
+
+@keyframes hintFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 0.6;
+        transform: translateY(0);
     }
 }
 
 // ===================================
-// DOT INDICATORS
+// STEP 2: CONCEPT EXPLAINER
 // ===================================
-
-.indicators {
-    position: absolute;
-    bottom: 6rem; // bottom-24
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem; // gap-2
-    z-index: 10;
+.step-explainer {
+    padding: 1.5rem;
 }
 
-.indicator-dot {
-    border-radius: 9999px; // rounded-full
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // transition-all duration-300
-    width: 0.5rem;
-    height: 0.5rem;
-    background-color: $indicator-inactive;
+.explainer-card {
+    width: 100%;
+    max-width: 24rem;
+    background-color: $card-bg;
+    border-radius: 2rem;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.07),
+        0 20px 40px -8px rgba(0, 0, 0, 0.1);
+}
+
+.explainer-icon {
+    width: 5rem;
+    height: 5rem;
+    margin-bottom: 1.75rem;
+    animation: iconBounce 0.6s ease-out 0.3s both;
+
+    svg {
+        width: 100%;
+        height: 100%;
+    }
+}
+
+@keyframes iconBounce {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(16px);
+    }
+
+    60% {
+        opacity: 1;
+        transform: scale(1.08) translateY(-4px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.explainer-headline {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0 0 1rem;
+    line-height: 1.25;
+    animation: fadeIn 0.5s ease-out 0.4s both;
+}
+
+.explainer-body {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: $text-secondary;
+    margin: 0 0 2rem;
+    animation: fadeIn 0.5s ease-out 0.55s both;
+
+    strong {
+        color: $text-primary;
+        font-weight: 600;
+    }
+}
+
+.cta-button {
+    width: 100%;
+    padding: 1rem 2rem;
     border: none;
-    cursor: pointer;
-
-    &.active {
-        width: 2rem;
-        background-color: $brand-accent;
-    }
-
-    &:hover:not(.active) {
-        background-color: color.adjust($indicator-inactive, $lightness: -10%);
-    }
-}
-
-// ===================================
-// FLOATING ACTION BUTTON (FAB)
-// ===================================
-
-.fab-button {
-    position: absolute;
-    bottom: 2rem; // bottom-8
-    right: 2rem; // right-8
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px; // rounded-full
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); // shadow-lg
-    font-weight: 700; // font-bold
-    color: white;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // transition-all duration-300
-    width: 4rem;
-    height: 4rem;
+    border-radius: 9999px;
     background-color: $brand-accent;
-    border: none;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
     cursor: pointer;
-
-    // On last slide, expand to show "Empezar" text
-    &:has(span) {
-        width: auto;
-        padding: 0 2rem;
-    }
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba($brand-accent, 0.4);
+    animation: ctaAppear 0.5s ease-out 0.7s both;
 
     &:hover {
-        transform: scale(1.05);
-        box-shadow: 0 10px 25px rgba($brand-accent, 0.4);
+        transform: scale(1.03);
+        box-shadow: 0 6px 20px rgba($brand-accent, 0.5);
     }
 
     &:active {
-        transform: scale(0.95);
+        transform: scale(0.97);
     }
 }
 
-.fab-icon {
-    width: 1.5rem; // w-6
-    height: 1.5rem; // h-6
+@keyframes ctaAppear {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 // ===================================
-// RESPONSIVE DESIGN
+// RESPONSIVE
 // ===================================
-
-@media (max-width: 640px) {
-    .slide-card {
-        padding: 2rem; // p-8
+@media (max-width: 380px) {
+    .wedding-title {
+        font-size: 2.2rem;
     }
 
-    .slide-icon {
-        font-size: 4.5rem; // text-7xl
-        margin-bottom: 1.5rem; // mb-6
+    .explainer-card {
+        padding: 2rem 1.5rem;
     }
 
-    .slide-title {
-        font-size: 1.875rem; // text-3xl
-        margin-bottom: 0.75rem; // mb-3
+    .explainer-headline {
+        font-size: 1.4rem;
     }
 
-    .slide-description {
-        font-size: 1rem; // text-base
-    }
-
-    .fab-button {
-        width: 3.5rem;
-        height: 3.5rem;
-
-        &:has(span) {
-            padding: 0 1.5rem;
-        }
+    .explainer-body {
+        font-size: 0.95rem;
     }
 }

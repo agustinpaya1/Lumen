@@ -15,6 +15,7 @@ $primary-black: #111827;
 $primary-white: #ffffff;
 $error-red: #ef4444;
 $success-green: #10b981;
+$reveal-red: #FF4747;
 
 // Shadows
 $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -22,12 +23,12 @@ $shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0,
 $shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 
 // Border Radius
-$rounded-3xl: 2rem; // 32px
+$rounded-3xl: 2rem;
 $rounded-full: 9999px;
-$rounded-lg: 1rem; // 16px
+$rounded-lg: 1rem;
 
 // Spacing
-$spacing-unit: 1rem; // 16px
+$spacing-unit: 1rem;
 
 // Touch Targets
 $min-touch-height: 56px;
@@ -49,10 +50,6 @@ $transition-base: all 0.3s ease;
     justify-content: center;
     position: relative;
     font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-.hidden-canvas {
-    display: none;
 }
 
 // ====================
@@ -99,7 +96,7 @@ $transition-base: all 0.3s ease;
 // ====================
 
 .heading {
-    font-size: 2rem; // 32px
+    font-size: 2rem;
     font-weight: 700;
     color: $text-dark;
     margin: 0;
@@ -107,21 +104,21 @@ $transition-base: all 0.3s ease;
 }
 
 .heading-small {
-    font-size: 1.5rem; // 24px
+    font-size: 1.5rem;
     font-weight: 700;
     color: $text-dark;
     margin: 0;
 }
 
 .subtitle {
-    font-size: 1.125rem; // 18px
+    font-size: 1.125rem;
     font-weight: 400;
     color: $text-gray;
     margin: $spacing-unit * 0.5 0 0;
 }
 
 .body-text {
-    font-size: 1.125rem; // 18px
+    font-size: 1.125rem;
     color: $text-gray;
     line-height: 1.6;
     margin: $spacing-unit * 0.75 0 0;
@@ -257,11 +254,37 @@ $transition-base: all 0.3s ease;
 .viewfinder-header {
     position: absolute;
     top: $spacing-unit * 2;
-    left: 0;
-    right: 0;
+    left: $spacing-unit;
+    right: $spacing-unit;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
     z-index: 20;
+
+    .back-button {
+        width: 44px;
+        height: 44px;
+        border-radius: $rounded-full;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        color: $text-dark;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: $shadow-card;
+        transition: transform 0.1s ease;
+
+        svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        &:active {
+            transform: scale(0.9);
+        }
+    }
 
     .count-badge {
         background-color: rgba(255, 255, 255, 0.95);
@@ -354,7 +377,7 @@ $transition-base: all 0.3s ease;
 }
 
 // ====================
-// STATE 3: Preview
+// STATE 3: Preview (CSS Polaroid)
 // ====================
 
 .state-preview {
@@ -371,92 +394,50 @@ $transition-base: all 0.3s ease;
 .preview-header {
     width: 100%;
     text-align: left;
-    margin-bottom: $spacing-unit;
+    margin-bottom: $spacing-unit * 0.5;
 }
 
-.polaroid-container {
-    background-color: $bg-white;
-    padding: $spacing-unit * 1.5;
-    padding-bottom: $spacing-unit * 4; // Extra bottom padding for Polaroid effect
-    border-radius: $rounded-lg;
-    box-shadow: $shadow-xl;
+// ── Polaroid Card (CSS Only) ──
+.polaroid-card {
+    background: $primary-white;
+    padding: 14px 14px 52px;
+    border-radius: 6px;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        0 8px 30px rgba(0, 0, 0, 0.12);
     width: 100%;
-    position: relative;
+    max-width: 400px;
+    transition: transform 0.3s ease;
+    animation: polaroidDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 
-    &.polaroid-revealing {
-        .polaroid-photo {
-            background-color: #000;
-        }
+    // Subtle tilt on hover for a tactile feel
+    &:hover {
+        transform: rotate(-1deg);
     }
 
     .polaroid-photo {
         width: 100%;
-        aspect-ratio: 1;
-        overflow: hidden;
-        border-radius: $spacing-unit * 0.5;
-        position: relative;
-        background-color: $bg-white;
-        transition: background-color 0.3s ease;
-    }
-
-    .captured-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
         display: block;
-
-        &.photo-reveal {
-            opacity: 0;
-            animation: photoReveal 2s ease-in forwards;
-        }
-    }
-
-    // Reveal Text Overlay
-    .reveal-text {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.9);
-        text-align: center;
-        z-index: 2;
-        animation: revealTextFade 2s ease-out forwards;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    }
-
-    .polaroid-bottom {
-        height: $spacing-unit * 3;
-        background-color: $bg-white;
+        border-radius: 2px;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        background-color: #eee;
     }
 }
 
-// Polaroid Developing Animation
-@keyframes photoReveal {
+@keyframes polaroidDrop {
     0% {
+        transform: translateY(-30px) rotate(3deg);
         opacity: 0;
     }
 
     100% {
+        transform: translateY(0) rotate(0deg);
         opacity: 1;
     }
 }
 
-@keyframes revealTextFade {
-    0% {
-        opacity: 1;
-    }
-
-    70% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0;
-    }
-}
-
+// ── Dedication form ──
 .dedication-section {
     text-align: left;
     padding: $spacing-unit * 1.5;
@@ -491,10 +472,118 @@ $transition-base: all 0.3s ease;
     }
 }
 
+// ── Action Buttons Row ──
 .action-buttons {
     display: flex;
-    gap: $spacing-unit;
+    gap: $spacing-unit * 0.75;
     width: 100%;
+    align-items: center;
+}
+
+// Retake — circular icon button (trash)
+.btn-retake {
+    width: $min-touch-height;
+    height: $min-touch-height;
+    min-width: $min-touch-height;
+    border-radius: $rounded-full;
+    border: 2px solid $border-gray;
+    background-color: $bg-white;
+    color: $text-gray;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: $transition-base;
+    flex-shrink: 0;
+
+    svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    &:hover {
+        border-color: $error-red;
+        color: $error-red;
+        background-color: rgba($error-red, 0.05);
+    }
+
+    &:active {
+        transform: scale(0.92);
+    }
+}
+
+// Save to Gallery — ghost/outline button
+.btn-save {
+    min-height: $min-touch-height;
+    padding: $spacing-unit $spacing-unit * 1.25;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: $rounded-full;
+    border: 2px solid $border-gray;
+    background-color: transparent;
+    color: $text-dark;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-unit * 0.4;
+    transition: $transition-base;
+    font-family: inherit;
+    flex: 1;
+    box-sizing: border-box;
+
+    .btn-icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    &:hover {
+        border-color: $text-gray;
+        background-color: $bg-soft-gray;
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+}
+
+// "Revelar" — Vibrant Red #FF4747
+.btn-reveal {
+    min-height: $min-touch-height;
+    padding: $spacing-unit $spacing-unit * 1.75;
+    font-size: 1.125rem;
+    font-weight: 700;
+    border-radius: $rounded-full;
+    border: none;
+    background-color: $reveal-red;
+    color: $primary-white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-unit * 0.5;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;
+    font-family: inherit;
+    flex: 2;
+    box-shadow: 0 4px 14px rgba($reveal-red, 0.4);
+    box-sizing: border-box;
+
+    .btn-icon {
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
+    }
+
+    &:hover {
+        background-color: color.adjust($reveal-red, $lightness: -5%);
+        box-shadow: 0 6px 18px rgba($reveal-red, 0.5);
+    }
+
+    &:active {
+        transform: scale(0.96);
+        box-shadow: 0 2px 8px rgba($reveal-red, 0.3);
+    }
 }
 
 // ====================
@@ -603,7 +692,7 @@ $transition-base: all 0.3s ease;
 }
 
 // ====================
-// Buttons
+// Buttons (shared)
 // ====================
 
 .btn-primary,
@@ -658,10 +747,6 @@ $transition-base: all 0.3s ease;
     }
 }
 
-.btn-send {
-    flex: 2; // Make the send button larger
-}
-
 // ====================
 // Responsive Design
 // ====================
@@ -688,14 +773,12 @@ $transition-base: all 0.3s ease;
         font-size: 1rem;
     }
 
-    .action-buttons {
-        flex-direction: column;
+    .polaroid-card {
+        padding: 10px 10px 40px;
     }
+}
 
-    .btn-send {
-        flex: 1;
-    }
-}// ====================
+// ====================
 // Permission Helper Modal
 // ====================
 

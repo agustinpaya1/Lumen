@@ -29,6 +29,15 @@ export class PhotoLimitService {
         }
     }
 
+    incrementCount(): void {
+        const currentCount = this.photoCountSignal();
+        if (currentCount < DEFAULT_PHOTO_LIMIT) {
+            const newCount = currentCount + 1;
+            this.photoCountSignal.set(newCount);
+            localStorage.setItem(STORAGE_KEY, newCount.toString());
+        }
+    }
+
     resetCount(): void {
         this.photoCountSignal.set(DEFAULT_PHOTO_LIMIT);
         localStorage.setItem(STORAGE_KEY, DEFAULT_PHOTO_LIMIT.toString());
