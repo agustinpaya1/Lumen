@@ -1,0 +1,10 @@
+{
+    "version": 2,
+    "outputDirectory": "dist/web/browser",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

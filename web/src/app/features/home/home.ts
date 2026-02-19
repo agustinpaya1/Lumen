@@ -59,6 +59,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     /** Whether a gallery upload is in progress */
     readonly isUploading = signal<boolean>(false);
 
+    /** Whether the limit reached modal is visible */
+    readonly showLimitModal = signal<boolean>(false);
+
     // =====================
     // Photo Viewer Overlay
     // =====================
@@ -140,6 +143,38 @@ export class HomeComponent implements OnInit, OnDestroy {
                 );
             }
         );
+    }
+
+    /** Intercepts camera/upload actions if limit is reached */
+    handleActionClick(action: 'camera' | 'upload'): void {
+        if (this.photoLimitService.photosLeft() > 0) {
+            if (action === 'camera') {
+                this.navigateToCamera();
+            } else {
+                this.triggerGalleryUpload();
+            }
+        } else {
+            this.showLimitModal.set(true);
+        }
+    }
+
+    /** Returns the color class for the photo counter based on remaining photos */
+    getCounterColorClass(): string {
+        const remaining = this.photoLimitService.photosLeft();
+        if (remaining > 3) return 'text-gray-500';
+        if (remaining > 1) return 'text-orange-500';
+        return 'text-red-500';
+    }
+
+    /** Switch to personal gallery and close modal so user can delete photos */
+    goToPersonalGallery(): void {
+        this.activeTab.set('personal');
+        this.showLimitModal.set(false);
+    }
+
+    /** Close the limit reached modal */
+    closeLimitModal(): void {
+        this.showLimitModal.set(false);
     }
 
     /** Navigate to the camera screen */

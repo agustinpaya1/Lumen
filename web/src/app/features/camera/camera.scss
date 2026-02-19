@@ -207,6 +207,10 @@ $transition-base: all 0.3s ease;
 // STATE 2: Viewfinder
 // ====================
 
+// ====================
+// STATE 2: Viewfinder (Immersive)
+// ====================
+
 .state-viewfinder {
     position: fixed;
     top: 0;
@@ -219,6 +223,133 @@ $transition-base: all 0.3s ease;
     z-index: 10;
 }
 
+// Top Bar (Gradient + Glassmorphism)
+.top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: $spacing-unit * 1.5 $spacing-unit;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+    z-index: 50;
+    pointer-events: none; // Let clicks pass through, but buttons have pointer-events: auto
+
+    .icon-btn {
+        pointer-events: auto;
+        width: 44px;
+        height: 44px;
+        border-radius: $rounded-full;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: $primary-white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: $transition-base;
+
+        svg {
+            width: 24px;
+            height: 24px;
+            stroke-width: 2;
+        }
+
+        &:active {
+            transform: scale(0.92);
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        &.active {
+            background-color: $primary-white;
+            color: $primary-black;
+        }
+
+        // Animation for flip button
+        &.rotate-anim {
+            animation: spinIcon 0.6s ease-in-out;
+        }
+    }
+}
+
+@keyframes spinIcon {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(180deg);
+    }
+}
+
+// Center Photo Counter Pill
+.counter-pill {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 6px 16px;
+    border-radius: $rounded-full;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    .count,
+    .total,
+    .separator {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: $primary-white;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .separator {
+        opacity: 0.6;
+        margin: 0 2px;
+    }
+}
+
+// Immersive Video Wrapper
+.video-wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    background-color: #000;
+}
+
+// 3D Flip Container
+.flip-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    perspective: 1000px;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style: preserve-3d;
+
+    &.is-flipping {
+        transform: rotateY(180deg);
+    }
+}
+
+// Full-screen Video Feed
+.video-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden; // Hides back when flipped
+
+    &.mirrored {
+        transform: scaleX(-1);
+    }
+}
+
 // Camera Flash Overlay
 .camera-flash {
     position: fixed;
@@ -229,150 +360,98 @@ $transition-base: all 0.3s ease;
     background-color: rgba(255, 255, 255, 0);
     pointer-events: none;
     z-index: 100;
-    transition: background-color 75ms ease-out;
+    transition: background-color 80ms ease-out;
 
     &.active {
         background-color: rgba(255, 255, 255, 0.95);
-        animation: flashEffect 150ms ease-out;
     }
 }
 
-@keyframes flashEffect {
-    0% {
-        background-color: rgba(255, 255, 255, 0);
-    }
-
-    50% {
-        background-color: rgba(255, 255, 255, 0.95);
-    }
-
-    100% {
-        background-color: rgba(255, 255, 255, 0);
-    }
-}
-
-.viewfinder-header {
+// 3×3 Grid Overlay
+.grid-overlay {
     position: absolute;
-    top: $spacing-unit * 2;
-    left: $spacing-unit;
-    right: $spacing-unit;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    inset: 0;
     z-index: 20;
+    pointer-events: none;
 
-    .back-button {
-        width: 44px;
-        height: 44px;
-        border-radius: $rounded-full;
-        border: none;
-        background-color: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        color: $text-dark;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: $shadow-card;
-        transition: transform 0.1s ease;
-
-        svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        &:active {
-            transform: scale(0.9);
-        }
-    }
-
-    .count-badge {
-        background-color: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        padding: $spacing-unit * 0.75 $spacing-unit * 1.5;
-        border-radius: $rounded-full;
-        display: flex;
-        align-items: center;
-        gap: $spacing-unit * 0.5;
-        box-shadow: $shadow-card;
-
-        .badge-number {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: $text-dark;
-            line-height: 1;
-        }
-
-        .badge-text {
-            font-size: 0.875rem;
-            color: $text-gray;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-    }
-}
-
-.video-container {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .video-feed {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .frame-overlay {
+    .grid-line {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 85%;
-        max-width: 400px;
-        aspect-ratio: 1;
-        border: 4px solid rgba(255, 255, 255, 0.8);
-        border-radius: $spacing-unit;
-        pointer-events: none;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+        background-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+
+        &--v1 {
+            top: 0;
+            bottom: 0;
+            left: 33.33%;
+            width: 1px;
+        }
+
+        &--v2 {
+            top: 0;
+            bottom: 0;
+            left: 66.66%;
+            width: 1px;
+        }
+
+        &--h1 {
+            left: 0;
+            right: 0;
+            top: 33.33%;
+            height: 1px;
+        }
+
+        &--h2 {
+            left: 0;
+            right: 0;
+            top: 66.66%;
+            height: 1px;
+        }
     }
 }
 
+// Floating Shutter Button
 .viewfinder-footer {
-    padding: $spacing-unit * 2.5;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: $spacing-unit * 3;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    z-index: 50;
+    padding-bottom: calc(#{$spacing-unit * 3} + env(safe-area-inset-bottom));
 }
 
 .shutter-button {
-    width: 80px;
-    height: 80px;
+    width: 84px;
+    height: 84px;
     border-radius: $rounded-full;
-    background-color: $primary-white;
-    border: 4px solid $primary-white;
+    background-color: transparent;
+    border: 5px solid $primary-white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s ease;
 
-    &:active {
-        transform: scale(0.88);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-
+    // Inner white circle
     .shutter-inner {
-        width: 64px;
-        height: 64px;
+        width: 70px;
+        height: 70px;
         border-radius: $rounded-full;
         background-color: $primary-white;
-        border: 2px solid color.adjust($border-gray, $lightness: -10%);
+        transition: transform 0.1s ease;
+    }
+
+    &:active {
+        transform: scale(0.95);
+
+        .shutter-inner {
+            transform: scale(0.9);
+            background-color: darken($primary-white, 5%);
+        }
     }
 }
 
@@ -648,46 +727,82 @@ $transition-base: all 0.3s ease;
     min-height: 100vh;
 }
 
-.success-card {
-    .success-icon {
-        width: 80px;
-        height: 80px;
-        color: $success-green;
-        margin: 0 auto $spacing-unit * 1.5;
-        animation: scaleIn 0.5s ease;
+.success-minimal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: springScaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 
-        svg {
-            width: 100%;
-            height: 100%;
+    .checkmark-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: $rounded-full;
+        background-color: rgba($reveal-red, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: $spacing-unit * 1.5;
+        color: $reveal-red;
+        animation: circlePulse 1.2s infinite ease-in-out;
+
+        .checkmark-icon {
+            width: 56px;
+            height: 56px;
+            stroke-width: 3;
         }
     }
 
-    &.success-animation {
-        animation: flyUpAndShrink 0.8s ease-in forwards;
+    .success-text {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: $text-dark;
+        margin: 0;
+        opacity: 0;
+        animation: fadeIn 0.3s ease 0.2s forwards;
     }
 }
 
-@keyframes scaleIn {
-    from {
+@keyframes springScaleIn {
+    0% {
         transform: scale(0.5);
         opacity: 0;
     }
 
-    to {
+    60% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+
+    100% {
         transform: scale(1);
         opacity: 1;
     }
 }
 
-@keyframes flyUpAndShrink {
+@keyframes circlePulse {
     0% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
+        box-shadow: 0 0 0 0 rgba($reveal-red, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 20px rgba($reveal-red, 0);
     }
 
     100% {
-        transform: translateY(-100vh) scale(0.5);
-        opacity: 0.5;
+        box-shadow: 0 0 0 0 rgba($reveal-red, 0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 

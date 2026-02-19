@@ -2,7 +2,6 @@ import { Component, signal, computed, viewChild, ElementRef, inject, OnDestroy, 
 import { form, FormField } from '@angular/forms/signals';
 import { CommonModule } from '@angular/common';
 import imageCompression from 'browser-image-compression';
-import confetti from 'canvas-confetti';
 import { PhotoLimitService } from '../../core/services/photo-limit.service';
 import { SupabaseService } from '../../core/services/supabase';
 import { FeedbackService } from '../../core/services/feedback.service';
@@ -47,6 +46,24 @@ export class CameraComponent implements OnInit, OnDestroy {
   readonly retryMessage = signal<string | null>(null);
   readonly permissionHelperVisible = signal<boolean>(false);
   readonly devicePlatform = signal<'ios' | 'android' | 'unknown'>('unknown');
+  /** Camera facing mode: 'environment' (back) or 'user' (front) */
+  readonly facingMode = signal<'environment' | 'user'>('environment');
+
+  /** Whether the camera is currently flipping (for animation) */
+  readonly isFlipping = signal<boolean>(false);
+
+  // ──────────────────────────────────────────
+  // Camera Controls (Grid & Flash)
+  // ──────────────────────────────────────────
+
+  /** Whether the Rule of Thirds 3×3 grid overlay is visible */
+  readonly showGrid = signal<boolean>(false);
+
+  /** Flash mode: 'off' or 'on' (hardware torch attempt + software screen flash) */
+  readonly flashMode = signal<'off' | 'on'>('off');
+
+  /** Whether the white screen flash overlay is currently active */
+  readonly isFlashing = signal<boolean>(false);
 
   // ──────────────────────────────────────────
   // Photo signals
@@ -99,6 +116,14 @@ export class CameraComponent implements OnInit, OnDestroy {
     this.router.navigate(['/home']);
   }
 
+  /** Returns the color class for the photo counter based on remaining photos */
+  getCounterColorClass(): string {
+    const remaining = this.photoLimitService.photosLeft();
+    if (remaining > 3) return 'text-white';
+    if (remaining > 1) return 'text-yellow-300';
+    return 'text-red-400';
+  }
+
   // ============================================================
   // DEVICE & LIFECYCLE
   // ============================================================
@@ -139,7 +164,11 @@ export class CameraComponent implements OnInit, OnDestroy {
       this.permissionHelperVisible.set(false);
 
       let constraints: MediaStreamConstraints = {
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: {
+          facingMode: this.facingMode(),
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
         audio: false,
       };
 
@@ -151,7 +180,11 @@ export class CameraComponent implements OnInit, OnDestroy {
         if (innerError instanceof Error && innerError.name === 'OverconstrainedError') {
           console.warn('1920x1080 not supported, falling back to 1280x720');
           constraints = {
-            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+            video: {
+              facingMode: this.facingMode(),
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
             audio: false,
           };
           try {
@@ -159,7 +192,10 @@ export class CameraComponent implements OnInit, OnDestroy {
           } catch (fallbackError) {
             if (fallbackError instanceof Error && fallbackError.name === 'OverconstrainedError') {
               console.warn('1280x720 not supported, using generic video constraints');
-              constraints = { video: true, audio: false };
+              constraints = {
+                video: { facingMode: this.facingMode() },
+                audio: false
+              };
               stream = await navigator.mediaDevices.getUserMedia(constraints);
             } else {
               throw fallbackError;
@@ -203,13 +239,86 @@ export class CameraComponent implements OnInit, OnDestroy {
     this.permissionHelperVisible.set(false);
   }
 
+  /**
+   * Flip the camera between front and back (environment/user).
+   * Triggers a 3D flip animation and restarts the stream.
+   */
+  flipCamera(): void {
+    if (this.isFlipping()) return;
+
+    // 1. Start animation
+    this.isFlipping.set(true);
+
+    // 2. Wait 300ms (halfway through animation) to swap content
+    setTimeout(async () => {
+      // Stop current stream
+      this.stopCamera();
+
+      // Toggle facing mode
+      const newMode = this.facingMode() === 'environment' ? 'user' : 'environment';
+      this.facingMode.set(newMode);
+
+      // Restart camera with new mode
+      await this.startCamera();
+
+      // 3. End animation after stream is ready (approx 600ms total)
+      setTimeout(() => {
+        this.isFlipping.set(false);
+      }, 300);
+
+    }, 300);
+  }
+
+  // ============================================================
+  // CAMERA CONTROLS (Grid & Flash)
+  // ============================================================
+
+  /** Toggle the 3×3 rule-of-thirds grid overlay */
+  toggleGrid(): void {
+    this.showGrid.update(v => !v);
+  }
+
+  /** Toggle flash mode and attempt hardware torch */
+  async toggleFlash(): Promise<void> {
+    const newMode = this.flashMode() === 'off' ? 'on' : 'off';
+    this.flashMode.set(newMode);
+
+    // Attempt hardware torch (safe — will silently fail on iOS/unsupported)
+    const track = this.mediaStream?.getVideoTracks()[0];
+    if (track) {
+      try {
+        await track.applyConstraints({
+          advanced: [{ torch: newMode === 'on' } as any]
+        });
+      } catch (err) {
+        console.warn('Hardware flash not supported:', err);
+        // Keep flashMode as 'on' — software screen flash will be used
+      }
+    }
+  }
+
+  /** Safely turn off hardware torch */
+  private async turnOffTorch(): Promise<void> {
+    const track = this.mediaStream?.getVideoTracks()[0];
+    if (track) {
+      try {
+        await track.applyConstraints({
+          advanced: [{ torch: false } as any]
+        });
+      } catch {
+        // Silently ignore — torch may not be supported
+      }
+    }
+  }
+
   // ============================================================
   // CAPTURE — viewfinder → preview (DIRECT, no editor)
   // ============================================================
 
   /**
    * Capture the current video frame and transition DIRECTLY to preview.
-   * Uses a temporary off-screen canvas (no ViewChild needed).
+   * If flash is on, triggers a software screen flash (white overlay) for 150ms
+   * to illuminate faces before capturing.
    */
   async capturePhoto(): Promise<void> {
     const video = this.videoElement()?.nativeElement;
@@ -221,7 +330,14 @@ export class CameraComponent implements OnInit, OnDestroy {
 
     // Trigger shutter feedback (haptic + audio + flash)
     this.feedbackService.triggerShutter();
-    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // If flash is on, show software screen flash and wait for illumination
+    if (this.flashMode() === 'on') {
+      this.isFlashing.set(true);
+      await new Promise(resolve => setTimeout(resolve, 150));
+    } else {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
 
     // Create a temporary off-screen canvas to extract the frame
     const tempCanvas = document.createElement('canvas');
@@ -229,10 +345,17 @@ export class CameraComponent implements OnInit, OnDestroy {
     tempCanvas.height = video.videoHeight;
     const ctx = tempCanvas.getContext('2d');
     if (!ctx) {
+      this.isFlashing.set(false);
       this.errorMessage.set('Failed to capture photo. Please try again.');
       return;
     }
     ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Turn off screen flash and hardware torch
+    this.isFlashing.set(false);
+    if (this.flashMode() === 'on') {
+      await this.turnOffTorch();
+    }
 
     // Convert to blob and go STRAIGHT to preview
     tempCanvas.toBlob((blob) => {
@@ -341,19 +464,18 @@ export class CameraComponent implements OnInit, OnDestroy {
       // Decrement the photo count
       this.photoLimitService.decrementCount();
 
-      // Trigger success feedback and confetti
+      // Trigger success feedback
       this.feedbackService.triggerSuccess();
-      this.triggerConfetti();
 
       // Show success state
       this.currentState.set('success');
 
-      // Reset after 3 seconds and navigate back to Home
+      // Reset after 1.2 seconds and navigate back to Home
       setTimeout(() => {
         this.rawPhotoBlob.set(null);
         this.dedicationModel.set({ dedication: '' });
         this.router.navigate(['/home']);
-      }, 3000);
+      }, 1200);
 
     } catch (error) {
       console.error('Upload error:', error);
@@ -384,23 +506,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Trigger confetti celebration 🎉 */
-  private triggerConfetti(): void {
-    const duration = 2000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 2000 };
 
-    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-    const interval = setInterval(() => {
-      const timeLeft = animationEnd - Date.now();
-      if (timeLeft <= 0) return clearInterval(interval);
-
-      const particleCount = 50 * (timeLeft / duration);
-      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-    }, 250);
-  }
 
   /** Cleanup on component destroy */
   ngOnDestroy(): void {

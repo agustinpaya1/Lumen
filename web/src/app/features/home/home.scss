@@ -55,40 +55,9 @@ $transition-base: all 0.3s ease;
     border-bottom: 1px solid rgba($border-gray, 0.6);
 }
 
-.header-top-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.header-center {
+    text-align: center;
     margin-bottom: $spacing-unit * 0.6;
-}
-
-.header-title-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.live-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: $success-green;
-    animation: livePulse 1.5s ease-in-out infinite;
-    flex-shrink: 0;
-}
-
-@keyframes livePulse {
-
-    0%,
-    100% {
-        opacity: 1;
-        box-shadow: 0 0 0 0 rgba($success-green, 0.5);
-    }
-
-    50% {
-        opacity: 0.7;
-        box-shadow: 0 0 0 6px rgba($success-green, 0);
-    }
 }
 
 .header-title {
@@ -99,40 +68,16 @@ $transition-base: all 0.3s ease;
     letter-spacing: -0.02em;
 }
 
-// ====================
-// Photo Limit Badge
-// ====================
+.header-subtitle {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: $text-gray;
+    margin: $spacing-unit * 0.15 0 0;
+    letter-spacing: 0.01em;
 
-.photo-limit-badge {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background-color: rgba($success-green, 0.08);
-    padding: $spacing-unit * 0.3 $spacing-unit * 0.7;
-    border-radius: $rounded-full;
-    transition: background-color 0.3s ease;
-
-    .limit-emoji {
-        font-size: 0.85rem;
-    }
-
-    .limit-text {
-        font-size: 0.78rem;
+    &--zero {
+        color: $reveal-red;
         font-weight: 600;
-        color: $text-gray;
-
-        strong {
-            color: $success-green;
-            font-weight: 800;
-        }
-    }
-
-    &.limit-zero {
-        background-color: rgba($reveal-red, 0.08);
-
-        .limit-text {
-            color: $reveal-red;
-        }
     }
 }
 
@@ -284,6 +229,20 @@ $transition-base: all 0.3s ease;
     display: block;
     background-color: #eee;
     pointer-events: none;
+}
+
+.photo-caption {
+    padding: $spacing-unit * 0.75;
+    background-color: $bg-white;
+}
+
+.caption-text {
+    font-size: 0.75rem;
+    color: $text-gray;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 // ====================
@@ -555,7 +514,23 @@ $transition-base: all 0.3s ease;
     justify-content: center;
     overflow: hidden;
     padding: 0 $spacing-unit * 0.5;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0 $spacing-unit * 0.5;
     min-height: 0; // critical for flex shrink
+    flex-direction: column; // Stack image and caption
+}
+
+.viewer-caption {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    margin: $spacing-unit 0 0;
+    max-width: 100%;
+    animation: fadeInUp 0.4s ease 0.1s forwards;
+    opacity: 0;
 }
 
 .viewer-photo {
@@ -739,5 +714,146 @@ $transition-base: all 0.3s ease;
     to {
         transform: scale(1);
         opacity: 1;
+    }
+}
+
+// ====================
+// Limit Reached Modal
+// ====================
+
+.limit-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300; // Above viewer, below upload overlay if needed
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-unit;
+    animation: overlayFadeIn 0.2s ease forwards;
+}
+
+.limit-modal-content {
+    position: relative; // For close button positioning
+    background-color: $bg-white;
+    width: 100%;
+    max-width: 340px;
+    border-radius: $rounded-xl; // rounded-2xl equivalent
+    padding: $spacing-unit * 2; // p-8
+    text-align: center;
+    box-shadow: $shadow-xl;
+    animation: modalPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.limit-close-btn {
+    position: absolute;
+    top: $spacing-unit;
+    right: $spacing-unit;
+    background: transparent;
+    border: none;
+    color: $text-light-gray;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background 0.2s ease;
+
+    &:active {
+        background-color: $bg-soft-gray;
+        color: $text-dark;
+    }
+}
+
+.limit-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: $rounded-full;
+    background-color: rgba($reveal-red, 0.08);
+    color: $reveal-red;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: $spacing-unit * 1.5;
+
+    svg {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+.limit-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: $text-dark;
+    margin: 0 0 $spacing-unit * 0.5;
+}
+
+.limit-body {
+    font-size: 0.95rem;
+    color: $text-gray;
+    line-height: 1.5;
+    margin: 0 0 $spacing-unit * 1.5;
+}
+
+.limit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-unit * 0.75;
+    width: 100%;
+}
+
+.limit-btn-primary {
+    width: 100%;
+    padding: $spacing-unit * 0.75;
+    border-radius: $rounded-full;
+    border: none;
+    background-color: $reveal-red;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+
+    &:active {
+        transform: scale(0.96);
+        background-color: darken($reveal-red, 5%);
+    }
+}
+
+.limit-btn-secondary {
+    width: 100%;
+    padding: $spacing-unit * 0.75;
+    border-radius: $rounded-full;
+    border: none;
+    background-color: transparent;
+    color: $text-gray;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    &:active {
+        color: $text-dark;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+}
+
+@keyframes modalPopIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
     }
 }

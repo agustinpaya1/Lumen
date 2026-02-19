@@ -10,23 +10,16 @@
     <!-- Sticky Header            -->
     <!-- ======================== -->
     <header class="home-header">
-        <!-- Top Row: Title + Photo Limit Badge -->
-        <div class="header-top-row">
-            <div class="header-title-group">
-                <span class="live-dot"></span>
-                <h1 class="header-title">Natasha & Lucas</h1>
-            </div>
-            <div class="photo-limit-badge" [class.limit-zero]="remaining === 0">
-                <span class="limit-emoji">📸</span>
-                @if (remaining > 0) {
-                <span class="limit-text">Te quedan <strong>{{ remaining }}</strong> fotos</span>
-                } @else {
-                <span class="limit-text">Sin fotos restantes</span>
-                }
-            </div>
+        <!-- Title + Photo Counter -->
+        <div class="header-center">
+            <h1 class="header-title">Natasha & Lucas</h1>
+            <h1 class="header-title">Natasha & Lucas</h1>
+            <p class="header-subtitle" [ngClass]="getCounterColorClass()">
+                {{ photoLimitService.photosLeft() }} fotos restantes
+            </p>
         </div>
 
-        <!-- Bottom Row: Segmented Control (Tabs) -->
+        <!-- Segmented Control (Tabs) -->
         <div class="tab-bar">
             <button class="tab-btn" [class.tab-btn--active]="tab === 'global'" (click)="setTab('global')">
                 Galería Global
@@ -75,6 +68,11 @@
             <div class="photo-card" (click)="openViewer(photo)">
                 <img [src]="photo.publicUrl" [alt]="photo.event_id || 'Foto de la boda'" class="photo-thumbnail"
                     loading="lazy" />
+                @if (photo.dedication) {
+                <div class="photo-caption">
+                    <p class="caption-text truncate">{{ photo.dedication }}</p>
+                </div>
+                }
             </div>
             }
         </div>
@@ -104,6 +102,11 @@
             <div class="photo-card" (click)="openViewer(photo)">
                 <img [src]="photo.publicUrl" [alt]="photo.event_id || 'Mi foto'" class="photo-thumbnail"
                     loading="lazy" />
+                @if (photo.dedication) {
+                <div class="photo-caption">
+                    <p class="caption-text truncate">{{ photo.dedication }}</p>
+                </div>
+                }
             </div>
             }
         </div>
@@ -121,36 +124,27 @@
     <!-- Bottom Action Bar (Pill)   -->
     <!-- ========================== -->
 
-    <div class="action-bar" [class.action-bar--disabled]="remaining === 0">
+    <div class="action-bar" [class.action-bar--disabled]="false">
 
         <!-- Camera Button (Secondary) -->
-        <button class="action-btn action-btn-camera" (click)="remaining > 0 ? navigateToCamera() : null"
-            [attr.aria-disabled]="remaining === 0" aria-label="Abrir cámara">
+        <button class="action-btn action-btn-camera" (click)="handleActionClick('camera')" aria-label="Abrir cámara">
             <svg class="action-btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            @if (remaining > 0) {
             <span>Cámara</span>
-            } @else {
-            <span>Límite alcanzado</span>
-            }
         </button>
 
         <!-- Gallery Button (Primary) -->
-        <button class="action-btn action-btn-gallery" (click)="remaining > 0 ? triggerGalleryUpload() : null"
-            [attr.aria-disabled]="remaining === 0" aria-label="Subir foto de galería">
+        <button class="action-btn action-btn-gallery" (click)="handleActionClick('upload')"
+            aria-label="Subir foto de galería">
             <svg class="action-btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            @if (remaining > 0) {
             <span>Subir Foto</span>
-            } @else {
-            <span>Límite alcanzado</span>
-            }
         </button>
 
     </div>
@@ -192,6 +186,9 @@
     <!-- Full-Size Photo -->
     <div class="viewer-photo-wrapper" (click)="$event.stopPropagation()">
         <img [src]="selectedPhoto().publicUrl" [alt]="selectedPhoto().event_id || 'Foto'" class="viewer-photo" />
+        @if (selectedPhoto().dedication) {
+        <p class="viewer-caption">{{ selectedPhoto().dedication }}</p>
+        }
     </div>
 
     <!-- Bottom Action Bar -->
@@ -252,5 +249,38 @@
 
     </div>
 
+</div>
+}
+
+<!-- ======================== -->
+<!-- Limit Reached Modal      -->
+<!-- ======================== -->
+
+@if (showLimitModal()) {
+<div class="limit-modal-overlay">
+    <div class="limit-modal-content">
+        <button class="limit-close-btn" (click)="closeLimitModal()" aria-label="Cerrar modal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+
+        <div class="limit-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+        </div>
+        <h3 class="limit-title">¡Vaya! Carrete lleno</h3>
+        <p class="limit-body">Has usado tus 10 fotos. Para seguir disparando, necesitas liberar espacio borrando alguna
+            de tus fotos anteriores.</p>
+        <div class="limit-actions">
+            <button class="limit-btn-primary" (click)="goToPersonalGallery()">Ir a mi Galería y liberar espacio</button>
+        </div>
+    </div>
 </div>
 }

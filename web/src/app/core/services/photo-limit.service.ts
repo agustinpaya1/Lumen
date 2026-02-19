@@ -10,6 +10,8 @@ export class PhotoLimitService {
     private readonly photoCountSignal = signal<number>(this.initializeCount());
     readonly photosLeft = this.photoCountSignal.asReadonly();
     readonly canTakePhoto = computed(() => this.photoCountSignal() > 0);
+    readonly maxPhotos = DEFAULT_PHOTO_LIMIT;
+    readonly photosTaken = computed(() => this.maxPhotos - this.photoCountSignal());
 
     private initializeCount(): number {
         const stored = localStorage.getItem(STORAGE_KEY);
