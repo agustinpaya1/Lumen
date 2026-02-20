@@ -118,7 +118,8 @@
     </div>
 
     <!-- Immersive Video Feed (Full Screen) -->
-    <div class="video-wrapper">
+    <!-- tap-to-flip: touch-action:manipulation disables double-tap-to-zoom so dblclick fires reliably on mobile -->
+    <div class="video-wrapper tap-to-flip" (dblclick)="toggleCamera()">
       <div class="flip-container" [class.is-flipping]="isFlipping()">
         <video #videoRef class="video-feed" autoplay playsinline [class.mirrored]="facingMode() === 'user'"
           [attr.aria-label]="'Live camera viewfinder'">

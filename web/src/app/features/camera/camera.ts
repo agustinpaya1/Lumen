@@ -159,6 +159,13 @@ export class CameraComponent implements OnInit, OnDestroy {
   // ============================================================
 
   async startCamera(): Promise<void> {
+    // Attempt to lock orientation to portrait (silently ignored on iOS)
+    try {
+      await (screen.orientation as any).lock('portrait');
+    } catch {
+      // Normal on iOS and desktop — orientation lock not supported
+    }
+
     try {
       this.errorMessage.set(null);
       this.permissionHelperVisible.set(false);
@@ -267,6 +274,14 @@ export class CameraComponent implements OnInit, OnDestroy {
       }, 300);
 
     }, 300);
+  }
+
+  /**
+   * Public alias for flipCamera(), bound to (dblclick) on the video wrapper.
+   * Allows users to double-tap the viewfinder to switch between cameras.
+   */
+  toggleCamera(): void {
+    this.flipCamera();
   }
 
   // ============================================================

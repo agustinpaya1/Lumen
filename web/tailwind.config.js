@@ -6,7 +6,7 @@ export default {
     theme: {
         extend: {
             colors: {
-                'brand-accent': '#FF4747',
+                'brand-accent': '#a1d3c0',
             },
         },
     },

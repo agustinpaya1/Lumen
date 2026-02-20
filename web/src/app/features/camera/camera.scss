@@ -15,7 +15,7 @@ $primary-black: #111827;
 $primary-white: #ffffff;
 $error-red: #ef4444;
 $success-green: #10b981;
-$reveal-red: #FF4747;
+$reveal-red: #a1d3c0;
 
 // Shadows
 $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -627,7 +627,7 @@ $transition-base: all 0.3s ease;
     }
 }
 
-// "Revelar" — Vibrant Red #FF4747
+// "Revelar" — Vibrant Red #a1d3c0
 .btn-reveal {
     min-height: $min-touch-height;
     padding: $spacing-unit $spacing-unit * 1.75;
@@ -1064,5 +1064,101 @@ $transition-base: all 0.3s ease;
 
     &:active {
         transform: scale(0.96);
+    }
+}
+
+// ====================
+// Double-Tap to Flip — disable browser double-tap-to-zoom
+// so that (dblclick) fires reliably on mobile browsers.
+// ====================
+
+.tap-to-flip {
+    touch-action: manipulation;
+}
+
+// ====================
+// Landscape Orientation — Native Camera Feel
+//
+// On devices that refuse the JS orientation-lock (e.g. all iPhones),
+// we recreate the native camera UX:
+//   • The viewport stays portrait-shaped from the user's perspective
+//   • The top-bar rotates to a left sidebar (physical bottom of phone)
+//   • The shutter stays at the physical bottom (right edge in landscape)
+//   • All icons rotate 90° to remain upright relative to gravity
+// ====================
+
+@media (orientation: landscape) {
+
+    // The full-screen viewfinder container — no changes needed,
+    // it already uses position:fixed + inset:0, so it fills the rotated viewport.
+
+    // ── Top bar becomes a left sidebar ──
+    .top-bar {
+        // Remove the top-edge horizontal strip
+        top: 0;
+        left: 0;
+        right: auto;
+        bottom: 0;
+
+        // Become a narrow vertical strip on the left
+        width: auto;
+        height: 100%;
+        padding: $spacing-unit * 2 $spacing-unit * 0.875;
+
+        // Stack buttons vertically
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+
+        // Re-orient gradient to come from the left edge
+        background: linear-gradient(to right, rgba(0, 0, 0, 0.6), transparent);
+    }
+
+    // ── Shutter button migrates to the right edge ──
+    .viewfinder-footer {
+        // Remove bottom strip
+        bottom: 0;
+        left: auto;
+        right: 0;
+        top: 0;
+
+        // Become a narrow vertical strip on the right
+        width: auto;
+        height: 100%;
+        padding: $spacing-unit * 2 $spacing-unit * 1.25;
+        padding-right: calc(#{$spacing-unit * 1.25} + env(safe-area-inset-right));
+
+        // Centre the shutter button vertically
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        // Re-orient gradient to come from the right edge
+        background: linear-gradient(to left, rgba(0, 0, 0, 0.7), transparent);
+    }
+
+    // ── Rotate all in-button SVG icons 90° so they are upright ──
+    // This targets every svg inside the icon buttons in the top-bar
+    // and the shutter area. The counter-pill text stays unrotated
+    // because it doesn't contain an svg.
+    .top-bar .icon-btn svg {
+        transform: rotate(90deg);
+        transition: transform 0.3s ease;
+    }
+
+    // Keep the rotate-anim keyframe working correctly in landscape
+    // (the base 90° offset means the animation starts at 90° + 0° = 90°)
+    .top-bar .icon-btn.rotate-anim {
+        animation: spinIconLandscape 0.6s ease-in-out;
+    }
+}
+
+@keyframes spinIconLandscape {
+    from {
+        transform: rotate(90deg);
+    }
+
+    to {
+        transform: rotate(270deg);
     }
 }
