@@ -1,60 +1,27 @@
-<div class="onboarding-container">
+<div class="splash-screen">
 
-    <!-- Step 1: Branded Wedding Welcome -->
-    @if (step() === 1) {
-    <div class="step-screen step-welcome" [class.fade-out]="transitioning()" (click)="goToStep2()">
+    <!-- Watercolour illustration -->
+    <div class="illustration-wrapper">
+        <img src="/dibujo.png" alt="Natacha y Lucas" class="illustration" />
+    </div>
 
-        <div class="welcome-content">
-            <p class="kicker">Bienvenidos a la</p>
-            <h1 class="wedding-title">Boda de<br>Natacha y Lucas</h1>
-            <p class="wedding-date">21 de Febrero de 2026</p>
-        </div>
+    <!-- Typography -->
+    <div class="text-block">
+        <p class="kicker">Bienvenidos a la boda de</p>
+        <h1 class="wedding-title">Natacha y Lucas</h1>
+        <div class="title-divider"></div>
+        <p class="wedding-date">21 de Febrero de 2026</p>
+    </div>
 
-        <button class="continue-hint" (click)="goToStep2()">
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    <!-- Manual skip — outline ghost button, no solid fill -->
+    <div class="cta-area">
+        <button class="cta-button" (click)="goToApp()">
+            <span class="cta-label">Entrar a la galería</span>
+            <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 5l7 7-7 7" />
             </svg>
         </button>
     </div>
-    }
-
-    <!-- Step 2: Concept Explainer -->
-    @if (step() === 2) {
-    <div class="step-screen step-explainer" [class.fade-in]="!transitioning()">
-
-        <div class="explainer-card">
-            <!-- Camera Icon -->
-            <div class="explainer-icon">
-                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Camera body -->
-                    <rect x="8" y="22" width="64" height="44" rx="8" fill="#a1d3c0" opacity="0.12" />
-                    <rect x="8" y="22" width="64" height="44" rx="8" stroke="#a1d3c0" stroke-width="3" />
-                    <!-- Lens -->
-                    <circle cx="40" cy="44" r="12" stroke="#a1d3c0" stroke-width="3" />
-                    <circle cx="40" cy="44" r="6" fill="#a1d3c0" opacity="0.3" />
-                    <!-- Flash -->
-                    <rect x="28" y="14" width="16" height="10" rx="3" fill="#a1d3c0" opacity="0.2" stroke="#a1d3c0"
-                        stroke-width="2" />
-                    <!-- Heart -->
-                    <path d="M56 16c1.5-2 4-3 6-1.5s2 4.5 0 7L56 28l-6-6.5c-2-2.5-1.5-5.5 0-7s4.5-.5 6 1.5z"
-                        fill="#a1d3c0" />
-                </svg>
-            </div>
-
-            <h2 class="explainer-headline">Captura este día inolvidable</h2>
-
-            <p class="explainer-body">
-                Usa esta cámara para guardar tus momentos favoritos de la fiesta.
-                <strong>¡Mañana abriremos la galería para que todos podáis ver las fotos de todos!</strong>
-            </p>
-
-            <button class="cta-button" (click)="startShooting()">
-                ¡Empezar a disparar!
-            </button>
-        </div>
-    </div>
-    }
 
 </div>

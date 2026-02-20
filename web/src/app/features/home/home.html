@@ -12,7 +12,7 @@
     <header class="home-header">
         <!-- Title + Photo Counter -->
         <div class="header-center">
-            <h1 class="header-title">Natacha & Lucas</h1>
+            <h1 class="header-title">Natacha y Lucas</h1>
             <p class="header-subtitle" [ngClass]="getCounterColorClass()">
                 {{ photoLimitService.photosLeft() }} fotos restantes
             </p>
@@ -67,9 +67,9 @@
             <div class="photo-card" (click)="openViewer(photo)">
                 <img [src]="photo.publicUrl" [alt]="photo.event_id || 'Foto de la boda'" class="photo-thumbnail"
                     loading="lazy" />
-                @if (photo.dedication) {
+                @if (photo.event_id) {
                 <div class="photo-caption">
-                    <p class="caption-text truncate">{{ photo.dedication }}</p>
+                    <p class="caption-text">{{ photo.event_id }}</p>
                 </div>
                 }
             </div>
@@ -93,7 +93,7 @@
                 </svg>
             </div>
             <p class="empty-title">Aún no has subido ninguna foto</p>
-            <p class="empty-text">¡Anímate! Toma una foto o sube una desde tu galería 🎉</p>
+            <p class="empty-text">¡Anímate! Toma una foto o sube una desde tu galería</p>
         </div>
         } @else {
         <div class="photo-grid">
@@ -101,9 +101,9 @@
             <div class="photo-card" (click)="openViewer(photo)">
                 <img [src]="photo.publicUrl" [alt]="photo.event_id || 'Mi foto'" class="photo-thumbnail"
                     loading="lazy" />
-                @if (photo.dedication) {
+                @if (photo.event_id) {
                 <div class="photo-caption">
-                    <p class="caption-text truncate">{{ photo.dedication }}</p>
+                    <p class="caption-text">{{ photo.event_id }}</p>
                 </div>
                 }
             </div>
@@ -185,8 +185,8 @@
     <!-- Full-Size Photo -->
     <div class="viewer-photo-wrapper" (click)="$event.stopPropagation()">
         <img [src]="selectedPhoto().publicUrl" [alt]="selectedPhoto().event_id || 'Foto'" class="viewer-photo" />
-        @if (selectedPhoto().dedication) {
-        <p class="viewer-caption">{{ selectedPhoto().dedication }}</p>
+        @if (selectedPhoto().event_id) {
+        <p class="viewer-caption">“{{ selectedPhoto().event_id }}”</p>
         }
     </div>
 

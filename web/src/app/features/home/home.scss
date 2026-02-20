@@ -61,11 +61,13 @@ $transition-base: all 0.3s ease;
 }
 
 .header-title {
-    font-size: 1.35rem;
-    font-weight: 800;
+    font-family: 'Cormorant Garamond', Georgia, serif; // font-seasons
+    font-size: 1.55rem;
+    font-weight: 700;
+    font-style: italic;
     color: $text-dark;
     margin: 0;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.01em;
 }
 
 .header-subtitle {
@@ -232,17 +234,25 @@ $transition-base: all 0.3s ease;
 }
 
 .photo-caption {
-    padding: $spacing-unit * 0.75;
+    padding: $spacing-unit * 0.6 $spacing-unit * 0.75;
     background-color: $bg-white;
+    border-top: 1px solid rgba($border-gray, 0.5);
 }
 
 .caption-text {
-    font-size: 0.75rem;
+    font-family: 'Cormorant Garamond', Georgia, serif; // font-seasons
+    font-size: 0.88rem;
+    font-style: italic;
+    font-weight: 500;
     color: $text-gray;
     margin: 0;
-    white-space: nowrap;
+    // 2-line clamp so long dedications don't break the grid
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.4;
 }
 
 // ====================
@@ -523,19 +533,24 @@ $transition-base: all 0.3s ease;
 }
 
 .viewer-caption {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1rem;
+    font-family: 'Cormorant Garamond', Georgia, serif; // font-seasons
+    font-size: 1.2rem;
+    font-style: italic;
     font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
     text-align: center;
-    margin: $spacing-unit 0 0;
-    max-width: 100%;
-    animation: fadeInUp 0.4s ease 0.1s forwards;
+    margin: $spacing-unit * 0.75 0 0;
+    max-width: 90%;
+    line-height: 1.55;
+    // soft text-shadow to stay legible on any photo background
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+    animation: fadeInUp 0.45s ease 0.15s both;
     opacity: 0;
 }
 
 .viewer-photo {
     max-width: 100%;
-    max-height: 100%;
+    max-height: 65dvh; // leaves room for the dedication caption below
     object-fit: contain;
     border-radius: 8px;
     animation: photoZoomIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
