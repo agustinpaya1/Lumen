@@ -208,43 +208,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         // Reset the input so the same file can be re-selected
         input.value = '';
 
-        this.isUploading.set(true);
-
-        try {
-            // Compress the image (same settings as camera)
-            const compressedFile = await imageCompression(file, {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
-                useWebWorker: true,
-            });
-
-            // Generate unique filename
-            const timestamp = Date.now();
-            const filename = `gallery_${timestamp}.jpg`;
-            const filepath = `uploads/${filename}`;
-
-            // Upload to Supabase with retry
-            const { error: uploadError } = await this.supabaseService.uploadPhotoWithRetry(
-                compressedFile,
-                filepath
-            );
-
-            if (uploadError) throw uploadError;
-
-            // Save photo metadata
-            await this.supabaseService.savePhotoDataWithRetry(filepath, 'gallery-upload');
-
-            // Decrement photo count
-            this.photoLimitService.decrementCount();
-
-            // No need to call loadPhotos() — realtime subscription will auto-prepend
-
-        } catch (error) {
-            console.error('Gallery upload error:', error);
-            alert('Hubo un error al subir la foto. Inténtalo de nuevo.');
-        } finally {
-            this.isUploading.set(false);
-        }
+        // Route to the CameraComponent passing the file in the state
+        this.router.navigate(['/camera'], { state: { file } });
     }
 
     // =====================

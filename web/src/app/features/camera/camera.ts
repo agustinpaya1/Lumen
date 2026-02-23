@@ -52,6 +52,9 @@ export class CameraComponent implements OnInit, OnDestroy {
   /** Whether the camera is currently flipping (for animation) */
   readonly isFlipping = signal<boolean>(false);
 
+  /** Whether the photo in preview originated from a gallery upload */
+  readonly isFromGallery = signal<boolean>(false);
+
   // ──────────────────────────────────────────
   // Camera Controls (Grid & Flash)
   // ──────────────────────────────────────────
@@ -106,8 +109,18 @@ export class CameraComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Auto-start camera when the component loads
-    this.startCamera();
+    // Check if a file was passed via router state from the gallery
+    const passedState = history.state as { file?: File };
+
+    if (passedState && passedState.file) {
+      // Gallery Upload Flow: jump straight to preview
+      this.isFromGallery.set(true);
+      this.rawPhotoBlob.set(passedState.file);
+      this.currentState.set('preview');
+    } else {
+      // Camera Capture Flow: Auto-start camera
+      this.startCamera();
+    }
   }
 
   /** Navigate back to the Home screen */
@@ -406,11 +419,18 @@ export class CameraComponent implements OnInit, OnDestroy {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  /** Discard photo and return to viewfinder */
+  /** Discard photo and return to viewfinder (or home if from gallery) */
   discardPhoto(): void {
     this.rawPhotoBlob.set(null);
     this.dedicationModel.set({ dedication: '' });
-    this.startCamera();
+
+    if (this.isFromGallery()) {
+      // If it came from the gallery, discarding should take the user back
+      this.router.navigate(['/home']);
+    } else {
+      // Otherwise restart the camera feed for another try
+      this.startCamera();
+    }
   }
 
   // ============================================================
