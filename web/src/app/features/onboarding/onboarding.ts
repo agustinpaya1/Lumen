@@ -12,7 +12,6 @@ export class OnboardingComponent implements OnInit, OnDestroy {
     private autoNavTimer: ReturnType<typeof setTimeout> | null = null;
 
     ngOnInit(): void {
-        // If user has already seen onboarding, skip straight to home
         if (localStorage.getItem('hasSeenTutorial') === 'true') {
             this.router.navigate(['/home']);
             return;
