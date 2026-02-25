@@ -1,64 +1,64 @@
 {
-  "hash": "d8dca0c9",
+  "hash": "bae4b802",
   "configHash": "82f4aa6c",
-  "lockfileHash": "0d81a288",
-  "browserHash": "097e2607",
+  "lockfileHash": "9a561556",
+  "browserHash": "e20128e2",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "9f25aa66",
+      "fileHash": "e98bca61",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "a08fbf9b",
+      "fileHash": "dec21a1c",
       "needsInterop": false
     },
     "@angular/forms": {
       "src": "../../../../../../node_modules/@angular/forms/fesm2022/forms.mjs",
       "file": "@angular_forms.js",
-      "fileHash": "82aa5075",
+      "fileHash": "76e2a9b7",
       "needsInterop": false
     },
     "@angular/forms/signals": {
       "src": "../../../../../../node_modules/@angular/forms/fesm2022/signals.mjs",
       "file": "@angular_forms_signals.js",
-      "fileHash": "4b1522d8",
+      "fileHash": "0a4f8b50",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "39092cb9",
+      "fileHash": "8e4ca116",
       "needsInterop": false
     },
     "@angular/router": {
       "src": "../../../../../../node_modules/@angular/router/fesm2022/router.mjs",
       "file": "@angular_router.js",
-      "fileHash": "ffb28c74",
+      "fileHash": "b8c1377c",
       "needsInterop": false
     },
     "@supabase/supabase-js": {
       "src": "../../../../../../node_modules/@supabase/supabase-js/dist/index.mjs",
       "file": "@supabase_supabase-js.js",
-      "fileHash": "ce80f239",
+      "fileHash": "081c3989",
       "needsInterop": false
     },
     "browser-image-compression": {
       "src": "../../../../../../node_modules/browser-image-compression/dist/browser-image-compression.mjs",
       "file": "browser-image-compression.js",
-      "fileHash": "effcc403",
+      "fileHash": "e0802acb",
       "needsInterop": false
     }
   },
   "chunks": {
-    "chunk-IAW5DHK2": {
-      "file": "chunk-IAW5DHK2.js"
-    },
     "chunk-I7WZ74OV": {
       "file": "chunk-I7WZ74OV.js"
+    },
+    "chunk-IAW5DHK2": {
+      "file": "chunk-IAW5DHK2.js"
     },
     "chunk-RKYGPXPG": {
       "file": "chunk-RKYGPXPG.js"
