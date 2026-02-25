@@ -1,16 +1,10 @@
-// ===================================
-// DESIGN TOKENS
-// ===================================
 $brand-accent: #a1d3c0;
 $bg-base: #fffefd;
-$text-primary: #4a4a4a; // warm charcoal — softer than pure black
+$text-primary: #4a4a4a;
 $text-secondary: #7a7a7a;
 $text-muted: #aaaaaa;
 $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
 
-// ===================================
-// FULL-SCREEN SPLASH CONTAINER
-// ===================================
 .splash-screen {
     width: 100%;
     min-height: 100dvh;
@@ -34,16 +28,12 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     }
 }
 
-// ===================================
-// ILLUSTRATION
-// ===================================
 .illustration-wrapper {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    // Let the image scale inside this region but never overflow
     overflow: hidden;
     padding: 1rem 0;
 }
@@ -53,7 +43,6 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     max-width: 100%;
     max-height: 42dvh;
     object-fit: contain;
-    // Soft drop shadow for the watercolour illustration
     filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.10));
     animation: illustrationRise 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
 }
@@ -70,12 +59,9 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     }
 }
 
-// ===================================
-// TYPOGRAPHY BLOCK
-// ===================================
 .text-block {
     text-align: center;
-    margin-bottom: 1.5rem; // tighter — pulls button up
+    margin-bottom: 1.5rem;
     animation: textReveal 0.8s ease-out 0.5s both;
 }
 
@@ -93,11 +79,11 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
 
 .kicker {
     font-family: $font-seasons;
-    font-size: clamp(1.1rem, 3.5vw, 1.25rem); // larger, more readable
+    font-size: clamp(1.1rem, 3.5vw, 1.25rem);
     font-weight: 500;
     font-style: italic;
     letter-spacing: 0.04em;
-    color: $text-primary; // darker — was $text-muted
+    color: $text-primary;
     margin: 0 0 0.5rem;
 }
 

@@ -1,0 +1,14 @@
+{
+    "$schema": "https://unpkg.com/knip@3/schema.json",
+    "entry": [
+        "src/main.ts",
+        "src/polyfills.ts",
+        "src/test.ts"
+    ],
+    "project": [
+        "src/**/*.ts"
+    ],
+    "ignore": [
+        "src/environments/**"
+    ]
+}

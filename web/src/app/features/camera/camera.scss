@@ -110,12 +110,6 @@ $transition-base: all 0.3s ease;
     margin: 0;
 }
 
-.subtitle {
-    font-size: 1.125rem;
-    font-weight: 400;
-    color: $text-gray;
-    margin: $spacing-unit * 0.5 0 0;
-}
 
 .body-text {
     font-size: 1.125rem;
@@ -151,57 +145,6 @@ $transition-base: all 0.3s ease;
     }
 }
 
-// ====================
-// STATE 1: Landing
-// ====================
-
-.state-landing {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 100vh;
-}
-
-.welcome-card {
-    .polaroid-icon {
-        font-size: 4rem;
-        margin-bottom: $spacing-unit * 1.5;
-    }
-
-    .photo-count {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: $spacing-unit * 2 0;
-        padding: $spacing-unit * 1.5;
-        background-color: $bg-soft-gray;
-        border-radius: $rounded-lg;
-
-        .count-number {
-            font-size: 3rem;
-            font-weight: 800;
-            color: $text-dark;
-            line-height: 1;
-        }
-
-        .count-label {
-            font-size: 1rem;
-            color: $text-gray;
-            margin-top: $spacing-unit * 0.25;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-    }
-}
-
-.limit-reached {
-    .limit-icon {
-        font-size: 4rem;
-        margin-bottom: $spacing-unit * 1.5;
-        opacity: 0.5;
-    }
-}
 
 // ====================
 // STATE 2: Viewfinder
@@ -470,11 +413,6 @@ $transition-base: all 0.3s ease;
     animation: fadeInUp 0.4s ease;
 }
 
-.preview-header {
-    width: 100%;
-    text-align: left;
-    margin-bottom: $spacing-unit * 0.5;
-}
 
 // ── CSS Polaroid Card ──
 // Shows the FULL image (no crop/mask) with the dedication
@@ -564,11 +502,6 @@ $transition-base: all 0.3s ease;
 }
 
 
-// ── Dedication section (moved OUT of card → replaced by .polaroid-input-area above) ──
-// Kept as empty shell to avoid breaking any future references.
-.dedication-section {
-    display: none;
-}
 
 // ── Action Buttons Row ──
 .action-buttons {

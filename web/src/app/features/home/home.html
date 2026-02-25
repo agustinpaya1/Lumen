@@ -5,20 +5,13 @@
 @let tab = activeTab();
 
 <div class="home-container">
-
-    <!-- ======================== -->
-    <!-- Sticky Header            -->
-    <!-- ======================== -->
     <header class="home-header">
-        <!-- Title + Photo Counter -->
         <div class="header-center">
             <h1 class="header-title">Natacha y Lucas</h1>
             <p class="header-subtitle" [ngClass]="getCounterColorClass()">
                 {{ photoLimitService.photosLeft() }} fotos restantes
             </p>
         </div>
-
-        <!-- Segmented Control (Tabs) -->
         <div class="tab-bar">
             <button class="tab-btn" [class.tab-btn--active]="tab === 'global'" (click)="setTab('global')">
                 Galería Global
@@ -29,12 +22,8 @@
         </div>
     </header>
 
-    <!-- ======================== -->
-    <!-- Content                  -->
-    <!-- ======================== -->
     <main class="home-content">
 
-        <!-- Loading State -->
         @if (loading) {
         <div class="empty-state">
             <div class="loading-spinner"></div>

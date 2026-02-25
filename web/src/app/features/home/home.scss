@@ -843,23 +843,6 @@ $transition-base: all 0.3s ease;
     }
 }
 
-.limit-btn-secondary {
-    width: 100%;
-    padding: $spacing-unit * 0.75;
-    border-radius: $rounded-full;
-    border: none;
-    background-color: transparent;
-    color: $text-gray;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-
-    &:active {
-        color: $text-dark;
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-}
 
 @keyframes modalPopIn {
     0% {
