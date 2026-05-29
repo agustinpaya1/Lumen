@@ -11,14 +11,59 @@ export class SupabaseService {
   /** localStorage key for the anonymous device identifier */
   private readonly DEVICE_ID_KEY = 'lumen_device_id';
 
+  /** localStorage key for the active event — persists across SPA navigation */
+  private readonly EVENT_KEY_STORAGE = 'lumen_event_key';
+
   /** In-memory cache — guarantees the same value across all calls within a session */
   private cachedDeviceId: string | null = null;
+
+  /** In-memory cache for the active event key */
+  private cachedEventKey: string | null = null;
 
   constructor() {
     this.supabase = createClient(
       environment.supabaseUrl,
       environment.supabaseKey
     );
+    this.initEventKey();
+  }
+
+  // ====================
+  // EVENT KEY
+  // ====================
+
+  /**
+   * Resolves the active event key with the following priority:
+   * 1. URL parameter ?e=<key>  → persisted to localStorage for cross-route navigation
+   * 2. localStorage            → survives SPA navigation within the same session
+   * 3. 'demo'                  → fallback for public access (empty gallery)
+   *
+   * Example URLs:
+   *   lumen.vercel.app          → event 'demo' (public demo, empty)
+   *   lumen.vercel.app?e=nc2026 → event 'nc2026' (private event photos)
+   */
+  private initEventKey(): void {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const urlEventKey = params.get('e');
+
+    if (urlEventKey) {
+      // URL parameter takes priority — persist so it survives navigation to /home, /camera, etc.
+      localStorage.setItem(this.EVENT_KEY_STORAGE, urlEventKey);
+      this.cachedEventKey = urlEventKey;
+    } else {
+      // No URL param: restore from localStorage or fall back to 'demo'
+      this.cachedEventKey = localStorage.getItem(this.EVENT_KEY_STORAGE) ?? 'demo';
+    }
+  }
+
+  /**
+   * Returns the active event key for the current session.
+   * All queries are scoped to this value.
+   */
+  getStoredEventKey(): string {
+    return this.cachedEventKey ?? 'demo';
   }
 
   // ====================
@@ -150,21 +195,25 @@ export class SupabaseService {
   }
 
   /**
-   * Base save photo data method (no retry logic)
+   * Base save photo data method (no retry logic).
+   * Scopes the record to the active event via event_key.
+   * Note: event_id stores the user's dedication text (unrelated to event routing).
    */
   async savePhotoData(url: string, eventId: string) {
     return this.supabase.from('photos').insert({
       url: url,
       event_id: eventId,
       device_id: this.getDeviceId(),
+      event_key: this.getStoredEventKey(),
       created_at: new Date()
     }).select();
   }
 
   /**
-   * Save photo metadata with retry mechanism
+   * Save photo metadata with retry mechanism.
+   * Scopes the record to the active event via event_key.
    * @param url - Photo URL
-   * @param eventId - Event/dedication ID
+   * @param eventId - Dedication text written by the user
    * @param onRetry - Optional callback when retry occurs
    * @returns Insert result or throws error after retries
    */
@@ -222,13 +271,15 @@ export class SupabaseService {
   // ====================
 
   /**
-   * Fetch all photos from the database (for admin dashboard)
+   * Fetch all photos for the active event (admin dashboard).
+   * Scoped to event_key so the admin only sees photos from their event.
    * @returns Array of photo objects ordered by created_at descending
    */
   async fetchPhotos() {
     const { data, error } = await this.supabase
       .from('photos')
       .select('*')
+      .eq('event_key', this.getStoredEventKey())
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -239,11 +290,14 @@ export class SupabaseService {
   }
 
   /**
-   * Subscribe to real-time photo inserts (for admin dashboard)
+   * Subscribe to real-time photo inserts for the active event (admin dashboard).
+   * Filtered by event_key so the admin only receives events from their event.
    * @param callback - Function to call when new photo is inserted
    * @returns RealtimeChannel for cleanup
    */
   subscribeToPhotos(callback: (photo: any) => void) {
+    const eventKey = this.getStoredEventKey();
+
     const channel = this.supabase
       .channel('photos_realtime')
       .on(
@@ -251,7 +305,8 @@ export class SupabaseService {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'photos'
+          table: 'photos',
+          filter: `event_key=eq.${eventKey}`
         },
         (payload) => {
           callback(payload.new);
@@ -263,7 +318,8 @@ export class SupabaseService {
   }
 
   /**
-   * Delete photo from both database and storage (for admin dashboard)
+   * Delete photo from both database and storage.
+   * No event_key filter needed — deletion is by primary key (photoId).
    * @param photoId - Photo ID to delete from database
    * @param photoPath - Photo path in storage to delete
    */
@@ -290,14 +346,14 @@ export class SupabaseService {
   }
 
   /**
-   * Get signed download URL for a photo (for admin dashboard)
+   * Get signed download URL for a photo (admin dashboard).
    * @param path - Photo path in storage
-   * @returns Signed download URL
+   * @returns Signed download URL valid for 60 seconds
    */
   async getPhotoDownloadUrl(path: string): Promise<string> {
     const { data, error } = await this.supabase.storage
       .from('photos')
-      .createSignedUrl(path, 60); // Valid for 60 seconds
+      .createSignedUrl(path, 60);
 
     if (error || !data) {
       throw error || new Error('Failed to generate download URL');
@@ -336,7 +392,8 @@ export class SupabaseService {
   // ====================
 
   /**
-   * Fetch photos belonging to the current device
+   * Fetch photos belonging to the current device within the active event.
+   * Double-filtered by device_id AND event_key.
    * @returns Array of photo objects for this device, ordered by newest first
    */
   async fetchMyPhotos() {
@@ -345,6 +402,7 @@ export class SupabaseService {
       .from('photos')
       .select('*')
       .eq('device_id', deviceId)
+      .eq('event_key', this.getStoredEventKey())
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -356,7 +414,7 @@ export class SupabaseService {
   }
 
   /**
-   * Get public URL for a photo in storage
+   * Get public URL for a photo in storage.
    * @param path - Photo path in storage (e.g., 'uploads/photo_123.jpg')
    * @returns Public URL string
    */
@@ -372,13 +430,15 @@ export class SupabaseService {
   // ====================
 
   /**
-   * Fetch ALL photos from all guests, ordered newest first.
+   * Fetch ALL photos for the active event, ordered newest first.
+   * Scoped to event_key — guests only see photos from their event.
    * Used by the Home "Galería en Vivo" screen.
    */
   async fetchAllPhotos() {
     const { data, error } = await this.supabase
       .from('photos')
       .select('*')
+      .eq('event_key', this.getStoredEventKey())
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -390,8 +450,9 @@ export class SupabaseService {
   }
 
   /**
-   * Subscribe to real-time INSERT and DELETE events on the photos table.
-   * Uses a dedicated channel ('home:photos') so it doesn't collide with admin.
+   * Subscribe to real-time INSERT and DELETE events for the active event.
+   * Filtered by event_key so guests only receive updates from their event.
+   * Uses a dedicated channel ('home:photos') to avoid colliding with admin.
    * @param onInsert - Called when a new photo is inserted
    * @param onDelete - Called when a photo is deleted (receives the old row)
    * @returns RealtimeChannel for cleanup in ngOnDestroy
@@ -400,18 +461,30 @@ export class SupabaseService {
     onInsert: (photo: any) => void,
     onDelete: (photo: any) => void
   ) {
+    const eventKey = this.getStoredEventKey();
+
     const channel = this.supabase
       .channel('home:photos')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'photos' },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'photos',
+          filter: `event_key=eq.${eventKey}`
+        },
         (payload) => {
           onInsert(payload.new);
         }
       )
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'photos' },
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'photos',
+          filter: `event_key=eq.${eventKey}`
+        },
         (payload) => {
           onDelete(payload.old);
         }
