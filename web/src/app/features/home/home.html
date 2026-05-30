@@ -168,7 +168,8 @@
 <!-- Full-Screen Photo Viewer -->
 <!-- ======================== -->
 
-@if (selectedPhoto() !== null) {
+@let viewerPhoto = selectedPhoto();
+@if (viewerPhoto) {
 <div class="photo-viewer-overlay" (click)="closeViewer()">
 
     <!-- Top Bar -->
@@ -184,9 +185,9 @@
 
     <!-- Full-Size Photo -->
     <div class="viewer-photo-wrapper" (click)="$event.stopPropagation()">
-        <img [src]="selectedPhoto().publicUrl" [alt]="selectedPhoto().event_id || 'Foto'" class="viewer-photo" />
-        @if (selectedPhoto().event_id) {
-        <p class="viewer-caption">“{{ selectedPhoto().event_id }}”</p>
+        <img [src]="viewerPhoto.publicUrl" [alt]="viewerPhoto.event_id || 'Foto'" class="viewer-photo" />
+        @if (viewerPhoto.event_id) {
+        <p class="viewer-caption">“{{ viewerPhoto.event_id }}”</p>
         }
     </div>
 
@@ -211,7 +212,7 @@
                 }
             </button>
 
-            @if (selectedPhoto()?.device_id === myDeviceId()) {
+            @if (viewerPhoto.device_id === myDeviceId()) {
             <button class="viewer-action-btn delete-btn" (click)="confirmDelete()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -275,8 +276,8 @@
             </svg>
         </div>
         <h3 class="limit-title">¡Vaya! Carrete lleno</h3>
-        <p class="limit-body">Has usado tus 10 fotos. Para seguir disparando, necesitas liberar espacio borrando alguna
-            de tus fotos anteriores.</p>
+        <p class="limit-body">Has usado tus {{ photoLimitService.maxPhotos }} fotos. Para seguir disparando, necesitas
+            liberar espacio borrando alguna de tus fotos anteriores.</p>
         <div class="limit-actions">
             <button class="limit-btn-primary" (click)="goToPersonalGallery()">Ir a mi Galería y liberar espacio</button>
         </div>

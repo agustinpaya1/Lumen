@@ -2,9 +2,9 @@ import { Component, signal, computed, inject, OnInit, OnDestroy, viewChild, Elem
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import imageCompression from 'browser-image-compression';
 import { SupabaseService } from '@core/services/supabase';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
+import { GalleryPhoto, Photo } from '@core/models/photo';
 
 @Component({
   selector: 'app-home',
@@ -22,13 +22,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly myDeviceId = signal(this.supabaseService.getDeviceId());
 
   /** ALL photos from ALL guests (newest first) */
-  readonly globalPhotos = signal<any[]>([]);
+  readonly globalPhotos = signal<GalleryPhoto[]>([]);
 
   /** Loading state */
   readonly isLoading = signal<boolean>(true);
-
-  /** Total photo limit */
-  readonly totalLimit = 10;
 
   // =====================
   // Tab State (Signals)
@@ -67,7 +64,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   // =====================
 
   /** Currently selected photo for full-screen viewer */
-  readonly selectedPhoto = signal<any | null>(null);
+  readonly selectedPhoto = signal<GalleryPhoto | null>(null);
 
   /** Whether delete confirmation is showing */
   readonly isConfirmingDelete = signal<boolean>(false);
@@ -95,7 +92,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   // =====================
 
   /** Returns true if the given photo belongs to this device */
-  isMyPhoto(photo: any): boolean {
+  isMyPhoto(photo: Photo): boolean {
     return photo?.device_id === this.myDeviceId();
   }
 
@@ -109,7 +106,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     try {
       const photos = await this.supabaseService.fetchAllPhotos();
       // Map photos to include public URLs
-      const photosWithUrls = photos.map((photo: any) => ({
+      const photosWithUrls = photos.map((photo: Photo) => ({
         ...photo,
         publicUrl: this.supabaseService.getPhotoPublicUrl(photo.url),
       }));
@@ -129,7 +126,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private setupRealtimeSubscription(): void {
     this.realtimeChannel = this.supabaseService.subscribeToAllPhotos(
       // On INSERT — prepend the new photo
-      (newPhoto: any) => {
+      (newPhoto: Photo) => {
         const photoWithUrl = {
           ...newPhoto,
           publicUrl: this.supabaseService.getPhotoPublicUrl(newPhoto.url),
@@ -137,7 +134,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.globalPhotos.update(photos => [photoWithUrl, ...photos]);
       },
       // On DELETE — remove the deleted photo
-      (oldPhoto: any) => {
+      (oldPhoto: Photo) => {
         this.globalPhotos.update(photos =>
           photos.filter(p => p.id !== oldPhoto.id)
         );
@@ -217,7 +214,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   // =====================
 
   /** Open the full-screen photo viewer */
-  openViewer(photo: any): void {
+  openViewer(photo: GalleryPhoto): void {
     this.selectedPhoto.set(photo);
     this.isConfirmingDelete.set(false);
     this.isDeleting.set(false);

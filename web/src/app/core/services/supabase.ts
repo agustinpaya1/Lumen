@@ -13,6 +13,7 @@ import {
   RETRY_MAX_ATTEMPTS,
   SIGNED_URL_TTL_SECONDS,
 } from '@core/constants';
+import { Photo } from '@core/models/photo';
 
 @Injectable({
   providedIn: 'root'
@@ -281,7 +282,7 @@ export class SupabaseService {
    * Scoped to event_key so the admin only sees photos from their event.
    * @returns Array of photo objects ordered by created_at descending
    */
-  async fetchPhotos() {
+  async fetchPhotos(): Promise<Photo[]> {
     const { data, error } = await this.supabase
       .from(PHOTOS_TABLE)
       .select('*')
@@ -301,7 +302,7 @@ export class SupabaseService {
    * @param callback - Function to call when new photo is inserted
    * @returns RealtimeChannel for cleanup
    */
-  subscribeToPhotos(callback: (photo: any) => void) {
+  subscribeToPhotos(callback: (photo: Photo) => void) {
     const eventKey = this.getStoredEventKey();
 
     const channel = this.supabase
@@ -315,7 +316,7 @@ export class SupabaseService {
           filter: `event_key=eq.${eventKey}`
         },
         (payload) => {
-          callback(payload.new);
+          callback(payload.new as Photo);
         }
       )
       .subscribe();
@@ -402,7 +403,7 @@ export class SupabaseService {
    * Double-filtered by device_id AND event_key.
    * @returns Array of photo objects for this device, ordered by newest first
    */
-  async fetchMyPhotos() {
+  async fetchMyPhotos(): Promise<Photo[]> {
     const deviceId = this.getDeviceId();
     const { data, error } = await this.supabase
       .from(PHOTOS_TABLE)
@@ -440,7 +441,7 @@ export class SupabaseService {
    * Scoped to event_key — guests only see photos from their event.
    * Used by the Home "Galería en Vivo" screen.
    */
-  async fetchAllPhotos() {
+  async fetchAllPhotos(): Promise<Photo[]> {
     const { data, error } = await this.supabase
       .from(PHOTOS_TABLE)
       .select('*')
@@ -464,8 +465,8 @@ export class SupabaseService {
    * @returns RealtimeChannel for cleanup in ngOnDestroy
    */
   subscribeToAllPhotos(
-    onInsert: (photo: any) => void,
-    onDelete: (photo: any) => void
+    onInsert: (photo: Photo) => void,
+    onDelete: (photo: Photo) => void
   ) {
     const eventKey = this.getStoredEventKey();
 
@@ -480,7 +481,7 @@ export class SupabaseService {
           filter: `event_key=eq.${eventKey}`
         },
         (payload) => {
-          onInsert(payload.new);
+          onInsert(payload.new as Photo);
         }
       )
       .on(
@@ -492,7 +493,7 @@ export class SupabaseService {
           filter: `event_key=eq.${eventKey}`
         },
         (payload) => {
-          onDelete(payload.old);
+          onDelete(payload.old as Photo);
         }
       )
       .subscribe();

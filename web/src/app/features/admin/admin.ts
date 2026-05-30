@@ -4,13 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '@core/services/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { ADMIN_AUTH_KEY } from '@core/constants';
-
-interface Photo {
-  id: number;
-  url: string;
-  event_id: string;
-  created_at: string;
-}
+import { Photo } from '@core/models/photo';
 
 @Component({
   selector: 'app-admin',
@@ -195,9 +189,7 @@ export class AdminComponent implements OnInit, OnDestroy {
    * Get photo thumbnail URL
    */
   getPhotoUrl(path: string): string {
-    // Use hardcoded Supabase URL (same as in environment)
-    const supabaseUrl = 'https://gjbggygtztlrcxudbabu.supabase.co';
-    return `${supabaseUrl}/storage/v1/object/public/photos/${path}`;
+    return this.supabaseService.getPhotoPublicUrl(path);
   }
 
   /**
