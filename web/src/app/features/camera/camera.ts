@@ -5,6 +5,7 @@ import imageCompression from 'browser-image-compression';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
 import { SupabaseService } from '@core/services/supabase';
 import { FeedbackService } from '@core/services/feedback.service';
+import { LoggerService } from '@core/services/logger.service';
 import { triggerBrowserDownload } from '@core/utils/download';
 import { Router } from '@angular/router';
 
@@ -31,6 +32,7 @@ export class CameraComponent implements OnInit, OnDestroy {
   readonly feedbackService = inject(FeedbackService);
   private readonly supabaseService = inject(SupabaseService);
   private readonly router = inject(Router);
+  private readonly logger = inject(LoggerService);
 
   // ──────────────────────────────────────────
   // View children
@@ -176,8 +178,9 @@ export class CameraComponent implements OnInit, OnDestroy {
     // Attempt to lock orientation to portrait (silently ignored on iOS)
     try {
       await (screen.orientation as any).lock('portrait');
-    } catch {
-      // Normal on iOS and desktop — orientation lock not supported
+    } catch (error) {
+      // Normal on iOS and desktop — orientation lock is not supported there.
+      this.logger.debug('Orientation lock not supported:', error);
     }
 
     try {
@@ -199,7 +202,7 @@ export class CameraComponent implements OnInit, OnDestroy {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
       } catch (innerError) {
         if (innerError instanceof Error && innerError.name === 'OverconstrainedError') {
-          console.warn('1920x1080 not supported, falling back to 1280x720');
+          this.logger.warn('1920x1080 not supported, falling back to 1280x720');
           constraints = {
             video: {
               facingMode: this.facingMode(),
@@ -212,7 +215,7 @@ export class CameraComponent implements OnInit, OnDestroy {
             stream = await navigator.mediaDevices.getUserMedia(constraints);
           } catch (fallbackError) {
             if (fallbackError instanceof Error && fallbackError.name === 'OverconstrainedError') {
-              console.warn('1280x720 not supported, using generic video constraints');
+              this.logger.warn('1280x720 not supported, using generic video constraints');
               constraints = {
                 video: { facingMode: this.facingMode() },
                 audio: false
@@ -237,11 +240,11 @@ export class CameraComponent implements OnInit, OnDestroy {
           video.srcObject = stream;
           video.play();
         } else {
-          console.error('Video element not found after state change');
+          this.logger.error('Video element not found after state change');
         }
       }, 100);
     } catch (error) {
-      console.error('Camera access error:', error);
+      this.logger.error('Camera access error:', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
           this.permissionHelperVisible.set(true);
@@ -320,8 +323,8 @@ export class CameraComponent implements OnInit, OnDestroy {
           advanced: [{ torch: newMode === 'on' } as any]
         });
       } catch (err) {
-        console.warn('Hardware flash not supported:', err);
-        // Keep flashMode as 'on' — software screen flash will be used
+        // Keep flashMode as 'on' — the software screen flash will be used instead.
+        this.logger.warn('Hardware flash not supported:', err);
       }
     }
   }
@@ -334,8 +337,9 @@ export class CameraComponent implements OnInit, OnDestroy {
         await track.applyConstraints({
           advanced: [{ torch: false } as any]
         });
-      } catch {
-        // Silently ignore — torch may not be supported
+      } catch (error) {
+        // Torch may not be supported — nothing actionable, just trace it.
+        this.logger.debug('Could not turn off hardware torch:', error);
       }
     }
   }
@@ -509,7 +513,7 @@ export class CameraComponent implements OnInit, OnDestroy {
       }, 1200);
 
     } catch (error) {
-      console.error('Upload error:', error);
+      this.logger.error('Upload error:', error);
       this.isUploading.set(false);
       this.retryMessage.set(null);
       this.errorMessage.set(

@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { LoggerService } from './logger.service';
 
 /**
 * FeedbackService provides haptic, audio, and visual feedback for the camera
@@ -8,6 +9,8 @@ import { Injectable, signal } from '@angular/core';
   providedIn: 'root'
 })
 export class FeedbackService {
+  private readonly logger = inject(LoggerService);
+
   // Flash animation state
   readonly flashActive = signal<boolean>(false);
 
@@ -40,7 +43,7 @@ export class FeedbackService {
       this.successSound.preload = 'auto';
       this.successSound.volume = 0.4;
     } catch (error) {
-      console.warn('Audio preload failed:', error);
+      this.logger.warn('Audio preload failed:', error);
     }
   }
 
@@ -53,7 +56,7 @@ export class FeedbackService {
         navigator.vibrate(duration);
       } catch (error) {
         // Silently fail if vibration is not supported
-        console.debug('Vibration not supported:', error);
+        this.logger.debug('Vibration not supported:', error);
       }
     }
   }
@@ -69,10 +72,10 @@ export class FeedbackService {
       audio.currentTime = 0;
       audio.play().catch(error => {
         // Silently fail - user might not have interacted with page yet
-        console.debug('Audio play failed:', error);
+        this.logger.debug('Audio play failed:', error);
       });
     } catch (error) {
-      console.debug('Audio playback error:', error);
+      this.logger.debug('Audio playback error:', error);
     }
   }
 

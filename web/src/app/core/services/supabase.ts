@@ -12,6 +12,7 @@ import {
 } from '@core/constants';
 import { Photo } from '@core/models/photo';
 import { triggerBrowserDownload } from '@core/utils/download';
+import { LoggerService } from './logger.service';
 import { SessionService } from './session.service';
 
 @Injectable({
@@ -19,6 +20,7 @@ import { SessionService } from './session.service';
 })
 export class SupabaseService {
   private readonly session = inject(SessionService);
+  private readonly logger = inject(LoggerService);
   private supabase: SupabaseClient;
 
   constructor() {
@@ -194,7 +196,7 @@ export class SupabaseService {
       .remove([photoPath]);
 
     if (storageError) {
-      console.error('Storage deletion error:', storageError);
+      this.logger.error('Storage deletion error:', storageError);
       throw storageError;
     }
 
@@ -264,7 +266,7 @@ export class SupabaseService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching my photos:', error);
+      this.logger.error('Error fetching my photos:', error);
       return [];
     }
 
@@ -300,7 +302,7 @@ export class SupabaseService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching all photos:', error);
+      this.logger.error('Error fetching all photos:', error);
       return [];
     }
 

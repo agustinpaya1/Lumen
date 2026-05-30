@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseService } from '@core/services/supabase';
 import { SessionService } from '@core/services/session.service';
+import { LoggerService } from '@core/services/logger.service';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
 import { GalleryPhoto, Photo } from '@core/models/photo';
 
@@ -18,6 +19,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly supabaseService = inject(SupabaseService);
   private readonly sessionService = inject(SessionService);
+  private readonly logger = inject(LoggerService);
   readonly photoLimitService = inject(PhotoLimitService);
 
   /** This device's ID — used for ownership checks */
@@ -114,7 +116,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       }));
       this.globalPhotos.set(photosWithUrls);
     } catch (error) {
-      console.error('Error loading photos:', error);
+      this.logger.error('Error loading photos:', error);
     } finally {
       this.isLoading.set(false);
     }
@@ -241,7 +243,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       const filename = `lumen_foto_${photo.id}.jpg`;
       await this.supabaseService.downloadImageAsBlob(photo.publicUrl, filename);
     } catch (error) {
-      console.error('Error downloading photo:', error);
+      this.logger.error('Error downloading photo:', error);
     } finally {
       this.isDownloading.set(false);
     }
@@ -275,7 +277,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       // Close the overlay
       this.closeViewer();
     } catch (error) {
-      console.error('Error deleting photo:', error);
+      this.logger.error('Error deleting photo:', error);
       this.isDeleting.set(false);
       this.isConfirmingDelete.set(false);
     }

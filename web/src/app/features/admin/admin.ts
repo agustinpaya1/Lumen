@@ -5,6 +5,7 @@ import { SupabaseService } from '@core/services/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { ADMIN_AUTH_KEY } from '@core/constants';
 import { Photo } from '@core/models/photo';
+import { LoggerService } from '@core/services/logger.service';
 import { triggerBrowserDownload } from '@core/utils/download';
 
 @Component({
@@ -15,6 +16,7 @@ import { triggerBrowserDownload } from '@core/utils/download';
 })
 export class AdminComponent implements OnInit, OnDestroy {
   private readonly supabaseService = inject(SupabaseService);
+  private readonly logger = inject(LoggerService);
 
   // Auth state
   readonly isAuthenticated = signal<boolean>(false);
@@ -98,7 +100,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       const photos = await this.supabaseService.fetchPhotos();
       this.photos.set(photos);
     } catch (error) {
-      console.error('Error loading photos:', error);
+      this.logger.error('Error loading photos:', error);
       this.errorMessage.set('Failed to load photos. Please refresh.');
     } finally {
       this.isLoading.set(false);
@@ -156,7 +158,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       this.photos.update(current => current.filter(p => p.id !== photoId));
       this.deleteConfirmId.set(null);
     } catch (error) {
-      console.error('Error deleting photo:', error);
+      this.logger.error('Error deleting photo:', error);
       this.errorMessage.set('Failed to delete photo. Please try again.');
       this.deleteConfirmId.set(null);
     }
@@ -173,7 +175,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       const downloadUrl = await this.supabaseService.getPhotoDownloadUrl(photo.url);
       triggerBrowserDownload(downloadUrl, `lumen_photo_${photo.id}.jpg`, '_blank');
     } catch (error) {
-      console.error('Error downloading photo:', error);
+      this.logger.error('Error downloading photo:', error);
       this.errorMessage.set('Failed to download photo. Please try again.');
     }
   }

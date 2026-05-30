@@ -1,9 +1,12 @@
-import { ErrorHandler, Injectable } from '@angular/core';
+import { ErrorHandler, inject, Injectable } from '@angular/core';
+import { LoggerService } from './logger.service';
 
 @Injectable()
 export class GlobalErrorHandlerService implements ErrorHandler {
+  private readonly logger = inject(LoggerService);
+
   handleError(error: any): void {
-    console.error('Lumen Global Error Caught:', error);
+    this.logger.error('Lumen Global Error Caught:', error);
 
     // Manipulate DOM to prevent blank white screen
     document.body.innerHTML = `
