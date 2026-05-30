@@ -1,0 +1,442 @@
+[
+  {
+    "id": "TC001",
+    "title": "Splash screen renders branding and illustration on initial load",
+    "description": "Verifies the onboarding splash screen loads and shows the expected event branding content before any navigation occurs.",
+    "category": "Onboarding Splash Screen",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"watercolor illustration\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Enter Gallery\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Manual entry navigates immediately to Home and cancels auto-timer behavior",
+    "description": "Verifies clicking the manual entry button routes to Home without waiting for the full timer.",
+    "category": "Onboarding Splash Screen",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Enter Gallery\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Enter Gallery\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/home\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Live Gallery\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Manual entry still succeeds when Device ID generation is slow (waits before routing)",
+    "description": "Verifies that when initialization takes time, onboarding does not route until ready and then proceeds to Home once complete.",
+    "category": "Onboarding Splash Screen",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Enter Gallery\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"initializing\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Wait for element \"Live Gallery\" to appear"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/home\""
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Repeated quick taps on Enter Gallery do not cause errors and still end in Home",
+    "description": "Verifies the onboarding flow is resilient to rapid repeated user input on the entry button.",
+    "category": "Onboarding Splash Screen",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Enter Gallery\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Enter Gallery\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Enter Gallery\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/home\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Live Gallery\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Global to Personal tab switch filters the gallery by Device ID",
+    "description": "Verifies the Home gallery loads global photos and switching to Personal shows only photos tied to the local device.",
+    "category": "Live Shared Gallery (Home)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Global\" tab is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Personal\" tab is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Masonry grid\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Personal\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Personal\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Masonry grid\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Open a photo to view full-screen modal with caption and actions",
+    "description": "Verifies selecting a photo opens a full photo modal showing the image, dedication/caption, and available action buttons.",
+    "category": "Live Shared Gallery (Home)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Masonry grid\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on a photo tile in the masonry grid"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Full photo modal\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Dedication/Capture caption\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Save/Share\" button is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Close full photo modal returns to gallery",
+    "description": "Verifies the user can dismiss the photo modal and return to the masonry grid view.",
+    "category": "Live Shared Gallery (Home)",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "action",
+        "description": "Click on a photo tile in the masonry grid"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Full photo modal\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Close\" button in the full photo modal"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Full photo modal\" is not visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Masonry grid\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Delete owned photo with confirmation removes it from the gallery",
+    "description": "Verifies deleting an owned photo via the modal confirmation removes it from the gallery view.",
+    "category": "Live Shared Gallery (Home)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "action",
+        "description": "Click on an owned photo tile in the masonry grid"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Delete\" button is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Delete\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Confirm deletion\" dialog is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Confirm\" in the deletion dialog"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Deleted\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Cancel delete keeps the photo in the gallery",
+    "description": "Verifies canceling deletion from the confirmation dialog does not remove the photo.",
+    "category": "Live Shared Gallery (Home)",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "action",
+        "description": "Click on an owned photo tile in the masonry grid"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Delete\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Confirm deletion\" dialog is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Cancel\" in the deletion dialog"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Full photo modal\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Dedication/Capture caption\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Authenticated admin can open Admin view and see management controls",
+    "description": "Verifies that an authenticated user can access the Admin view and see gallery management controls.",
+    "category": "Admin View (Gallery Management)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Log in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"home\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the \"Admin\" link or menu item"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"admin\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Admin gallery list\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Admin can delete a photo and it disappears from the admin list",
+    "description": "Verifies successful deletion flow removes the selected photo from the admin gallery list.",
+    "category": "Admin View (Gallery Management)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Log in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"home\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the \"Admin\" link or menu item"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"admin\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first photo item in the admin gallery list"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Delete\" button"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Confirm\" button in the deletion confirmation dialog"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Deleted\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Admin delete confirmation can be canceled without removing the photo",
+    "description": "Verifies canceling the delete confirmation keeps the photo in the admin list and no success message is shown.",
+    "category": "Admin View (Gallery Management)",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Log in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Click on the \"Admin\" link or menu item"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"admin\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first photo item in the admin gallery list"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Delete\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Confirm\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Cancel\" button in the deletion confirmation dialog"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Admin gallery list\" is visible"
+      }
+    ]
+  }
+]
