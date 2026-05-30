@@ -11,6 +11,7 @@ import {
   SIGNED_URL_TTL_SECONDS,
 } from '@core/constants';
 import { Photo } from '@core/models/photo';
+import { triggerBrowserDownload } from '@core/utils/download';
 import { SessionService } from './session.service';
 
 @Injectable({
@@ -239,14 +240,8 @@ export class SupabaseService {
     }
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    // Small delay before revoking to ensure download starts
+    triggerBrowserDownload(blobUrl, filename);
+    // Small delay before revoking to ensure the download has started.
     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
   }
 

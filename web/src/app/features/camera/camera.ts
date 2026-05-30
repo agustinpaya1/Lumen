@@ -5,6 +5,7 @@ import imageCompression from 'browser-image-compression';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
 import { SupabaseService } from '@core/services/supabase';
 import { FeedbackService } from '@core/services/feedback.service';
+import { triggerBrowserDownload } from '@core/utils/download';
 import { Router } from '@angular/router';
 
 // ──────────────────────────────────────────────
@@ -408,12 +409,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     if (!blob) return;
 
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'lumen-photo.jpg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    triggerBrowserDownload(url, 'lumen-photo.jpg');
 
     // Cleanup the object URL after a short delay
     setTimeout(() => URL.revokeObjectURL(url), 1000);

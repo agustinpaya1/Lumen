@@ -5,6 +5,7 @@ import { SupabaseService } from '@core/services/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { ADMIN_AUTH_KEY } from '@core/constants';
 import { Photo } from '@core/models/photo';
+import { triggerBrowserDownload } from '@core/utils/download';
 
 @Component({
   selector: 'app-admin',
@@ -168,17 +169,9 @@ export class AdminComponent implements OnInit, OnDestroy {
     try {
       this.errorMessage.set(null);
 
-      // Get signed download URL
+      // Signed URL is remote (cross-origin), so open via _blank as a fallback.
       const downloadUrl = await this.supabaseService.getPhotoDownloadUrl(photo.url);
-
-      // Trigger download
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `lumen_photo_${photo.id}.jpg`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      triggerBrowserDownload(downloadUrl, `lumen_photo_${photo.id}.jpg`, '_blank');
     } catch (error) {
       console.error('Error downloading photo:', error);
       this.errorMessage.set('Failed to download photo. Please try again.');
