@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import imageCompression from 'browser-image-compression';
-import { SupabaseService } from '../../core/services/supabase';
-import { PhotoLimitService } from '../../core/services/photo-limit.service';
+import { SupabaseService } from '@core/services/supabase';
+import { PhotoLimitService } from '@core/services/photo-limit.service';
 
 @Component({
   selector: 'app-home',

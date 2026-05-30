@@ -2,9 +2,9 @@ import { Component, signal, computed, viewChild, ElementRef, inject, OnDestroy, 
 import { form, FormField } from '@angular/forms/signals';
 import { CommonModule } from '@angular/common';
 import imageCompression from 'browser-image-compression';
-import { PhotoLimitService } from '../../core/services/photo-limit.service';
-import { SupabaseService } from '../../core/services/supabase';
-import { FeedbackService } from '../../core/services/feedback.service';
+import { PhotoLimitService } from '@core/services/photo-limit.service';
+import { SupabaseService } from '@core/services/supabase';
+import { FeedbackService } from '@core/services/feedback.service';
 import { Router } from '@angular/router';
 
 // ──────────────────────────────────────────────

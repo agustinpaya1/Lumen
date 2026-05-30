@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { SupabaseService } from '../../core/services/supabase';
-import { TUTORIAL_SEEN_KEY } from '../../core/constants';
+import { SupabaseService } from '@core/services/supabase';
+import { TUTORIAL_SEEN_KEY } from '@core/constants';
 
 @Component({
   selector: 'app-onboarding',

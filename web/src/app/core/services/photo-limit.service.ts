@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { DEFAULT_PHOTO_LIMIT, PHOTOS_REMAINING_KEY } from '../constants';
+import { DEFAULT_PHOTO_LIMIT, PHOTOS_REMAINING_KEY } from '@core/constants';
 
 @Injectable({
   providedIn: 'root'

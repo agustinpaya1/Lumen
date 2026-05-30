@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '@environments/environment';
 import {
   ADMIN_PHOTOS_CHANNEL,
   DEFAULT_EVENT_KEY,
@@ -12,7 +12,7 @@ import {
   RETRY_BACKOFF_DELAYS_MS,
   RETRY_MAX_ATTEMPTS,
   SIGNED_URL_TTL_SECONDS,
-} from '../constants';
+} from '@core/constants';
 
 @Injectable({
   providedIn: 'root'
