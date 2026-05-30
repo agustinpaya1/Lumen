@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../core/services/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { ADMIN_AUTH_KEY } from '../../core/constants';
 
 interface Photo {
   id: number;
@@ -36,11 +37,10 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   // PIN constant
   private readonly ADMIN_PIN = '2102';
-  private readonly SESSION_KEY = 'lumen_admin_auth';
 
   ngOnInit(): void {
     // Check if already authenticated in session
-    const isAuth = sessionStorage.getItem(this.SESSION_KEY);
+    const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY);
     if (isAuth === 'true') {
       this.isAuthenticated.set(true);
       this.loadPhotos();
@@ -60,7 +60,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
     if (pin === this.ADMIN_PIN) {
       this.isAuthenticated.set(true);
-      sessionStorage.setItem(this.SESSION_KEY, 'true');
+      sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
       this.authError.set(null);
       this.pinInput.set('');
 
@@ -87,7 +87,7 @@ export class AdminComponent implements OnInit, OnDestroy {
    */
   logout(): void {
     this.isAuthenticated.set(false);
-    sessionStorage.removeItem(this.SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     this.photos.set([]);
     this.cleanupRealtimeSubscription();
   }

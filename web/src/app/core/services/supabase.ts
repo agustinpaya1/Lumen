@@ -1,18 +1,24 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment.development';
+import {
+  ADMIN_PHOTOS_CHANNEL,
+  DEFAULT_EVENT_KEY,
+  DEVICE_ID_KEY,
+  EVENT_KEY_STORAGE_KEY,
+  HOME_PHOTOS_CHANNEL,
+  PHOTOS_BUCKET,
+  PHOTOS_TABLE,
+  RETRY_BACKOFF_DELAYS_MS,
+  RETRY_MAX_ATTEMPTS,
+  SIGNED_URL_TTL_SECONDS,
+} from '../constants';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SupabaseService {
   private supabase: SupabaseClient;
-
-  /** localStorage key for the anonymous device identifier */
-  private readonly DEVICE_ID_KEY = 'lumen_device_id';
-
-  /** localStorage key for the active event — persists across SPA navigation */
-  private readonly EVENT_KEY_STORAGE = 'lumen_event_key';
 
   /** In-memory cache — guarantees the same value across all calls within a session */
   private cachedDeviceId: string | null = null;
@@ -50,11 +56,11 @@ export class SupabaseService {
 
     if (urlEventKey) {
       // URL parameter takes priority — persist so it survives navigation to /home, /camera, etc.
-      localStorage.setItem(this.EVENT_KEY_STORAGE, urlEventKey);
+      localStorage.setItem(EVENT_KEY_STORAGE_KEY, urlEventKey);
       this.cachedEventKey = urlEventKey;
     } else {
       // No URL param: restore from localStorage or fall back to 'demo'
-      this.cachedEventKey = localStorage.getItem(this.EVENT_KEY_STORAGE) ?? 'demo';
+      this.cachedEventKey = localStorage.getItem(EVENT_KEY_STORAGE_KEY) ?? DEFAULT_EVENT_KEY;
     }
   }
 
@@ -63,7 +69,7 @@ export class SupabaseService {
    * All queries are scoped to this value.
    */
   getStoredEventKey(): string {
-    return this.cachedEventKey ?? 'demo';
+    return this.cachedEventKey ?? DEFAULT_EVENT_KEY;
   }
 
   // ====================
@@ -89,7 +95,7 @@ export class SupabaseService {
     }
 
     // 3. Read from localStorage
-    let storedId = localStorage.getItem(this.DEVICE_ID_KEY);
+    let storedId = localStorage.getItem(DEVICE_ID_KEY);
 
     // 4. Generate if not found
     if (!storedId) {
@@ -101,7 +107,7 @@ export class SupabaseService {
           return v.toString(16);
         });
       }
-      localStorage.setItem(this.DEVICE_ID_KEY, storedId);
+      localStorage.setItem(DEVICE_ID_KEY, storedId);
     }
 
     // 5. Cache in memory and return
@@ -125,7 +131,7 @@ export class SupabaseService {
    */
   async uploadPhoto(file: File, path: string) {
     return this.supabase.storage
-      .from('photos')
+      .from(PHOTOS_BUCKET)
       .upload(path, file);
   }
 
@@ -142,8 +148,8 @@ export class SupabaseService {
     path: string,
     onRetry?: (attemptNumber: number, maxAttempts: number) => void
   ) {
-    const maxAttempts = 3;
-    const backoffDelays = [1000, 2000, 4000]; // 1s, 2s, 4s
+    const maxAttempts = RETRY_MAX_ATTEMPTS;
+    const backoffDelays = RETRY_BACKOFF_DELAYS_MS; // 1s, 2s, 4s
 
     let lastError: any;
 
@@ -200,7 +206,7 @@ export class SupabaseService {
    * Note: event_id stores the user's dedication text (unrelated to event routing).
    */
   async savePhotoData(url: string, eventId: string) {
-    return this.supabase.from('photos').insert({
+    return this.supabase.from(PHOTOS_TABLE).insert({
       url: url,
       event_id: eventId,
       device_id: this.getDeviceId(),
@@ -222,8 +228,8 @@ export class SupabaseService {
     eventId: string,
     onRetry?: (attemptNumber: number, maxAttempts: number) => void
   ) {
-    const maxAttempts = 3;
-    const backoffDelays = [1000, 2000, 4000];
+    const maxAttempts = RETRY_MAX_ATTEMPTS;
+    const backoffDelays = RETRY_BACKOFF_DELAYS_MS;
 
     let lastError: any;
 
@@ -277,7 +283,7 @@ export class SupabaseService {
    */
   async fetchPhotos() {
     const { data, error } = await this.supabase
-      .from('photos')
+      .from(PHOTOS_TABLE)
       .select('*')
       .eq('event_key', this.getStoredEventKey())
       .order('created_at', { ascending: false });
@@ -299,13 +305,13 @@ export class SupabaseService {
     const eventKey = this.getStoredEventKey();
 
     const channel = this.supabase
-      .channel('photos_realtime')
+      .channel(ADMIN_PHOTOS_CHANNEL)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'photos',
+          table: PHOTOS_TABLE,
           filter: `event_key=eq.${eventKey}`
         },
         (payload) => {
@@ -326,7 +332,7 @@ export class SupabaseService {
   async deletePhoto(photoId: number, photoPath: string) {
     // Delete from storage first
     const { error: storageError } = await this.supabase.storage
-      .from('photos')
+      .from(PHOTOS_BUCKET)
       .remove([photoPath]);
 
     if (storageError) {
@@ -336,7 +342,7 @@ export class SupabaseService {
 
     // Then delete from database
     const { error: dbError } = await this.supabase
-      .from('photos')
+      .from(PHOTOS_TABLE)
       .delete()
       .eq('id', photoId);
 
@@ -352,8 +358,8 @@ export class SupabaseService {
    */
   async getPhotoDownloadUrl(path: string): Promise<string> {
     const { data, error } = await this.supabase.storage
-      .from('photos')
-      .createSignedUrl(path, 60);
+      .from(PHOTOS_BUCKET)
+      .createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
 
     if (error || !data) {
       throw error || new Error('Failed to generate download URL');
@@ -399,7 +405,7 @@ export class SupabaseService {
   async fetchMyPhotos() {
     const deviceId = this.getDeviceId();
     const { data, error } = await this.supabase
-      .from('photos')
+      .from(PHOTOS_TABLE)
       .select('*')
       .eq('device_id', deviceId)
       .eq('event_key', this.getStoredEventKey())
@@ -420,7 +426,7 @@ export class SupabaseService {
    */
   getPhotoPublicUrl(path: string): string {
     const { data } = this.supabase.storage
-      .from('photos')
+      .from(PHOTOS_BUCKET)
       .getPublicUrl(path);
     return data.publicUrl;
   }
@@ -436,7 +442,7 @@ export class SupabaseService {
    */
   async fetchAllPhotos() {
     const { data, error } = await this.supabase
-      .from('photos')
+      .from(PHOTOS_TABLE)
       .select('*')
       .eq('event_key', this.getStoredEventKey())
       .order('created_at', { ascending: false });
@@ -464,13 +470,13 @@ export class SupabaseService {
     const eventKey = this.getStoredEventKey();
 
     const channel = this.supabase
-      .channel('home:photos')
+      .channel(HOME_PHOTOS_CHANNEL)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'photos',
+          table: PHOTOS_TABLE,
           filter: `event_key=eq.${eventKey}`
         },
         (payload) => {
@@ -482,7 +488,7 @@ export class SupabaseService {
         {
           event: 'DELETE',
           schema: 'public',
-          table: 'photos',
+          table: PHOTOS_TABLE,
           filter: `event_key=eq.${eventKey}`
         },
         (payload) => {

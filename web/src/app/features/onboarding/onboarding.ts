@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase';
+import { TUTORIAL_SEEN_KEY } from '../../core/constants';
 
 @Component({
   selector: 'app-onboarding',
@@ -14,7 +15,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
   private autoNavTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
-    if (localStorage.getItem('hasSeenTutorial') === 'true') {
+    if (localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true') {
       this.router.navigate(['/home']);
       return;
     }
@@ -32,7 +33,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
       clearTimeout(this.autoNavTimer);
       this.autoNavTimer = null;
     }
-    localStorage.setItem('hasSeenTutorial', 'true');
+    localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
     this.supabaseService.getDeviceId();
 
     this.router.navigate(['/home']);

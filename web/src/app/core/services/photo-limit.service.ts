@@ -1,7 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-
-const STORAGE_KEY = 'lumen_photos_remaining';
-const DEFAULT_PHOTO_LIMIT = 10;
+import { DEFAULT_PHOTO_LIMIT, PHOTOS_REMAINING_KEY } from '../constants';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +12,7 @@ export class PhotoLimitService {
   readonly photosTaken = computed(() => this.maxPhotos - this.photoCountSignal());
 
   private initializeCount(): number {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(PHOTOS_REMAINING_KEY);
     if (stored !== null) {
       const parsed = parseInt(stored, 10);
       return isNaN(parsed) ? DEFAULT_PHOTO_LIMIT : parsed;
@@ -27,7 +25,7 @@ export class PhotoLimitService {
     if (currentCount > 0) {
       const newCount = currentCount - 1;
       this.photoCountSignal.set(newCount);
-      localStorage.setItem(STORAGE_KEY, newCount.toString());
+      localStorage.setItem(PHOTOS_REMAINING_KEY, newCount.toString());
     }
   }
 
@@ -36,12 +34,12 @@ export class PhotoLimitService {
     if (currentCount < DEFAULT_PHOTO_LIMIT) {
       const newCount = currentCount + 1;
       this.photoCountSignal.set(newCount);
-      localStorage.setItem(STORAGE_KEY, newCount.toString());
+      localStorage.setItem(PHOTOS_REMAINING_KEY, newCount.toString());
     }
   }
 
   resetCount(): void {
     this.photoCountSignal.set(DEFAULT_PHOTO_LIMIT);
-    localStorage.setItem(STORAGE_KEY, DEFAULT_PHOTO_LIMIT.toString());
+    localStorage.setItem(PHOTOS_REMAINING_KEY, DEFAULT_PHOTO_LIMIT.toString());
   }
 }
