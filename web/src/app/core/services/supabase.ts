@@ -120,11 +120,61 @@ export class SupabaseService {
     return this.supabase;
   }
 
-  /**
-   * Helper: Delay utility for retry backoff
-   */
+  /** Resolves after `ms` milliseconds — used to space out retry attempts. */
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Runs a Supabase operation up to RETRY_MAX_ATTEMPTS times with exponential
+   * backoff, so a flaky guest connection doesn't lose a capture. Both a thrown
+   * error and a Supabase `{ error }` result count as a retryable failure; the
+   * last error is rethrown once attempts are exhausted.
+   * @param operation Produces a fresh Supabase result on each attempt.
+   * @param onRetry Optional hook invoked before each backoff wait (UI feedback).
+   * @returns The first result whose `error` is empty.
+   */
+  private async withRetry<T extends { error: unknown }>(
+    operation: () => Promise<T>,
+    onRetry?: (attemptNumber: number, maxAttempts: number) => void
+  ): Promise<T> {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= RETRY_MAX_ATTEMPTS; attempt++) {
+      try {
+        const result = await operation();
+        if (!result.error) {
+          return result;
+        }
+        lastError = result.error;
+      } catch (error) {
+        lastError = error;
+      }
+
+      if (attempt === RETRY_MAX_ATTEMPTS) {
+        break;
+      }
+      onRetry?.(attempt, RETRY_MAX_ATTEMPTS);
+      await this.delay(RETRY_BACKOFF_DELAYS_MS[attempt - 1]);
+    }
+
+    throw lastError;
+  }
+
+  /**
+   * Builds a Realtime `postgres_changes` filter for the photos table, scoped to
+   * the active event so each subscriber only receives rows from its own event.
+   */
+  private photoChangeFilter<E extends 'INSERT' | 'UPDATE' | 'DELETE'>(
+    event: E,
+    eventKey: string
+  ) {
+    return {
+      event,
+      schema: 'public',
+      table: PHOTOS_TABLE,
+      filter: `event_key=eq.${eventKey}`,
+    };
   }
 
   /**
@@ -137,68 +187,17 @@ export class SupabaseService {
   }
 
   /**
-   * Upload photo with retry mechanism and exponential backoff
-   * Retries 3 times with delays: 1s, 2s, 4s
-   * @param file - The file to upload
-   * @param path - The storage path
-   * @param onRetry - Optional callback when retry occurs (for UI feedback)
-   * @returns Upload result or throws error after all retries exhausted
+   * Uploads a photo to storage, retrying transient failures with exponential
+   * backoff so a weak guest connection doesn't drop the capture.
+   * @param onRetry Optional hook for surfacing retry progress in the UI.
+   * @returns The successful Supabase upload result.
    */
   async uploadPhotoWithRetry(
     file: File,
     path: string,
     onRetry?: (attemptNumber: number, maxAttempts: number) => void
   ) {
-    const maxAttempts = RETRY_MAX_ATTEMPTS;
-    const backoffDelays = RETRY_BACKOFF_DELAYS_MS; // 1s, 2s, 4s
-
-    let lastError: any;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const result = await this.uploadPhoto(file, path);
-
-        // Success! Return immediately
-        if (!result.error) {
-          return result;
-        }
-
-        // Supabase returned an error in the result
-        lastError = result.error;
-
-        // Don't retry on final attempt
-        if (attempt === maxAttempts) {
-          throw result.error;
-        }
-
-        // Notify UI about retry
-        if (onRetry) {
-          onRetry(attempt, maxAttempts);
-        }
-
-        // Wait before retrying (exponential backoff)
-        await this.delay(backoffDelays[attempt - 1]);
-
-      } catch (error) {
-        lastError = error;
-
-        // Don't retry on final attempt
-        if (attempt === maxAttempts) {
-          throw error;
-        }
-
-        // Notify UI about retry
-        if (onRetry) {
-          onRetry(attempt, maxAttempts);
-        }
-
-        // Wait before retrying (exponential backoff)
-        await this.delay(backoffDelays[attempt - 1]);
-      }
-    }
-
-    // This should never be reached, but TypeScript needs it
-    throw lastError;
+    return this.withRetry(() => this.uploadPhoto(file, path), onRetry);
   }
 
   /**
@@ -217,60 +216,17 @@ export class SupabaseService {
   }
 
   /**
-   * Save photo metadata with retry mechanism.
-   * Scopes the record to the active event via event_key.
-   * @param url - Photo URL
-   * @param eventId - Dedication text written by the user
-   * @param onRetry - Optional callback when retry occurs
-   * @returns Insert result or throws error after retries
+   * Saves photo metadata, retrying transient failures with exponential backoff.
+   * @param eventId Free-text dedication written by the guest (legacy column name).
+   * @param onRetry Optional hook for surfacing retry progress in the UI.
+   * @returns The successful Supabase insert result.
    */
   async savePhotoDataWithRetry(
     url: string,
     eventId: string,
     onRetry?: (attemptNumber: number, maxAttempts: number) => void
   ) {
-    const maxAttempts = RETRY_MAX_ATTEMPTS;
-    const backoffDelays = RETRY_BACKOFF_DELAYS_MS;
-
-    let lastError: any;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const result = await this.savePhotoData(url, eventId);
-
-        // Success!
-        if (!result.error) {
-          return result;
-        }
-
-        lastError = result.error;
-
-        if (attempt === maxAttempts) {
-          throw result.error;
-        }
-
-        if (onRetry) {
-          onRetry(attempt, maxAttempts);
-        }
-
-        await this.delay(backoffDelays[attempt - 1]);
-
-      } catch (error) {
-        lastError = error;
-
-        if (attempt === maxAttempts) {
-          throw error;
-        }
-
-        if (onRetry) {
-          onRetry(attempt, maxAttempts);
-        }
-
-        await this.delay(backoffDelays[attempt - 1]);
-      }
-    }
-
-    throw lastError;
+    return this.withRetry(() => this.savePhotoData(url, eventId), onRetry);
   }
 
   // ====================
@@ -305,23 +261,12 @@ export class SupabaseService {
   subscribeToPhotos(callback: (photo: Photo) => void) {
     const eventKey = this.getStoredEventKey();
 
-    const channel = this.supabase
+    return this.supabase
       .channel(ADMIN_PHOTOS_CHANNEL)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: PHOTOS_TABLE,
-          filter: `event_key=eq.${eventKey}`
-        },
-        (payload) => {
-          callback(payload.new as Photo);
-        }
-      )
+      .on('postgres_changes', this.photoChangeFilter('INSERT', eventKey), (payload) => {
+        callback(payload.new as Photo);
+      })
       .subscribe();
-
-    return channel;
   }
 
   /**
@@ -470,34 +415,14 @@ export class SupabaseService {
   ) {
     const eventKey = this.getStoredEventKey();
 
-    const channel = this.supabase
+    return this.supabase
       .channel(HOME_PHOTOS_CHANNEL)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: PHOTOS_TABLE,
-          filter: `event_key=eq.${eventKey}`
-        },
-        (payload) => {
-          onInsert(payload.new as Photo);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: PHOTOS_TABLE,
-          filter: `event_key=eq.${eventKey}`
-        },
-        (payload) => {
-          onDelete(payload.old as Photo);
-        }
-      )
+      .on('postgres_changes', this.photoChangeFilter('INSERT', eventKey), (payload) => {
+        onInsert(payload.new as Photo);
+      })
+      .on('postgres_changes', this.photoChangeFilter('DELETE', eventKey), (payload) => {
+        onDelete(payload.old as Photo);
+      })
       .subscribe();
-
-    return channel;
   }
 }
