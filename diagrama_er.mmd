@@ -1,0 +1,33 @@
+erDiagram
+    photos {
+        bigint id PK "Auto-incremental"
+        timestamptz created_at "NOT NULL — DEFAULT now()"
+        text url "Path en Storage: uploads/photo_xxx.jpg"
+        text event_id "Dedicatoria del invitado"
+        text device_id "UUID anonimo del dispositivo"
+    }
+
+    storage_buckets {
+        text id PK "Nombre del bucket"
+        text name "Nombre visible"
+        boolean public "Acceso publico o privado"
+        bigint file_size_limit "Limite por archivo en bytes"
+        text allowed_mime_types "Tipos MIME permitidos"
+        timestamptz created_at "Fecha de creacion"
+        timestamptz updated_at "Ultima actualizacion"
+    }
+
+    storage_objects {
+        uuid id PK "Identificador unico del archivo"
+        text bucket_id FK "Referencia al bucket"
+        text name "Path del archivo almacenado"
+        timestamptz created_at "Fecha de subida"
+        timestamptz updated_at "Ultima modificacion"
+        timestamptz last_accessed_at "Ultimo acceso"
+        jsonb metadata "Metadatos del archivo"
+        text version "Version del objeto"
+        text owner_id "Propietario del archivo"
+    }
+
+    photos ||--o| storage_objects : "url referencia name"
+    storage_objects }o--|| storage_buckets : "bucket_id"
