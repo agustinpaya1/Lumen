@@ -31,9 +31,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   /** Loading state */
   readonly isLoading = signal<boolean>(true);
 
-  // =====================
   // Tab State (Signals)
-  // =====================
 
   /** Active tab: 'global' or 'personal' */
   readonly activeTab = signal<'global' | 'personal'>('global');
@@ -43,16 +41,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.globalPhotos().filter(photo => photo.device_id === this.myDeviceId())
   );
 
-  // =====================
   // Real-Time
-  // =====================
 
   /** Supabase Realtime channel reference for cleanup */
   private realtimeChannel: RealtimeChannel | null = null;
 
-  // =====================
   // Gallery Upload
-  // =====================
 
   /** Hidden file input reference (Signal-based viewChild) */
   readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
@@ -63,9 +57,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   /** Whether the limit reached modal is visible */
   readonly showLimitModal = signal<boolean>(false);
 
-  // =====================
   // Photo Viewer Overlay
-  // =====================
 
   /** Currently selected photo for full-screen viewer */
   readonly selectedPhoto = signal<GalleryPhoto | null>(null);
@@ -91,18 +83,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  // =====================
   // Ownership Check
-  // =====================
 
-  /** Returns true if the given photo belongs to this device */
+  // TODO(security): ownership is a client-side device_id check (UI gating only) — enforce with row-level security before trusting it.
+  /** Returns true if the given photo belongs to this device. */
   isMyPhoto(photo: Photo): boolean {
     return photo?.device_id === this.myDeviceId();
   }
 
-  // =====================
   // Data Loading
-  // =====================
 
   /** Load ALL photos from Supabase (global gallery) */
   async loadPhotos(): Promise<void> {
@@ -122,9 +111,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  // =====================
   // Real-Time Subscription
-  // =====================
 
   /** Subscribe to INSERT and DELETE events on the photos table */
   private setupRealtimeSubscription(): void {
@@ -188,9 +175,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.activeTab.set(tab);
   }
 
-  // =====================
   // Gallery Upload Logic
-  // =====================
 
   /** Trigger the hidden file input */
   triggerGalleryUpload(): void {
@@ -213,9 +198,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/camera'], { state: { file } });
   }
 
-  // =====================
   // Viewer Actions
-  // =====================
 
   /** Open the full-screen photo viewer */
   openViewer(photo: GalleryPhoto): void {

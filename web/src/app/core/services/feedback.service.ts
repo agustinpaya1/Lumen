@@ -2,9 +2,9 @@ import { inject, Injectable, signal } from '@angular/core';
 import { LoggerService } from './logger.service';
 
 /**
-* FeedbackService provides haptic, audio, and visual feedback for the camera
-* to create delightful micro-interactions and enhance the "game feel".
-*/
+ * Haptic, audio, and visual feedback for the camera — the micro-interactions
+ * that give photo capture its "game feel".
+ */
 @Injectable({
   providedIn: 'root'
 })

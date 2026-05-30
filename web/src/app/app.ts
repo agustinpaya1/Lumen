@@ -11,7 +11,6 @@ import { RouterOutlet } from '@angular/router';
         Para usar la cámara y ver las fotos correctamente, abre este enlace en Safari o Chrome (pulsa los 3 puntos arriba a la derecha).
       </div>
     }
-    <!-- Aquí se pintará la cámara -->
     <router-outlet></router-outlet>
   `,
   styleUrl: './app.scss'
@@ -20,6 +19,8 @@ export class AppComponent implements OnInit {
   isInAppBrowser = false;
 
   ngOnInit() {
+    // TODO(compat): User-Agent sniffing is brittle and breaks as in-app browsers
+    //               change their UA — revisit with feature detection.
     const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
     if (ua.includes('WhatsApp') || ua.includes('Instagram') || ua.includes('FBAN') || ua.includes('FBAV')) {
       this.isInAppBrowser = true;

@@ -6,9 +6,7 @@
 
 <div class="home-container">
 
-    <!-- ======================== -->
-    <!-- Sticky Header            -->
-    <!-- ======================== -->
+    <!-- Sticky Header -->
     <header class="home-header">
         <!-- Title + Photo Counter -->
         <div class="header-center">
@@ -29,9 +27,7 @@
         </div>
     </header>
 
-    <!-- ======================== -->
-    <!-- Content                  -->
-    <!-- ======================== -->
+    <!-- Content -->
     <main class="home-content">
 
         <!-- Loading State -->
@@ -42,7 +38,7 @@
         </div>
         }
 
-        <!-- ====== GLOBAL TAB ====== -->
+        <!-- Global tab -->
         @else if (tab === 'global') {
 
         @if (photos.length === 0) {
@@ -79,7 +75,7 @@
 
         }
 
-        <!-- ====== PERSONAL TAB ====== -->
+        <!-- Personal tab -->
         @else if (tab === 'personal') {
 
         @if (personal.length === 0) {
@@ -119,9 +115,7 @@
     <input type="file" accept="image/jpeg, image/png" [multiple]="false" #fileInput
         (change)="onGalleryFileSelected($event)" class="hidden" />
 
-    <!-- ========================== -->
-    <!-- Bottom Action Bar (Pill)   -->
-    <!-- ========================== -->
+    <!-- Bottom Action Bar (Pill) -->
 
     <div class="action-bar" [class.action-bar--disabled]="false">
 
@@ -150,9 +144,7 @@
 
 </div>
 
-<!-- ================================ -->
-<!-- Full-Screen Uploading Overlay    -->
-<!-- ================================ -->
+<!-- Full-Screen Uploading Overlay -->
 
 @if (isUploading()) {
 <div class="upload-overlay">
@@ -164,9 +156,7 @@
 </div>
 }
 
-<!-- ======================== -->
 <!-- Full-Screen Photo Viewer -->
-<!-- ======================== -->
 
 @let viewerPhoto = selectedPhoto();
 @if (viewerPhoto) {
@@ -252,9 +242,7 @@
 </div>
 }
 
-<!-- ======================== -->
-<!-- Limit Reached Modal      -->
-<!-- ======================== -->
+<!-- Limit Reached Modal -->
 
 @if (showLimitModal()) {
 <div class="limit-modal-overlay">

@@ -9,9 +9,7 @@ import { LoggerService } from '@core/services/logger.service';
 import { triggerBrowserDownload } from '@core/utils/download';
 import { Router } from '@angular/router';
 
-// ──────────────────────────────────────────────
 // State Machine — 5 stable states (no editor)
-// ──────────────────────────────────────────────
 type CameraState = 'viewfinder' | 'preview' | 'uploading' | 'success';
 
 interface DedicationModel {
@@ -25,23 +23,17 @@ interface DedicationModel {
   styleUrl: './camera.scss',
 })
 export class CameraComponent implements OnInit, OnDestroy {
-  // ──────────────────────────────────────────
   // Services
-  // ──────────────────────────────────────────
   readonly photoLimitService = inject(PhotoLimitService);
   readonly feedbackService = inject(FeedbackService);
   private readonly supabaseService = inject(SupabaseService);
   private readonly router = inject(Router);
   private readonly logger = inject(LoggerService);
 
-  // ──────────────────────────────────────────
   // View children
-  // ──────────────────────────────────────────
   readonly videoElement = viewChild<ElementRef<HTMLVideoElement>>('videoRef');
 
-  // ──────────────────────────────────────────
   // Core state signals
-  // ──────────────────────────────────────────
   readonly currentState = signal<CameraState>('viewfinder');
   readonly errorMessage = signal<string | null>(null);
   readonly uploadProgress = signal<number>(0);
@@ -58,9 +50,7 @@ export class CameraComponent implements OnInit, OnDestroy {
   /** Whether the photo in preview originated from a gallery upload */
   readonly isFromGallery = signal<boolean>(false);
 
-  // ──────────────────────────────────────────
   // Camera Controls (Grid & Flash)
-  // ──────────────────────────────────────────
 
   /** Whether the Rule of Thirds 3×3 grid overlay is visible */
   readonly showGrid = signal<boolean>(false);
@@ -71,9 +61,7 @@ export class CameraComponent implements OnInit, OnDestroy {
   /** Whether the white screen flash overlay is currently active */
   readonly isFlashing = signal<boolean>(false);
 
-  // ──────────────────────────────────────────
   // Photo signals
-  // ──────────────────────────────────────────
 
   /** Raw photo blob captured from viewfinder */
   readonly rawPhotoBlob = signal<Blob | null>(null);
@@ -84,26 +72,18 @@ export class CameraComponent implements OnInit, OnDestroy {
     return blob ? URL.createObjectURL(blob) : null;
   });
 
-  // ──────────────────────────────────────────
   // Media stream
-  // ──────────────────────────────────────────
   private mediaStream: MediaStream | null = null;
 
-  // ──────────────────────────────────────────
   // Signal Form for dedication text
-  // ──────────────────────────────────────────
   private readonly dedicationModel = signal<DedicationModel>({ dedication: '' });
   readonly dedicationForm = form(this.dedicationModel);
 
-  // ──────────────────────────────────────────
   // Computed signals
-  // ──────────────────────────────────────────
   readonly isLimitReached = computed(() => this.photoLimitService.photosLeft() === 0);
   readonly canProceed = computed(() => this.photoLimitService.canTakePhoto());
 
-  // ──────────────────────────────────────────
   // Beforeunload handler reference
-  // ──────────────────────────────────────────
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
 
   constructor() {
@@ -140,9 +120,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     return 'text-red-400';
   }
 
-  // ============================================================
   // DEVICE & LIFECYCLE
-  // ============================================================
 
   /** Detect iOS / Android / unknown for permission helper UI */
   private detectDevicePlatform(): void {
@@ -170,9 +148,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
   }
 
-  // ============================================================
   // CAMERA ACCESS (with constraint fallback)
-  // ============================================================
 
   async startCamera(): Promise<void> {
     // Attempt to lock orientation to portrait (silently ignored on iOS)
@@ -301,9 +277,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     this.flipCamera();
   }
 
-  // ============================================================
   // CAMERA CONTROLS (Grid & Flash)
-  // ============================================================
 
   /** Toggle the 3×3 rule-of-thirds grid overlay */
   toggleGrid(): void {
@@ -344,9 +318,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ============================================================
   // CAPTURE — viewfinder → preview (DIRECT, no editor)
-  // ============================================================
 
   /**
    * Capture the current video frame and transition DIRECTLY to preview.
@@ -400,9 +372,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     }, 'image/jpeg', 0.95);
   }
 
-  // ============================================================
   // PREVIEW — download & upload
-  // ============================================================
 
   /**
    * Download the raw photo to the user's device.
@@ -433,9 +403,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ============================================================
   // UPLOAD — with compression & retry
-  // ============================================================
 
   async uploadPhoto(): Promise<void> {
     const rawBlob = this.rawPhotoBlob();
@@ -529,9 +497,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     this.uploadPhoto();
   }
 
-  // ============================================================
   // INTERNAL HELPERS
-  // ============================================================
 
   /** Stop the camera media stream */
   private stopCamera(): void {

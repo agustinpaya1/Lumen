@@ -32,7 +32,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   // Realtime subscription
   private realtimeChannel: RealtimeChannel | null = null;
 
-  // PIN constant
+  // TODO(auth): replace PIN with Supabase Auth + RLS role when multi-tenant admin is implemented
   private readonly ADMIN_PIN = '2102';
 
   ngOnInit(): void {

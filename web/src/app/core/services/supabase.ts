@@ -91,9 +91,7 @@ export class SupabaseService {
     };
   }
 
-  /**
-   * Base upload method (no retry logic)
-   */
+  /** Single upload attempt (no retry) — the primitive wrapped by uploadPhotoWithRetry. */
   async uploadPhoto(file: File, path: string) {
     return this.supabase.storage
       .from(PHOTOS_BUCKET)
@@ -115,9 +113,9 @@ export class SupabaseService {
   }
 
   /**
-   * Base save photo data method (no retry logic).
-   * Scopes the record to the active event via event_key.
-   * Note: event_id stores the user's dedication text (unrelated to event routing).
+   * Single insert attempt (no retry) — the primitive wrapped by
+   * savePhotoDataWithRetry. Scopes the row to the active event via event_key;
+   * event_id is a legacy column that actually holds the guest's dedication text.
    */
   async savePhotoData(url: string, eventId: string) {
     return this.supabase.from(PHOTOS_TABLE).insert({
@@ -143,9 +141,7 @@ export class SupabaseService {
     return this.withRetry(() => this.savePhotoData(url, eventId), onRetry);
   }
 
-  // ====================
   // ADMIN METHODS
-  // ====================
 
   /**
    * Fetch all photos for the active event (admin dashboard).
@@ -190,7 +186,6 @@ export class SupabaseService {
    * @param photoPath - Photo path in storage to delete
    */
   async deletePhoto(photoId: number, photoPath: string) {
-    // Delete from storage first
     const { error: storageError } = await this.supabase.storage
       .from(PHOTOS_BUCKET)
       .remove([photoPath]);
@@ -200,7 +195,6 @@ export class SupabaseService {
       throw storageError;
     }
 
-    // Then delete from database
     const { error: dbError } = await this.supabase
       .from(PHOTOS_TABLE)
       .delete()
@@ -247,9 +241,7 @@ export class SupabaseService {
     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
   }
 
-  // ====================
   // GALLERY METHODS
-  // ====================
 
   /**
    * Fetch photos belonging to the current device within the active event.
@@ -285,9 +277,7 @@ export class SupabaseService {
     return data.publicUrl;
   }
 
-  // ====================
   // LIVE GALLERY METHODS
-  // ====================
 
   /**
    * Fetch ALL photos for the active event, ordered newest first.

@@ -14,6 +14,7 @@ export const ADMIN_AUTH_KEY = 'lumen_admin_auth';
 export const TUTORIAL_SEEN_KEY = 'hasSeenTutorial';
 
 // --- Photo limit ---
+// TODO(roadmap): make the photo limit configurable per event instead of a global constant.
 export const DEFAULT_PHOTO_LIMIT = 10;
 
 // --- Upload retry (exponential backoff) ---
