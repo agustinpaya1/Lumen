@@ -1,11 +1,8 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '@environments/environment';
 import {
   ADMIN_PHOTOS_CHANNEL,
-  DEFAULT_EVENT_KEY,
-  DEVICE_ID_KEY,
-  EVENT_KEY_STORAGE_KEY,
   HOME_PHOTOS_CHANNEL,
   PHOTOS_BUCKET,
   PHOTOS_TABLE,
@@ -14,106 +11,20 @@ import {
   SIGNED_URL_TTL_SECONDS,
 } from '@core/constants';
 import { Photo } from '@core/models/photo';
+import { SessionService } from './session.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SupabaseService {
+  private readonly session = inject(SessionService);
   private supabase: SupabaseClient;
-
-  /** In-memory cache — guarantees the same value across all calls within a session */
-  private cachedDeviceId: string | null = null;
-
-  /** In-memory cache for the active event key */
-  private cachedEventKey: string | null = null;
 
   constructor() {
     this.supabase = createClient(
       environment.supabaseUrl,
       environment.supabaseKey
     );
-    this.initEventKey();
-  }
-
-  // ====================
-  // EVENT KEY
-  // ====================
-
-  /**
-   * Resolves the active event key with the following priority:
-   * 1. URL parameter ?e=<key>  → persisted to localStorage for cross-route navigation
-   * 2. localStorage            → survives SPA navigation within the same session
-   * 3. 'demo'                  → fallback for public access (empty gallery)
-   *
-   * Example URLs:
-   *   lumen.vercel.app          → event 'demo' (public demo, empty)
-   *   lumen.vercel.app?e=nc2026 → event 'nc2026' (private event photos)
-   */
-  private initEventKey(): void {
-    if (typeof window === 'undefined') return;
-
-    const params = new URLSearchParams(window.location.search);
-    const urlEventKey = params.get('e');
-
-    if (urlEventKey) {
-      // URL parameter takes priority — persist so it survives navigation to /home, /camera, etc.
-      localStorage.setItem(EVENT_KEY_STORAGE_KEY, urlEventKey);
-      this.cachedEventKey = urlEventKey;
-    } else {
-      // No URL param: restore from localStorage or fall back to 'demo'
-      this.cachedEventKey = localStorage.getItem(EVENT_KEY_STORAGE_KEY) ?? DEFAULT_EVENT_KEY;
-    }
-  }
-
-  /**
-   * Returns the active event key for the current session.
-   * All queries are scoped to this value.
-   */
-  getStoredEventKey(): string {
-    return this.cachedEventKey ?? DEFAULT_EVENT_KEY;
-  }
-
-  // ====================
-  // DEVICE ID
-  // ====================
-
-  /**
-   * Get or generate a unique device ID for anonymous photo ownership.
-   * 1. Returns in-memory cache (prevents multiple localStorage reads).
-   * 2. Falls back to localStorage.
-   * 3. Generates a new UUID v4 only if nothing is stored.
-   * Guarantees the SAME string every time within a browser session.
-   */
-  getDeviceId(): string {
-    // 1. Return cached ID if it exists (avoids localStorage reads on every call)
-    if (this.cachedDeviceId) {
-      return this.cachedDeviceId;
-    }
-
-    // 2. SSR safety guard (pure CSR app, but safe for Vercel edge cases)
-    if (typeof window === 'undefined') {
-      return 'ssr-fallback';
-    }
-
-    // 3. Read from localStorage
-    let storedId = localStorage.getItem(DEVICE_ID_KEY);
-
-    // 4. Generate if not found
-    if (!storedId) {
-      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-        storedId = crypto.randomUUID();
-      } else {
-        storedId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-          var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
-      }
-      localStorage.setItem(DEVICE_ID_KEY, storedId);
-    }
-
-    // 5. Cache in memory and return
-    this.cachedDeviceId = storedId;
-    return storedId;
   }
 
   get client() {
@@ -209,8 +120,8 @@ export class SupabaseService {
     return this.supabase.from(PHOTOS_TABLE).insert({
       url: url,
       event_id: eventId,
-      device_id: this.getDeviceId(),
-      event_key: this.getStoredEventKey(),
+      device_id: this.session.getDeviceId(),
+      event_key: this.session.getStoredEventKey(),
       created_at: new Date()
     }).select();
   }
@@ -242,7 +153,7 @@ export class SupabaseService {
     const { data, error } = await this.supabase
       .from(PHOTOS_TABLE)
       .select('*')
-      .eq('event_key', this.getStoredEventKey())
+      .eq('event_key', this.session.getStoredEventKey())
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -259,7 +170,7 @@ export class SupabaseService {
    * @returns RealtimeChannel for cleanup
    */
   subscribeToPhotos(callback: (photo: Photo) => void) {
-    const eventKey = this.getStoredEventKey();
+    const eventKey = this.session.getStoredEventKey();
 
     return this.supabase
       .channel(ADMIN_PHOTOS_CHANNEL)
@@ -349,12 +260,12 @@ export class SupabaseService {
    * @returns Array of photo objects for this device, ordered by newest first
    */
   async fetchMyPhotos(): Promise<Photo[]> {
-    const deviceId = this.getDeviceId();
+    const deviceId = this.session.getDeviceId();
     const { data, error } = await this.supabase
       .from(PHOTOS_TABLE)
       .select('*')
       .eq('device_id', deviceId)
-      .eq('event_key', this.getStoredEventKey())
+      .eq('event_key', this.session.getStoredEventKey())
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -390,7 +301,7 @@ export class SupabaseService {
     const { data, error } = await this.supabase
       .from(PHOTOS_TABLE)
       .select('*')
-      .eq('event_key', this.getStoredEventKey())
+      .eq('event_key', this.session.getStoredEventKey())
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -413,7 +324,7 @@ export class SupabaseService {
     onInsert: (photo: Photo) => void,
     onDelete: (photo: Photo) => void
   ) {
-    const eventKey = this.getStoredEventKey();
+    const eventKey = this.session.getStoredEventKey();
 
     return this.supabase
       .channel(HOME_PHOTOS_CHANNEL)

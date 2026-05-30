@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseService } from '@core/services/supabase';
+import { SessionService } from '@core/services/session.service';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
 import { GalleryPhoto, Photo } from '@core/models/photo';
 
@@ -16,10 +17,11 @@ import { GalleryPhoto, Photo } from '@core/models/photo';
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly supabaseService = inject(SupabaseService);
+  private readonly sessionService = inject(SessionService);
   readonly photoLimitService = inject(PhotoLimitService);
 
   /** This device's ID — used for ownership checks */
-  readonly myDeviceId = signal(this.supabaseService.getDeviceId());
+  readonly myDeviceId = signal(this.sessionService.getDeviceId());
 
   /** ALL photos from ALL guests (newest first) */
   readonly globalPhotos = signal<GalleryPhoto[]>([]);

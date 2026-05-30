@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { SupabaseService } from '@core/services/supabase';
+import { SessionService } from '@core/services/session.service';
 import { TUTORIAL_SEEN_KEY } from '@core/constants';
 
 @Component({
@@ -11,7 +11,7 @@ import { TUTORIAL_SEEN_KEY } from '@core/constants';
 })
 export class OnboardingComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
-  private readonly supabaseService = inject(SupabaseService);
+  private readonly sessionService = inject(SessionService);
   private autoNavTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
@@ -34,7 +34,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
       this.autoNavTimer = null;
     }
     localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
-    this.supabaseService.getDeviceId();
+    this.sessionService.getDeviceId();
 
     this.router.navigate(['/home']);
   }
