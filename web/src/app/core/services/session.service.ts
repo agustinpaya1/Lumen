@@ -34,8 +34,9 @@ export class SessionService {
       return this.cachedDeviceId;
     }
 
-    // Pure CSR app, but guard SSR/edge cases (e.g. Vercel) where window is absent.
-    if (typeof window === 'undefined') {
+    // Pure CSR app, but guard SSR/test/edge cases where window or localStorage
+    // is absent (or blocked) so construction never throws.
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
       return 'ssr-fallback';
     }
 
@@ -57,7 +58,7 @@ export class SessionService {
    * e.g. `lumen.vercel.app?e=nc2026` selects event `nc2026`.
    */
   private initEventKey(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
 
     const urlEventKey = new URLSearchParams(window.location.search).get('e');
     if (urlEventKey) {

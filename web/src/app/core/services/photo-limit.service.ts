@@ -12,6 +12,11 @@ export class PhotoLimitService {
   readonly photosTaken = computed(() => this.maxPhotos - this.photoCountSignal());
 
   private initializeCount(): number {
+    // localStorage is absent in SSR/test environments and can be blocked by the
+    // browser — fall back to the default rather than throwing during construction.
+    if (typeof localStorage === 'undefined') {
+      return DEFAULT_PHOTO_LIMIT;
+    }
     const stored = localStorage.getItem(PHOTOS_REMAINING_KEY);
     if (stored !== null) {
       const parsed = parseInt(stored, 10);
@@ -25,7 +30,7 @@ export class PhotoLimitService {
     if (currentCount > 0) {
       const newCount = currentCount - 1;
       this.photoCountSignal.set(newCount);
-      localStorage.setItem(PHOTOS_REMAINING_KEY, newCount.toString());
+      this.persist(newCount);
     }
   }
 
@@ -34,12 +39,19 @@ export class PhotoLimitService {
     if (currentCount < DEFAULT_PHOTO_LIMIT) {
       const newCount = currentCount + 1;
       this.photoCountSignal.set(newCount);
-      localStorage.setItem(PHOTOS_REMAINING_KEY, newCount.toString());
+      this.persist(newCount);
     }
   }
 
   resetCount(): void {
     this.photoCountSignal.set(DEFAULT_PHOTO_LIMIT);
-    localStorage.setItem(PHOTOS_REMAINING_KEY, DEFAULT_PHOTO_LIMIT.toString());
+    this.persist(DEFAULT_PHOTO_LIMIT);
+  }
+
+  /** Persists the remaining count, skipping write when localStorage is unavailable. */
+  private persist(count: number): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(PHOTOS_REMAINING_KEY, count.toString());
+    }
   }
 }
