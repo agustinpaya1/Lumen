@@ -1,7 +1,7 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SupabaseService } from '@core/services/supabase';
+import { SupabaseService } from '@core/services/supabase.service';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { ADMIN_AUTH_KEY } from '@core/constants';
 import { Photo } from '@core/models/photo';

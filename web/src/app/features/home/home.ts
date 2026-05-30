@@ -2,7 +2,7 @@ import { Component, signal, computed, inject, OnInit, OnDestroy, viewChild, Elem
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { SupabaseService } from '@core/services/supabase';
+import { SupabaseService } from '@core/services/supabase.service';
 import { SessionService } from '@core/services/session.service';
 import { LoggerService } from '@core/services/logger.service';
 import { PhotoLimitService } from '@core/services/photo-limit.service';

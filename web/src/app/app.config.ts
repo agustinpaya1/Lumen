@@ -2,7 +2,7 @@ import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } f
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
-import { GlobalErrorHandlerService } from '@core/services/global-error-handler';
+import { GlobalErrorHandlerService } from '@core/services/global-error-handler.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [

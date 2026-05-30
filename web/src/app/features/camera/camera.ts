@@ -3,7 +3,7 @@ import { form, FormField } from '@angular/forms/signals';
 import { CommonModule } from '@angular/common';
 import imageCompression from 'browser-image-compression';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
-import { SupabaseService } from '@core/services/supabase';
+import { SupabaseService } from '@core/services/supabase.service';
 import { FeedbackService } from '@core/services/feedback.service';
 import { LoggerService } from '@core/services/logger.service';
 import { triggerBrowserDownload } from '@core/utils/download';
