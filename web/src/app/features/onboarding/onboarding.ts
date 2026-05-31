@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { SessionService } from '@core/services/session.service';
-import { TUTORIAL_SEEN_KEY } from '@core/constants';
+import { LUMEN_CONSENT_KEY, TUTORIAL_SEEN_KEY } from '@core/constants';
 
 @Component({
   selector: 'app-onboarding',
@@ -14,11 +14,15 @@ export class OnboardingComponent implements OnInit, OnDestroy {
   private readonly sessionService = inject(SessionService);
   private autoNavTimer: ReturnType<typeof setTimeout> | null = null;
 
+  showConsentModal = false;
+  consentDeclined = false;
+
   ngOnInit(): void {
-    if (localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true') {
-      this.router.navigate(['/home']);
+    if (localStorage.getItem(LUMEN_CONSENT_KEY) !== 'true') {
+      this.showConsentModal = true;
       return;
     }
+    this.proceedAfterConsent();
   }
 
   ngOnDestroy(): void {
@@ -28,6 +32,17 @@ export class OnboardingComponent implements OnInit, OnDestroy {
     }
   }
 
+  acceptConsent(): void {
+    localStorage.setItem(LUMEN_CONSENT_KEY, 'true');
+    this.showConsentModal = false;
+    this.proceedAfterConsent();
+  }
+
+  declineConsent(): void {
+    this.showConsentModal = false;
+    this.consentDeclined = true;
+  }
+
   goToApp(): void {
     if (this.autoNavTimer) {
       clearTimeout(this.autoNavTimer);
@@ -35,7 +50,12 @@ export class OnboardingComponent implements OnInit, OnDestroy {
     }
     localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
     this.sessionService.getDeviceId();
-
     this.router.navigate(['/home']);
+  }
+
+  private proceedAfterConsent(): void {
+    if (localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true') {
+      this.router.navigate(['/home']);
+    }
   }
 }

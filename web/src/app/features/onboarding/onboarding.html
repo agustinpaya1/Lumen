@@ -1,27 +1,60 @@
-<div class="splash-screen">
+@if (consentDeclined) {
 
-    <!-- Watercolour illustration -->
-    <div class="illustration-wrapper">
-        <img src="/dibujo.png" alt="Natacha y Lucas" class="illustration" />
+    <div class="consent-declined-screen">
+        <p class="consent-declined-message">
+            Para usar esta aplicación es necesario aceptar el uso de almacenamiento local.
+            Si cambias de opinión, recarga la página.
+        </p>
     </div>
 
-    <!-- Typography -->
-    <div class="text-block">
-        <p class="kicker">Bienvenidos a la boda de</p>
-        <h1 class="wedding-title">Natacha y Lucas</h1>
-        <div class="title-divider"></div>
-        <p class="wedding-date">21 de Febrero de 2026</p>
+} @else {
+
+    <div class="splash-screen">
+
+        <!-- Watercolour illustration -->
+        <div class="illustration-wrapper">
+            <img src="/dibujo.png" alt="Natacha y Lucas" class="illustration" />
+        </div>
+
+        <!-- Typography -->
+        <div class="text-block">
+            <p class="kicker">Bienvenidos a la boda de</p>
+            <h1 class="wedding-title">Natacha y Lucas</h1>
+            <div class="title-divider"></div>
+            <p class="wedding-date">21 de Febrero de 2026</p>
+        </div>
+
+        <!-- Manual skip — outline ghost button, no solid fill -->
+        <div class="cta-area">
+            <button class="cta-button" (click)="goToApp()">
+                <span class="cta-label">Entrar a la galería</span>
+                <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+
     </div>
 
-    <!-- Manual skip — outline ghost button, no solid fill -->
-    <div class="cta-area">
-        <button class="cta-button" (click)="goToApp()">
-            <span class="cta-label">Entrar a la galería</span>
-            <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 5l7 7-7 7" />
-            </svg>
-        </button>
-    </div>
+    <!-- GDPR consent bottom sheet -->
+    @if (showConsentModal) {
+        <div class="consent-backdrop" role="dialog" aria-modal="true" aria-labelledby="consent-title">
+            <div class="consent-sheet">
+                <h2 id="consent-title" class="consent-title">Antes de continuar</h2>
+                <p class="consent-body">
+                    Esta aplicación almacena las fotografías que compartes y un
+                    identificador anónimo de tu dispositivo para que puedas gestionar
+                    tus propias fotos. No se recopilan datos personales identificables
+                    ni se comparten con terceros. Al continuar, aceptas el uso de
+                    almacenamiento local y la subida de imágenes al servidor del evento.
+                </p>
+                <div class="consent-actions">
+                    <button class="consent-accept" (click)="acceptConsent()">Entendido, continuar</button>
+                    <button class="consent-decline" (click)="declineConsent()">No acepto</button>
+                </div>
+            </div>
+        </div>
+    }
 
-</div>
+}

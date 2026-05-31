@@ -5,6 +5,7 @@
  */
 
 // --- Persistence keys (localStorage / sessionStorage) ---
+export const LUMEN_CONSENT_KEY = 'lumen_consent';
 export const DEVICE_ID_KEY = 'lumen_device_id';
 export const EVENT_KEY_STORAGE_KEY = 'lumen_event_key';
 export const PHOTOS_REMAINING_KEY = 'lumen_photos_remaining';
