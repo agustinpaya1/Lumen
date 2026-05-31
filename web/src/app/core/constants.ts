@@ -10,6 +10,9 @@ export const DEVICE_ID_KEY = 'lumen_device_id';
 export const EVENT_KEY_STORAGE_KEY = 'lumen_event_key';
 export const PHOTOS_REMAINING_KEY = 'lumen_photos_remaining';
 export const ADMIN_AUTH_KEY = 'lumen_admin_auth';
+// Guided demo tour — set once the visitor finishes or skips the tour, so it
+// only runs on the first visit per device.
+export const LUMEN_TOUR_KEY = 'lumen_tour_completed';
 // Pre-existing key without the `lumen_` prefix — kept as-is so returning users
 // who already completed onboarding are still recognised.
 export const TUTORIAL_SEEN_KEY = 'hasSeenTutorial';
