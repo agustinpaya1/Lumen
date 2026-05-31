@@ -100,6 +100,7 @@ export class CameraComponent implements OnInit, OnDestroy {
       this.isFromGallery.set(true);
       this.rawPhotoBlob.set(passedState.file);
       this.currentState.set('preview');
+      this.feedbackService.triggerShutter();
     } else {
       // Camera Capture Flow: Auto-start camera
       this.startCamera();
@@ -223,6 +224,7 @@ export class CameraComponent implements OnInit, OnDestroy {
       this.logger.error('Camera access error:', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
+          this.feedbackService.triggerError();
           this.permissionHelperVisible.set(true);
           this.errorMessage.set('Camera permission denied. Please follow the instructions below to enable camera access.');
         } else if (error.name === 'NotFoundError') {

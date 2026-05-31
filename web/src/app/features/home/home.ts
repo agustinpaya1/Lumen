@@ -6,6 +6,7 @@ import { SupabaseService } from '@core/services/supabase.service';
 import { SessionService } from '@core/services/session.service';
 import { LoggerService } from '@core/services/logger.service';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
+import { FeedbackService } from '@core/services/feedback.service';
 import { TourService } from '@core/services/tour.service';
 import { GalleryPhoto, Photo } from '@core/models/photo';
 import { DEFAULT_EVENT_KEY } from '@core/constants';
@@ -23,6 +24,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly sessionService = inject(SessionService);
   private readonly logger = inject(LoggerService);
   readonly photoLimitService = inject(PhotoLimitService);
+  private readonly feedbackService = inject(FeedbackService);
   private readonly tourService = inject(TourService);
 
   /** This device's ID — used for ownership checks */
@@ -158,6 +160,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.triggerGalleryUpload();
       }
     } else {
+      this.feedbackService.triggerWarning();
       this.showLimitModal.set(true);
     }
   }
@@ -189,6 +192,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   /** Switch the active tab */
   setTab(tab: 'global' | 'personal'): void {
     this.activeTab.set(tab);
+    this.feedbackService.triggerButtonPress();
   }
 
   // Gallery Upload Logic
@@ -225,6 +229,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.isConfirmingDelete.set(false);
     this.isDeleting.set(false);
     this.isDownloading.set(false);
+    this.feedbackService.triggerButtonPress();
   }
 
   /** Close the full-screen photo viewer */
@@ -245,6 +250,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const photos = this.globalPhotos();
     if (!photos.length) return;
     const newIndex = (this.selectedPhotoIndex() + direction + photos.length) % photos.length;
+    this.feedbackService.triggerButtonPress();
     if (this.navTimeoutId) clearTimeout(this.navTimeoutId);
     this.viewerPhotoVisible.set(false);
     this.navTimeoutId = setTimeout(() => {
@@ -314,6 +320,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
       // Recover a photo slot
       this.photoLimitService.incrementCount();
+
+      this.feedbackService.triggerSuccess();
 
       // Close the overlay
       this.closeViewer();
