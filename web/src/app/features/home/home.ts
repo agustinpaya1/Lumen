@@ -6,7 +6,9 @@ import { SupabaseService } from '@core/services/supabase.service';
 import { SessionService } from '@core/services/session.service';
 import { LoggerService } from '@core/services/logger.service';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
+import { TourService } from '@core/services/tour.service';
 import { GalleryPhoto, Photo } from '@core/models/photo';
+import { DEFAULT_EVENT_KEY } from '@core/constants';
 
 @Component({
   selector: 'app-home',
@@ -21,6 +23,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly sessionService = inject(SessionService);
   private readonly logger = inject(LoggerService);
   readonly photoLimitService = inject(PhotoLimitService);
+  private readonly tourService = inject(TourService);
 
   /** This device's ID — used for ownership checks */
   readonly myDeviceId = signal(this.sessionService.getDeviceId());
@@ -83,6 +86,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     await this.loadPhotos();
     this.setupRealtimeSubscription();
+    // Demo mode (no ?e= param → event_key resolves to 'demo'): run the
+    // one-time guided tour. maybeStart() no-ops if it already ran or is active,
+    // so navigating back here mid-tour (step 5) won't restart it.
+    this.tourService.maybeStart(this.sessionService.getStoredEventKey() === DEFAULT_EVENT_KEY);
   }
 
   ngOnDestroy(): void {
