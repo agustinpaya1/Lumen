@@ -524,12 +524,52 @@ $transition-base: all 0.3s ease;
     justify-content: center;
     overflow: hidden;
     padding: 0 $spacing-unit * 0.5;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    padding: 0 $spacing-unit * 0.5;
     min-height: 0; // critical for flex shrink
     flex-direction: column; // Stack image and caption
+    transition: opacity 150ms ease;
+
+    &--hidden {
+        opacity: 0;
+    }
+}
+
+// Navigation arrows — hidden on mobile, shown on desktop
+.viewer-nav-btn {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: $rounded-full;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.28);
+    }
+
+    &:active {
+        background: rgba(255, 255, 255, 0.35);
+    }
+
+    @media (min-width: 640px) {
+        display: flex;
+    }
+}
+
+.viewer-nav-btn--prev {
+    left: $spacing-unit;
+}
+
+.viewer-nav-btn--next {
+    right: $spacing-unit;
 }
 
 .viewer-caption {

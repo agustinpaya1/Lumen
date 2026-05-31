@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy, viewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, viewChild, ElementRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -61,6 +61,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   /** Currently selected photo for full-screen viewer */
   readonly selectedPhoto = signal<GalleryPhoto | null>(null);
+
+  /** Index of selectedPhoto in globalPhotos() */
+  readonly selectedPhotoIndex = signal<number>(0);
+
+  /** Controls opacity fade when navigating between photos */
+  readonly viewerPhotoVisible = signal<boolean>(true);
+
+  private touchStartX = 0;
+  private navTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   /** Whether delete confirmation is showing */
   readonly isConfirmingDelete = signal<boolean>(false);
@@ -202,6 +211,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   /** Open the full-screen photo viewer */
   openViewer(photo: GalleryPhoto): void {
+    const index = this.globalPhotos().findIndex(p => p.id === photo.id);
+    this.selectedPhotoIndex.set(index >= 0 ? index : 0);
+    this.viewerPhotoVisible.set(true);
     this.selectedPhoto.set(photo);
     this.isConfirmingDelete.set(false);
     this.isDeleting.set(false);
@@ -210,10 +222,49 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   /** Close the full-screen photo viewer */
   closeViewer(): void {
+    if (this.navTimeoutId) {
+      clearTimeout(this.navTimeoutId);
+      this.navTimeoutId = null;
+    }
     this.selectedPhoto.set(null);
+    this.viewerPhotoVisible.set(true);
     this.isConfirmingDelete.set(false);
     this.isDeleting.set(false);
     this.isDownloading.set(false);
+  }
+
+  /** Navigate to the next (1) or previous (-1) photo with an opacity fade */
+  navigatePhoto(direction: 1 | -1): void {
+    const photos = this.globalPhotos();
+    if (!photos.length) return;
+    const newIndex = (this.selectedPhotoIndex() + direction + photos.length) % photos.length;
+    if (this.navTimeoutId) clearTimeout(this.navTimeoutId);
+    this.viewerPhotoVisible.set(false);
+    this.navTimeoutId = setTimeout(() => {
+      this.navTimeoutId = null;
+      this.selectedPhotoIndex.set(newIndex);
+      this.selectedPhoto.set(photos[newIndex]);
+      this.isConfirmingDelete.set(false);
+      this.viewerPhotoVisible.set(true);
+    }, 150);
+  }
+
+  @HostListener('keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.selectedPhoto()) return;
+    if (event.key === 'ArrowLeft') this.navigatePhoto(-1);
+    if (event.key === 'ArrowRight') this.navigatePhoto(1);
+  }
+
+  onTouchStart(event: TouchEvent): void {
+    this.touchStartX = event.touches[0].clientX;
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    const deltaX = event.changedTouches[0].clientX - this.touchStartX;
+    if (Math.abs(deltaX) > 50) {
+      this.navigatePhoto(deltaX < 0 ? 1 : -1);
+    }
   }
 
   /** Download the selected photo using blob fetch (mobile-safe) */

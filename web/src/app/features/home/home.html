@@ -160,7 +160,8 @@
 
 @let viewerPhoto = selectedPhoto();
 @if (viewerPhoto) {
-<div class="photo-viewer-overlay" (click)="closeViewer()">
+<div class="photo-viewer-overlay" (click)="closeViewer()"
+    (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
 
     <!-- Top Bar -->
     <div class="viewer-top-bar">
@@ -173,8 +174,27 @@
         </button>
     </div>
 
+    <!-- Nav arrows (desktop only) -->
+    <button class="viewer-nav-btn viewer-nav-btn--prev"
+        (click)="$event.stopPropagation(); navigatePhoto(-1)"
+        aria-label="Foto anterior">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+    </button>
+    <button class="viewer-nav-btn viewer-nav-btn--next"
+        (click)="$event.stopPropagation(); navigatePhoto(1)"
+        aria-label="Foto siguiente">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    </button>
+
     <!-- Full-Size Photo -->
-    <div class="viewer-photo-wrapper" (click)="$event.stopPropagation()">
+    <div class="viewer-photo-wrapper" [class.viewer-photo-wrapper--hidden]="!viewerPhotoVisible()"
+        (click)="$event.stopPropagation()">
         <img [src]="viewerPhoto.publicUrl" [alt]="viewerPhoto.event_id || 'Foto'" class="viewer-photo" />
         @if (viewerPhoto.event_id && viewerPhoto.event_id !== 'gallery-upload') {
         <p class=”viewer-caption”>”{{ viewerPhoto.event_id }}”</p>
