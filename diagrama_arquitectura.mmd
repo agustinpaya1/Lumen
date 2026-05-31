@@ -1,0 +1,83 @@
+flowchart TB
+    subgraph CLIENTE["📱 Cliente — Angular 21 en navegador del invitado"]
+        direction TB
+        QR["📷 Escaneo QR<br/>Invitado accede a la app"]
+        ONBOARD["🎉 Onboarding<br/>Pantalla de bienvenida<br/>Primera visita"]
+        CAM["📸 Camara del dispositivo<br/>MediaDevices API<br/>Resolucion: hasta 1920x1080<br/>Flash, grid, flip"]
+        CANVAS["🖼️ Captura de frame<br/>Canvas API<br/>Calidad JPEG 95%"]
+        COMP["⚡ Compresion client-side<br/>browser-image-compression<br/>5-12 MB → max 1 MB<br/>Web Worker — no bloquea UI"]
+        PREVIEW["👁️ Preview Polaroid<br/>Dedicatoria opcional<br/>Signal Forms"]
+        FEEDBACK["🔔 Feedback multisensorial<br/>Vibracion haptica<br/>Sonido de obturador<br/>Flash visual"]
+        LOCAL["💾 localStorage<br/>device_id UUID anonimo<br/>photos_remaining 10<br/>hasSeenTutorial"]
+        GALLERY["🖼️ Galeria en vivo<br/>Tab global + Tab personal<br/>Viewer con descarga"]
+
+        QR --> ONBOARD
+        ONBOARD --> CAM
+        CAM --> CANVAS
+        CANVAS --> COMP
+        COMP --> PREVIEW
+        CAM -.-> FEEDBACK
+        ONBOARD -.-> LOCAL
+    end
+
+    subgraph SUPABASE["☁️ Supabase — Backend-as-a-Service"]
+        direction TB
+        subgraph POSTGRES["🐘 PostgreSQL 17.6"]
+            TABLE["Tabla: public.photos<br/>─────────────────────<br/>id: bigint PK<br/>created_at: timestamptz<br/>url: text — path en storage<br/>event_id: text — dedicatoria<br/>device_id: text — UUID anonimo"]
+            RLS["🔒 Row Level Security<br/>INSERT: public<br/>SELECT: public<br/>DELETE: public — admin"]
+        end
+
+        subgraph STORAGE["📦 Supabase Storage"]
+            BUCKET["Bucket: photos<br/>Almacenamiento de objetos<br/>Archivos JPEG comprimidos"]
+            SIGNED["🔗 URLs firmadas<br/>Expiracion: 60 segundos<br/>Para descargas seguras"]
+        end
+
+        subgraph REALTIME_SVC["⚡ Supabase Realtime"]
+            CDC["Change Data Capture<br/>PostgreSQL WAL"]
+            CH1["Canal: photos_realtime<br/>Eventos: INSERT<br/>Destino: Panel admin"]
+            CH2["Canal: home:photos<br/>Eventos: INSERT + DELETE<br/>Destino: Galeria invitados"]
+        end
+
+        TABLE --> RLS
+        TABLE --> CDC
+        CDC --> CH1
+        CDC --> CH2
+        BUCKET --> SIGNED
+    end
+
+    subgraph ADMIN["🔐 Panel de Administracion"]
+        PIN["Acceso por PIN: 4 digitos<br/>Session storage"]
+        DASH["Dashboard admin<br/>Ver todas las fotos<br/>Eliminar fotos<br/>Descargar fotos"]
+        PIN --> DASH
+    end
+
+    subgraph DEPLOY["🌐 Vercel — Despliegue"]
+        CDN["CDN Global<br/>HTTPS obligatorio — camara<br/>SPA rewrites → index.html"]
+        CICD["Deploy automatico<br/>Push a main → produccion"]
+    end
+
+    %% Flujo principal
+    PREVIEW -->|"1. Upload con retry<br/>3 intentos — backoff 1s,2s,4s"| BUCKET
+    BUCKET -.->|"2. Path del archivo"| TABLE
+    PREVIEW -->|"3. Insert metadata<br/>+ dedicatoria"| TABLE
+
+    %% Realtime
+    CH2 -->|"WebSocket push<br/>Foto nueva aparece al instante"| GALLERY
+    CH1 -->|"WebSocket push"| DASH
+
+    %% Admin
+    DASH -->|"Delete foto<br/>Storage + DB"| BUCKET
+    DASH -->|"Delete registro"| TABLE
+    DASH -->|"Descarga via URL firmada"| SIGNED
+
+    %% Deploy
+    CDN -->|"Sirve SPA Angular"| QR
+
+    %% Estilos
+    style CLIENTE fill:#1a1a2e,stroke:#e94560,color:#fff
+    style SUPABASE fill:#1a1a2e,stroke:#3ecf8e,color:#fff
+    style ADMIN fill:#1a1a2e,stroke:#f5a623,color:#fff
+    style DEPLOY fill:#1a1a2e,stroke:#0070f3,color:#fff
+    style POSTGRES fill:#0d1117,stroke:#3ecf8e,color:#fff
+    style STORAGE fill:#0d1117,stroke:#3ecf8e,color:#fff
+    style REALTIME_SVC fill:#0d1117,stroke:#3ecf8e,color:#fff

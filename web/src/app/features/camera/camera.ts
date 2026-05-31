@@ -2,14 +2,14 @@ import { Component, signal, computed, viewChild, ElementRef, inject, OnDestroy, 
 import { form, FormField } from '@angular/forms/signals';
 import { CommonModule } from '@angular/common';
 import imageCompression from 'browser-image-compression';
-import { PhotoLimitService } from '../../core/services/photo-limit.service';
-import { SupabaseService } from '../../core/services/supabase';
-import { FeedbackService } from '../../core/services/feedback.service';
+import { PhotoLimitService } from '@core/services/photo-limit.service';
+import { SupabaseService } from '@core/services/supabase.service';
+import { FeedbackService } from '@core/services/feedback.service';
+import { LoggerService } from '@core/services/logger.service';
+import { triggerBrowserDownload } from '@core/utils/download';
 import { Router } from '@angular/router';
 
-// ──────────────────────────────────────────────
 // State Machine — 5 stable states (no editor)
-// ──────────────────────────────────────────────
 type CameraState = 'viewfinder' | 'preview' | 'uploading' | 'success';
 
 interface DedicationModel {
@@ -23,22 +23,17 @@ interface DedicationModel {
   styleUrl: './camera.scss',
 })
 export class CameraComponent implements OnInit, OnDestroy {
-  // ──────────────────────────────────────────
   // Services
-  // ──────────────────────────────────────────
   readonly photoLimitService = inject(PhotoLimitService);
   readonly feedbackService = inject(FeedbackService);
   private readonly supabaseService = inject(SupabaseService);
   private readonly router = inject(Router);
+  private readonly logger = inject(LoggerService);
 
-  // ──────────────────────────────────────────
   // View children
-  // ──────────────────────────────────────────
   readonly videoElement = viewChild<ElementRef<HTMLVideoElement>>('videoRef');
 
-  // ──────────────────────────────────────────
   // Core state signals
-  // ──────────────────────────────────────────
   readonly currentState = signal<CameraState>('viewfinder');
   readonly errorMessage = signal<string | null>(null);
   readonly uploadProgress = signal<number>(0);
@@ -55,9 +50,7 @@ export class CameraComponent implements OnInit, OnDestroy {
   /** Whether the photo in preview originated from a gallery upload */
   readonly isFromGallery = signal<boolean>(false);
 
-  // ──────────────────────────────────────────
   // Camera Controls (Grid & Flash)
-  // ──────────────────────────────────────────
 
   /** Whether the Rule of Thirds 3×3 grid overlay is visible */
   readonly showGrid = signal<boolean>(false);
@@ -68,9 +61,7 @@ export class CameraComponent implements OnInit, OnDestroy {
   /** Whether the white screen flash overlay is currently active */
   readonly isFlashing = signal<boolean>(false);
 
-  // ──────────────────────────────────────────
   // Photo signals
-  // ──────────────────────────────────────────
 
   /** Raw photo blob captured from viewfinder */
   readonly rawPhotoBlob = signal<Blob | null>(null);
@@ -81,26 +72,18 @@ export class CameraComponent implements OnInit, OnDestroy {
     return blob ? URL.createObjectURL(blob) : null;
   });
 
-  // ──────────────────────────────────────────
   // Media stream
-  // ──────────────────────────────────────────
   private mediaStream: MediaStream | null = null;
 
-  // ──────────────────────────────────────────
   // Signal Form for dedication text
-  // ──────────────────────────────────────────
   private readonly dedicationModel = signal<DedicationModel>({ dedication: '' });
   readonly dedicationForm = form(this.dedicationModel);
 
-  // ──────────────────────────────────────────
   // Computed signals
-  // ──────────────────────────────────────────
   readonly isLimitReached = computed(() => this.photoLimitService.photosLeft() === 0);
   readonly canProceed = computed(() => this.photoLimitService.canTakePhoto());
 
-  // ──────────────────────────────────────────
   // Beforeunload handler reference
-  // ──────────────────────────────────────────
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
 
   constructor() {
@@ -137,9 +120,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     return 'text-red-400';
   }
 
-  // ============================================================
   // DEVICE & LIFECYCLE
-  // ============================================================
 
   /** Detect iOS / Android / unknown for permission helper UI */
   private detectDevicePlatform(): void {
@@ -167,16 +148,15 @@ export class CameraComponent implements OnInit, OnDestroy {
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
   }
 
-  // ============================================================
   // CAMERA ACCESS (with constraint fallback)
-  // ============================================================
 
   async startCamera(): Promise<void> {
     // Attempt to lock orientation to portrait (silently ignored on iOS)
     try {
       await (screen.orientation as any).lock('portrait');
-    } catch {
-      // Normal on iOS and desktop — orientation lock not supported
+    } catch (error) {
+      // Normal on iOS and desktop — orientation lock is not supported there.
+      this.logger.debug('Orientation lock not supported:', error);
     }
 
     try {
@@ -198,7 +178,7 @@ export class CameraComponent implements OnInit, OnDestroy {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
       } catch (innerError) {
         if (innerError instanceof Error && innerError.name === 'OverconstrainedError') {
-          console.warn('1920x1080 not supported, falling back to 1280x720');
+          this.logger.warn('1920x1080 not supported, falling back to 1280x720');
           constraints = {
             video: {
               facingMode: this.facingMode(),
@@ -211,7 +191,7 @@ export class CameraComponent implements OnInit, OnDestroy {
             stream = await navigator.mediaDevices.getUserMedia(constraints);
           } catch (fallbackError) {
             if (fallbackError instanceof Error && fallbackError.name === 'OverconstrainedError') {
-              console.warn('1280x720 not supported, using generic video constraints');
+              this.logger.warn('1280x720 not supported, using generic video constraints');
               constraints = {
                 video: { facingMode: this.facingMode() },
                 audio: false
@@ -236,11 +216,11 @@ export class CameraComponent implements OnInit, OnDestroy {
           video.srcObject = stream;
           video.play();
         } else {
-          console.error('Video element not found after state change');
+          this.logger.error('Video element not found after state change');
         }
       }, 100);
     } catch (error) {
-      console.error('Camera access error:', error);
+      this.logger.error('Camera access error:', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
           this.permissionHelperVisible.set(true);
@@ -297,9 +277,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     this.flipCamera();
   }
 
-  // ============================================================
   // CAMERA CONTROLS (Grid & Flash)
-  // ============================================================
 
   /** Toggle the 3×3 rule-of-thirds grid overlay */
   toggleGrid(): void {
@@ -319,8 +297,8 @@ export class CameraComponent implements OnInit, OnDestroy {
           advanced: [{ torch: newMode === 'on' } as any]
         });
       } catch (err) {
-        console.warn('Hardware flash not supported:', err);
-        // Keep flashMode as 'on' — software screen flash will be used
+        // Keep flashMode as 'on' — the software screen flash will be used instead.
+        this.logger.warn('Hardware flash not supported:', err);
       }
     }
   }
@@ -333,15 +311,14 @@ export class CameraComponent implements OnInit, OnDestroy {
         await track.applyConstraints({
           advanced: [{ torch: false } as any]
         });
-      } catch {
-        // Silently ignore — torch may not be supported
+      } catch (error) {
+        // Torch may not be supported — nothing actionable, just trace it.
+        this.logger.debug('Could not turn off hardware torch:', error);
       }
     }
   }
 
-  // ============================================================
   // CAPTURE — viewfinder → preview (DIRECT, no editor)
-  // ============================================================
 
   /**
    * Capture the current video frame and transition DIRECTLY to preview.
@@ -395,9 +372,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     }, 'image/jpeg', 0.95);
   }
 
-  // ============================================================
   // PREVIEW — download & upload
-  // ============================================================
 
   /**
    * Download the raw photo to the user's device.
@@ -408,12 +383,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     if (!blob) return;
 
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'lumen-photo.jpg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    triggerBrowserDownload(url, 'lumen-photo.jpg');
 
     // Cleanup the object URL after a short delay
     setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -433,9 +403,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ============================================================
   // UPLOAD — with compression & retry
-  // ============================================================
 
   async uploadPhoto(): Promise<void> {
     const rawBlob = this.rawPhotoBlob();
@@ -513,7 +481,7 @@ export class CameraComponent implements OnInit, OnDestroy {
       }, 1200);
 
     } catch (error) {
-      console.error('Upload error:', error);
+      this.logger.error('Upload error:', error);
       this.isUploading.set(false);
       this.retryMessage.set(null);
       this.errorMessage.set(
@@ -529,9 +497,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     this.uploadPhoto();
   }
 
-  // ============================================================
   // INTERNAL HELPERS
-  // ============================================================
 
   /** Stop the camera media stream */
   private stopCamera(): void {

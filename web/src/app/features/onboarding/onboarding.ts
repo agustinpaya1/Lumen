@@ -1,40 +1,41 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { SupabaseService } from '../../core/services/supabase';
+import { SessionService } from '@core/services/session.service';
+import { TUTORIAL_SEEN_KEY } from '@core/constants';
 
 @Component({
-    selector: 'app-onboarding',
-    standalone: true,
-    templateUrl: './onboarding.html',
-    styleUrl: './onboarding.scss',
+  selector: 'app-onboarding',
+  standalone: true,
+  templateUrl: './onboarding.html',
+  styleUrl: './onboarding.scss',
 })
 export class OnboardingComponent implements OnInit, OnDestroy {
-    private readonly router = inject(Router);
-    private readonly supabaseService = inject(SupabaseService);
-    private autoNavTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly router = inject(Router);
+  private readonly sessionService = inject(SessionService);
+  private autoNavTimer: ReturnType<typeof setTimeout> | null = null;
 
-    ngOnInit(): void {
-        if (localStorage.getItem('hasSeenTutorial') === 'true') {
-            this.router.navigate(['/home']);
-            return;
-        }
+  ngOnInit(): void {
+    if (localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true') {
+      this.router.navigate(['/home']);
+      return;
     }
+  }
 
-    ngOnDestroy(): void {
-        if (this.autoNavTimer) {
-            clearTimeout(this.autoNavTimer);
-            this.autoNavTimer = null;
-        }
+  ngOnDestroy(): void {
+    if (this.autoNavTimer) {
+      clearTimeout(this.autoNavTimer);
+      this.autoNavTimer = null;
     }
+  }
 
-    goToApp(): void {
-        if (this.autoNavTimer) {
-            clearTimeout(this.autoNavTimer);
-            this.autoNavTimer = null;
-        }
-        localStorage.setItem('hasSeenTutorial', 'true');
-        this.supabaseService.getDeviceId();
-
-        this.router.navigate(['/home']);
+  goToApp(): void {
+    if (this.autoNavTimer) {
+      clearTimeout(this.autoNavTimer);
+      this.autoNavTimer = null;
     }
+    localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+    this.sessionService.getDeviceId();
+
+    this.router.navigate(['/home']);
+  }
 }

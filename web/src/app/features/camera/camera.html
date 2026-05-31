@@ -69,12 +69,7 @@
   </div>
   }
 
-  <!-- ════════════════════════════════════════════ -->
-  <!-- STATE 1: Viewfinder (Active Camera)          -->
-  <!-- ════════════════════════════════════════════ -->
-  <!-- ════════════════════════════════════════════ -->
-  <!-- STATE 1: Viewfinder (Active Camera)          -->
-  <!-- ════════════════════════════════════════════ -->
+  <!-- STATE 1: Viewfinder (Active Camera) -->
   @if (state === 'viewfinder') {
   <div class="state-viewfinder">
 
@@ -149,9 +144,7 @@
   </div>
   }
 
-  <!-- ════════════════════════════════════════════ -->
-  <!-- STATE 3: Preview (CSS Polaroid Card)         -->
-  <!-- ════════════════════════════════════════════ -->
+  <!-- STATE 3: Preview (CSS Polaroid Card) -->
   @if (state === 'preview' && rawUrl) {
   <div class="state-preview">
 
@@ -214,9 +207,7 @@
   </div>
   }
 
-  <!-- ════════════════════════════════════════════ -->
-  <!-- STATE 4: Uploading                           -->
-  <!-- ════════════════════════════════════════════ -->
+  <!-- STATE 4: Uploading -->
   @if (state === 'uploading') {
   <div class="state-uploading">
     <div class="card upload-card">
@@ -243,9 +234,7 @@
   </div>
   }
 
-  <!-- ════════════════════════════════════════════ -->
-  <!-- STATE 5: Success                             -->
-  <!-- ════════════════════════════════════════════ -->
+  <!-- STATE 5: Success -->
   @if (state === 'success') {
   <div class="state-success">
     <div class="success-minimal">
@@ -260,9 +249,7 @@
   }
 </div>
 
-<!-- ================================ -->
-<!-- Software Screen Flash Overlay    -->
-<!-- ================================ -->
+<!-- Software Screen Flash Overlay -->
 
 @if (isFlashing()) {
 <div class="screen-flash"></div>
