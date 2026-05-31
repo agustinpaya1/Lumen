@@ -1,14 +1,14 @@
 /**
  * A photo row as stored in the Supabase `photos` table.
  *
- * `event_id` is a legacy column name that actually holds the guest's free-text
- * dedication; `event_key` is the value that scopes a photo to a given event.
+ * `dedication` holds the guest's optional free-text dedication;
+ * `event_key` is the value that scopes a photo to a given event.
  */
 export interface Photo {
   id: number;
   url: string;
-  /** Free-text dedication written by the guest (legacy column name). */
-  event_id: string;
+  /** Free-text dedication written by the guest (optional). */
+  dedication: string | null;
   device_id: string;
   event_key: string;
   created_at: string;

@@ -115,12 +115,12 @@ export class SupabaseService {
   /**
    * Single insert attempt (no retry) — the primitive wrapped by
    * savePhotoDataWithRetry. Scopes the row to the active event via event_key;
-   * event_id is a legacy column that actually holds the guest's dedication text.
+   * dedication holds the guest's optional free-text dedication.
    */
-  async savePhotoData(url: string, eventId: string) {
+  async savePhotoData(url: string, dedication: string) {
     return this.supabase.from(PHOTOS_TABLE).insert({
       url: url,
-      event_id: eventId,
+      dedication: dedication,
       device_id: this.session.getDeviceId(),
       event_key: this.session.getStoredEventKey(),
       created_at: new Date()
@@ -129,16 +129,16 @@ export class SupabaseService {
 
   /**
    * Saves photo metadata, retrying transient failures with exponential backoff.
-   * @param eventId Free-text dedication written by the guest (legacy column name).
+   * @param dedication Free-text dedication written by the guest (optional).
    * @param onRetry Optional hook for surfacing retry progress in the UI.
    * @returns The successful Supabase insert result.
    */
   async savePhotoDataWithRetry(
     url: string,
-    eventId: string,
+    dedication: string,
     onRetry?: (attemptNumber: number, maxAttempts: number) => void
   ) {
-    return this.withRetry(() => this.savePhotoData(url, eventId), onRetry);
+    return this.withRetry(() => this.savePhotoData(url, dedication), onRetry);
   }
 
   // ADMIN METHODS

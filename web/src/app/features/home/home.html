@@ -61,11 +61,11 @@
         <div class="photo-grid">
             @for (photo of photos; track photo.id) {
             <div class="photo-card" (click)="openViewer(photo)" [attr.data-tour]="$first ? 'photo-card' : null">
-                <img [src]="photo.publicUrl" [alt]="photo.event_id || 'Foto de la boda'" class="photo-thumbnail"
+                <img [src]="photo.publicUrl" [alt]="photo.dedication || 'Foto de la boda'" class="photo-thumbnail"
                     loading="lazy" />
-                @if (photo.event_id) {
+                @if (photo.dedication) {
                 <div class="photo-caption">
-                    <p class="caption-text">{{ photo.event_id }}</p>
+                    <p class="caption-text">{{ photo.dedication }}</p>
                 </div>
                 }
             </div>
@@ -95,11 +95,11 @@
         <div class="photo-grid">
             @for (photo of personal; track photo.id) {
             <div class="photo-card" (click)="openViewer(photo)">
-                <img [src]="photo.publicUrl" [alt]="photo.event_id || 'Mi foto'" class="photo-thumbnail"
+                <img [src]="photo.publicUrl" [alt]="photo.dedication || 'Mi foto'" class="photo-thumbnail"
                     loading="lazy" />
-                @if (photo.event_id) {
+                @if (photo.dedication) {
                 <div class="photo-caption">
-                    <p class="caption-text">{{ photo.event_id }}</p>
+                    <p class="caption-text">{{ photo.dedication }}</p>
                 </div>
                 }
             </div>
@@ -195,9 +195,9 @@
     <!-- Full-Size Photo -->
     <div class="viewer-photo-wrapper" [class.viewer-photo-wrapper--hidden]="!viewerPhotoVisible()"
         (click)="$event.stopPropagation()">
-        <img [src]="viewerPhoto.publicUrl" [alt]="viewerPhoto.event_id || 'Foto'" class="viewer-photo" />
-        @if (viewerPhoto.event_id && viewerPhoto.event_id !== 'gallery-upload') {
-        <p class=”viewer-caption”>”{{ viewerPhoto.event_id }}”</p>
+        <img [src]="viewerPhoto.publicUrl" [alt]="viewerPhoto.dedication || 'Foto'" class="viewer-photo" />
+        @if (viewerPhoto.dedication && viewerPhoto.dedication !== 'gallery-upload') {
+        <p class="viewer-caption">"{{ viewerPhoto.dedication }}"</p>
         }
     </div>
 
