@@ -1,4 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
+import { Howl } from 'howler';
 import { LoggerService } from './logger.service';
 
 /**
@@ -14,104 +15,61 @@ export class FeedbackService {
   // Flash animation state
   readonly flashActive = signal<boolean>(false);
 
-  // Audio elements
-  private shutterSound: HTMLAudioElement | null = null;
-  private successSound: HTMLAudioElement | null = null;
+  private readonly shutterSound = new Howl({
+    src: ['/assets/sounds/shutter.mp3'],
+    volume: 0.7,
+    preload: true,
+  });
 
-  // Base64 encoded audio (short shutter click sound - ~0.1s)
-  private readonly SHUTTER_AUDIO =
-    'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhAC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7kGQAD/AAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+  private readonly successSound = new Howl({
+    src: ['/assets/sounds/success.mp3'],
+    volume: 0.6,
+    preload: true,
+  });
 
-  // Base64 encoded audio (short success chime - ~0.3s)
-  private readonly SUCCESS_AUDIO =
-    'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAAAFVgBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7kGQAD/AAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
-
-  constructor() {
-    this.preloadAudio();
-  }
-
-  /**
-   * Preload audio files for instant playback
-   */
-  private preloadAudio(): void {
-    try {
-      this.shutterSound = new Audio(this.SHUTTER_AUDIO);
-      this.shutterSound.preload = 'auto';
-      this.shutterSound.volume = 0.6;
-
-      this.successSound = new Audio(this.SUCCESS_AUDIO);
-      this.successSound.preload = 'auto';
-      this.successSound.volume = 0.4;
-    } catch (error) {
-      this.logger.warn('Audio preload failed:', error);
-    }
-  }
-
-  /**
-   * Trigger haptic vibration (mobile only)
-   */
-  private vibrate(duration: number = 20): void {
+  // navigator.vibrate() is not supported on iOS Safari — this is an OS
+  // restriction, not a JS limitation. Haptics on iOS require a native wrapper
+  // (Capacitor/Cordova). Calls fail silently; audio feedback covers iOS users.
+  private vibrate(pattern: number | number[]): void {
     if ('vibrate' in navigator) {
       try {
-        navigator.vibrate(duration);
-      } catch (error) {
-        // Silently fail if vibration is not supported
-        this.logger.debug('Vibration not supported:', error);
+        navigator.vibrate(pattern);
+      } catch {
+        // Silently fail — some browsers expose the API but block it
       }
     }
   }
 
-  /**
-   * Play audio with error handling
-   */
-  private playSound(audio: HTMLAudioElement | null): void {
-    if (!audio) return;
-
-    try {
-      // Reset to start if already playing
-      audio.currentTime = 0;
-      audio.play().catch(error => {
-        // Silently fail - user might not have interacted with page yet
-        this.logger.debug('Audio play failed:', error);
-      });
-    } catch (error) {
-      this.logger.debug('Audio playback error:', error);
-    }
-  }
-
-  /**
-   * Trigger camera flash effect
-   */
   private triggerFlash(): void {
     this.flashActive.set(true);
-
-    // Auto-reset after 150ms
-    setTimeout(() => {
-      this.flashActive.set(false);
-    }, 150);
+    setTimeout(() => this.flashActive.set(false), 150);
   }
 
-  /**
-   * Complete shutter feedback: haptic + audio + flash
-   */
+  /** Complete shutter feedback: haptic + audio + flash */
   triggerShutter(): void {
     this.vibrate(20);
-    this.playSound(this.shutterSound);
+    this.shutterSound.play();
     this.triggerFlash();
   }
 
-  /**
-   * Complete success feedback: haptic + audio
-   */
+  /** Complete success feedback: haptic + audio */
   triggerSuccess(): void {
-    this.vibrate(50); // Longer vibration for success
-    this.playSound(this.successSound);
+    this.vibrate(50);
+    this.successSound.play();
   }
 
-  /**
-   * Simple haptic feedback for button presses
-   */
+  /** Simple haptic feedback for button presses */
   triggerButtonPress(): void {
-    this.vibrate(10); // Short, subtle vibration
+    this.vibrate(10);
+  }
+
+  /** Warning haptic for limit or gated actions (vibration only — no audio) */
+  triggerWarning(): void {
+    this.vibrate([50, 50, 50]);
+  }
+
+  /** Error haptic for denied permissions or hard failures (vibration only — no audio) */
+  triggerError(): void {
+    this.vibrate([100, 50, 100]);
   }
 }
