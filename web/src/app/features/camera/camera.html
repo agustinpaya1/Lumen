@@ -26,44 +26,48 @@
         </svg>
       </button>
 
-      <h2 class="heading-small">Camera Access Blocked</h2>
+      <h2 class="heading-small">Acceso a la cámara bloqueado</h2>
 
       @if (devicePlatform() === 'ios') {
       <div class="helper-content">
-        <p class="body-text">To enable camera access on iOS:</p>
+        <p class="body-text">Para habilitar el acceso a la cámara en iOS:</p>
         <ol class="instruction-list">
-          <li>Go to <strong>Settings</strong> app</li>
-          <li>Scroll down and tap <strong>Safari</strong></li>
-          <li>Find <strong>Camera</strong> and select <strong>Allow</strong></li>
-          <li>Return to this page and refresh</li>
+          <li>Ve a la app de <strong>Ajustes</strong></li>
+          <li>Desplázate hacia abajo y pulsa <strong>Safari</strong></li>
+          <li>Busca <strong>Cámara</strong> y selecciona <strong>Permitir</strong></li>
+          <li>Vuelve a esta página y actualízala</li>
         </ol>
         <div class="helper-icon">📱</div>
       </div>
       } @else if (devicePlatform() === 'android') {
       <div class="helper-content">
-        <p class="body-text">To enable camera access on Android:</p>
+        <p class="body-text">Para habilitar el acceso a la cámara en Android:</p>
         <ol class="instruction-list">
-          <li>Tap the <strong>lock icon</strong> in address bar</li>
-          <li>Tap <strong>Permissions</strong></li>
-          <li>Enable <strong>Camera</strong></li>
-          <li>Refresh this page</li>
+          <li>Pulsa el <strong>icono del candado</strong> en la barra de direcciones</li>
+          <li>Pulsa <strong>Permisos</strong></li>
+          <li>Activa la <strong>Cámara</strong></li>
+          <li>Actualiza esta página</li>
         </ol>
         <div class="helper-icon">🤖</div>
       </div>
       } @else {
       <div class="helper-content">
-        <p class="body-text">To enable camera access:</p>
+        <p class="body-text">Para habilitar el acceso a la cámara:</p>
         <ol class="instruction-list">
-          <li>Click the camera icon in your browser's address bar</li>
-          <li>Select "Allow" for camera access</li>
-          <li>Refresh this page</li>
+          <li>Haz clic en el icono de la cámara en la barra de direcciones del navegador</li>
+          <li>Selecciona "Permitir" para el acceso a la cámara</li>
+          <li>Actualiza esta página</li>
         </ol>
         <div class="helper-icon">📷</div>
       </div>
       }
 
       <button class="btn-primary" (click)="dismissPermissionHelper()">
-        Got It
+        Entendido
+      </button>
+
+      <button class="btn-secondary" (click)="goBack()">
+        Volver a la galería
       </button>
     </div>
   </div>
@@ -214,7 +218,7 @@
       <div class="spinner-container">
         <div class="spinner"></div>
       </div>
-      <h2 class="heading-small">Sending Photo</h2>
+      <h2 class="heading-small">Enviando foto</h2>
 
       @if (retryMessage()) {
       <div class="retry-toast">

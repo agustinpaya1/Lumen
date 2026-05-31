@@ -139,7 +139,7 @@ export class CameraComponent implements OnInit, OnDestroy {
   private setupBeforeUnloadHandler(): void {
     this.beforeUnloadHandler = (e: BeforeUnloadEvent) => {
       if (this.isUploading()) {
-        const msg = 'Photo is still uploading! Are you sure you want to leave?';
+        const msg = '¡La foto aún se está subiendo! ¿Seguro que quieres salir?';
         e.preventDefault();
         e.returnValue = msg;
         return msg;
@@ -226,11 +226,11 @@ export class CameraComponent implements OnInit, OnDestroy {
         if (error.name === 'NotAllowedError') {
           this.feedbackService.triggerError();
           this.permissionHelperVisible.set(true);
-          this.errorMessage.set('Camera permission denied. Please follow the instructions below to enable camera access.');
+          this.errorMessage.set('Permiso de cámara denegado. Sigue las instrucciones de abajo para habilitar el acceso a la cámara.');
         } else if (error.name === 'NotFoundError') {
-          this.errorMessage.set('No camera found on this device.');
+          this.errorMessage.set('No se encontró ninguna cámara en este dispositivo.');
         } else {
-          this.errorMessage.set('Failed to access camera. Please try again.');
+          this.errorMessage.set('Error al acceder a la cámara. Por favor, inténtalo de nuevo.');
         }
       }
     }
@@ -331,7 +331,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     const video = this.videoElement()?.nativeElement;
 
     if (!video) {
-      this.errorMessage.set('Camera not ready. Please try again.');
+      this.errorMessage.set('Cámara no preparada. Por favor, inténtalo de nuevo.');
       return;
     }
 
@@ -353,7 +353,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     const ctx = tempCanvas.getContext('2d');
     if (!ctx) {
       this.isFlashing.set(false);
-      this.errorMessage.set('Failed to capture photo. Please try again.');
+      this.errorMessage.set('Error al capturar la foto. Por favor, inténtalo de nuevo.');
       return;
     }
     ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
@@ -443,7 +443,7 @@ export class CameraComponent implements OnInit, OnDestroy {
         compressedFile,
         filepath,
         (attempt, maxAttempts) => {
-          this.retryMessage.set(`Connection weak. Retrying (${attempt}/${maxAttempts})...`);
+          this.retryMessage.set(`Conexión débil. Reintentando (${attempt}/${maxAttempts})...`);
         }
       );
 
@@ -458,7 +458,7 @@ export class CameraComponent implements OnInit, OnDestroy {
         filepath,
         dedication,
         (attempt, maxAttempts) => {
-          this.retryMessage.set(`Saving metadata. Retrying (${attempt}/${maxAttempts})...`);
+          this.retryMessage.set(`Guardando metadatos. Reintentando (${attempt}/${maxAttempts})...`);
         }
       );
 
@@ -487,7 +487,7 @@ export class CameraComponent implements OnInit, OnDestroy {
       this.isUploading.set(false);
       this.retryMessage.set(null);
       this.errorMessage.set(
-        'Failed to upload photo after multiple attempts. Photo is saved locally — tap "Retry Upload" to try again.'
+        'Error al subir la foto tras varios intentos. La foto está guardada localmente — pulsa "Reintentar subida" para volver a intentarlo.'
       );
       this.currentState.set('preview');
     }
