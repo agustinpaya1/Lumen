@@ -176,8 +176,8 @@
     <!-- Full-Size Photo -->
     <div class="viewer-photo-wrapper" (click)="$event.stopPropagation()">
         <img [src]="viewerPhoto.publicUrl" [alt]="viewerPhoto.event_id || 'Foto'" class="viewer-photo" />
-        @if (viewerPhoto.event_id) {
-        <p class="viewer-caption">“{{ viewerPhoto.event_id }}”</p>
+        @if (viewerPhoto.event_id && viewerPhoto.event_id !== 'gallery-upload') {
+        <p class=”viewer-caption”>”{{ viewerPhoto.event_id }}”</p>
         }
     </div>
 
