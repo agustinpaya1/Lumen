@@ -1,9 +1,10 @@
 CREATE TABLE "photos" (
   "id" bigint PRIMARY KEY,
   "created_at" timestamp NOT NULL,
-  "url" text,
-  "event_id" text,
-  "device_id" text
+  "url" text NOT NULL,
+  "dedication" text,
+  "device_id" text NOT NULL,
+  "event_key" text NOT NULL DEFAULT 'demo'
 );
 
 CREATE TABLE "storage_buckets" (

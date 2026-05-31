@@ -31,8 +31,8 @@ where event_key = 'demo'
 
 -- id and created_at are normally DB-managed; created_at is set explicitly here
 -- so the gallery (ordered by created_at desc) shows a believable event timeline.
--- `event_id` is the legacy column name that actually stores the guest dedication.
-insert into public.photos (url, event_id, device_id, event_key, created_at) values
+-- `dedication` stores the guest's optional free-text dedication.
+insert into public.photos (url, dedication, device_id, event_key, created_at) values
   ('demo/lumen-01.jpg', 'Qué noche tan mágica. ¡Felicidades Natacha y Lucas! 🥂',          'demo-seed-ana',    'demo', '2026-05-30T23:42:00+02:00'),
   ('demo/lumen-02.jpg', 'El primer baile como marido y mujer 💃🕺',                          'demo-seed-carlos', 'demo', '2026-05-30T23:15:00+02:00'),
   ('demo/lumen-03.jpg', '¡Vivan los novios! Os deseamos toda la felicidad del mundo ❤️',    'demo-seed-marta',  'demo', '2026-05-30T22:50:00+02:00'),
