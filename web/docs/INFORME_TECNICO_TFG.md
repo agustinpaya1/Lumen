@@ -15,7 +15,6 @@ A continuación se muestra el árbol completo de directorios del proyecto (exclu
 Lumen/
 ├── diagrama_arquitectura.mmd                # Diagrama de flujo/arquitectura en formato Mermaid
 ├── diagrama_er.mmd                          # Diagrama Entidad-Relación en formato Mermaid
-├── lumen_backup.sql                         # Dump SQL completo de la base de datos (PostgreSQL 17.6)
 ├── lumen_dbdiagram.sql                      # Definición DDL compatible con DBdiagram.io
 └── web/                                     # Aplicación Angular 21 (Frontend)
     ├── .browserslistrc                       # Targets de navegadores soportados (iOS >= 14, etc.)
@@ -25,7 +24,7 @@ Lumen/
     ├── knip.json                            # Configuración de Knip para detectar código y CSS huérfano
     ├── package.json                         # Gestión de dependencias npm y scripts de desarrollo/compilación
     ├── tailwind.config.js                  # Configuración de temas, fuentes y estilos de Tailwind CSS
-    ├── tsconfig.json                       # Configuración base del compilador de TypeScript
+    ├── tsconfig.json                       # Configuración base de TypeScript (incluye path aliases @core, @features, @environments)
     ├── tsconfig.app.json                   # Configuración de compilación específica para la aplicación
     ├── tsconfig.spec.json                  # Configuración de TypeScript para la suite de testing
     ├── vercel.json                         # Reglas de enrutamiento y rewrite SPA para Vercel
@@ -36,7 +35,8 @@ Lumen/
     │   ├── settings.json
     │   └── tasks.json
     ├── docs/                                # Documentación de arquitectura y guías operativas
-    │   └── SUPABASE_ADMIN_SETUP.md          # Manual para configurar RLS en Supabase
+    │   ├── SUPABASE_ADMIN_SETUP.md          # Manual para configurar RLS en Supabase
+    │   └── INFORME_TECNICO_TFG.md          # Este documento: informe técnico exhaustivo del TFG
     ├── public/                              # Recursos estáticos servidos directamente
     │   ├── dibujo.png                      # Ilustración de acuarela (portada del onboarding)
     │   ├── favicon.ico                     # Icono de la barra del navegador
@@ -58,22 +58,27 @@ Lumen/
         ├── main.ts                         # Script de inicialización y arranque de Angular (Bootstrap)
         ├── styles.scss                     # Importación y configuración de directivas globales de Tailwind
         ├── environments/                    # Variables de entorno
-        │   ├── environment.ts              # Variables de producción (Supabase URL, Anon Key)
-        │   └── environment.development.ts  # Variables de desarrollo (idénticas para homogeneidad)
+        │   └── environment.ts              # Variables de entorno (Supabase URL, Anon Key, flag production)
         └── app/                             # Arquitectura lógica de Angular
             ├── app.config.ts               # Proveedores globales (Router, ErrorHandler)
             ├── app.html                    # Plantilla base (contiene únicamente <router-outlet>)
             ├── app.routes.ts               # Declaración de rutas y navegación de la SPA
             ├── app.scss                    # Estilos específicos del componente base
-            ├── app.spec.ts                 # Tests unitarios del componente raíz
             ├── app.ts                      # Componente base: detección de in-app browsers
             ├── core/                        # Módulos transversales y core de la app
+            │   ├── constants.ts              # Constantes centralizadas (keys, límites, canales, buckets)
+            │   ├── models/
+            │   │   └── photo.ts             # Interfaces Photo y GalleryPhoto (modelo compartido)
+            │   ├── utils/
+            │   │   └── download.ts          # Utilidad de descarga de archivos via Blob (iOS-safe)
             │   └── services/                # Servicios globales singleton
             │       ├── feedback.service.ts       # Feedback multisensorial (haptics, audio, flash)
-            │       ├── global-error-handler.ts   # Manejador global de errores del runtime
+            │       ├── global-error-handler.service.ts  # Manejador global de errores del runtime
+            │       ├── logger.service.ts         # Fachada de logging silenciada en producción
             │       ├── photo-limit.service.ts    # Control del límite de 10 fotos por dispositivo
-            │       ├── supabase.spec.ts          # Pruebas unitarias de inyección del servicio Supabase
-            │       └── supabase.ts               # Cliente API de base de datos, storage y realtime
+            │       ├── session.service.ts        # Identidad anónima (device_id, event_key)
+            │       ├── supabase.service.ts       # Cliente API de base de datos, storage y realtime
+            │       └── supabase.spec.ts          # Pruebas unitarias de inyección del servicio Supabase
             └── features/                    # Módulos y vistas principales de la aplicación
                 ├── admin/                   # Panel de administración protegido por PIN
                 │   ├── admin.html
@@ -96,10 +101,12 @@ Lumen/
 
 ### Propósito de las Carpetas y Archivos Clave
 
-- **`/web/src/app/core/services/`**: Aloja la lógica dura de infraestructura. Todos los componentes consumen el estado y los métodos expuestos aquí. Garantiza un desacoplamiento limpio de las APIs del navegador y de Supabase.
+- **`/web/src/app/core/`**: Aloja la lógica dura de infraestructura. Incluye servicios singleton, constantes centralizadas, modelos de datos tipados y utilidades compartidas. Todos los componentes consumen el estado y los métodos expuestos aquí. Garantiza un desacoplamiento limpio de las APIs del navegador y de Supabase.
+- **`/web/src/app/core/constants.ts`**: Fuente única de verdad para valores reutilizados: claves de localStorage, límites de fotos, tiempos de retry, nombres de canales realtime y nombres de buckets de almacenamiento.
+- **`/web/src/app/core/models/photo.ts`**: Define las interfaces `Photo` y `GalleryPhoto` como modelo de datos compartido, eliminando la necesidad de `any` en la capa de datos.
+- **`/web/src/app/core/utils/download.ts`**: Utilidad centralizada para descargas de archivos en el navegador. Resuelve los problemas de compatibilidad con Safari/iOS usando la técnica de crear un `<a>` temporal con un `Blob URL`.
 - **`/web/src/app/features/`**: Contiene las pantallas autocontenidas de la aplicación mediante la aproximación *Standalone Components* de Angular. Cada feature agrupa su lógica (`.ts`), plantilla (`.html`) y estilos locales (`.scss`).
 - **`diagrama_arquitectura.mmd` y `diagrama_er.mmd`**: Archivos de documentación viva basados en Mermaid que permiten renderizar visualmente el flujo de datos del sistema y el modelo relacional respectivamente.
-- **`lumen_backup.sql`**: Respaldo completo del backend del sistema que contiene la estructura PostgreSQL, restricciones, índices, RLS y almacenamiento.
 
 ---
 
@@ -271,14 +278,13 @@ Los servicios core son la columna vertebral arquitectónica del proyecto Lumen. 
 
 ---
 
-### A. SupabaseService (`core/services/supabase.ts`)
-Dispone del envoltorio oficial `@supabase/supabase-js` inicializado mediante las variables de entorno de producción del hosting.
+### A. SupabaseService (`core/services/supabase.service.ts`)
+Dispone del envoltorio oficial `@supabase/supabase-js` inicializado mediante las variables de entorno de producción del hosting. Tras la refactorización, la responsabilidad de identidad de sesión (device_id, event_key) fue extraída a `SessionService`, y la lógica de retry duplicada fue consolidada en un helper genérico `withRetry<T>()`.
 
 #### Métodos Públicos e Interfaces
 
 ```typescript
 // Firma de métodos públicos de SupabaseService
-getDeviceId(): string
 get client(): SupabaseClient
 uploadPhoto(file: File, path: string): Promise<{ data: any; error: any }>
 uploadPhotoWithRetry(
@@ -292,19 +298,25 @@ savePhotoDataWithRetry(
   eventId: string, 
   onRetry?: (attemptNumber: number, maxAttempts: number) => void
 ): Promise<{ data: any; error: any }>
-fetchPhotos(): Promise<any[]>
-subscribeToPhotos(callback: (photo: any) => void): RealtimeChannel
+fetchPhotos(): Promise<Photo[]>
+subscribeToPhotos(callback: (photo: Photo) => void): RealtimeChannel
 deletePhoto(photoId: number, photoPath: string): Promise<void>
 getPhotoDownloadUrl(path: string): Promise<string>
 downloadImageAsBlob(url: string, filename: string): Promise<void>
-fetchMyPhotos(): Promise<any[]>
+fetchMyPhotos(): Promise<Photo[]>
 getPhotoPublicUrl(path: string): string
-fetchAllPhotos(): Promise<any[]>
+fetchAllPhotos(): Promise<Photo[]>
 subscribeToAllPhotos(
-  onInsert: (photo: any) => void, 
-  onDelete: (photo: any) => void
+  onInsert: (photo: Photo) => void, 
+  onDelete: (photo: Photo) => void
 ): RealtimeChannel
 ```
+
+> **Nota**: Todos los métodos que anteriormente retornaban `any[]` ahora retornan `Photo[]`, utilizando la interfaz compartida definida en `core/models/photo.ts`.
+
+#### Helpers Privados Destacables
+- **`withRetry<T>(operation, onRetry?)`**: Helper genérico de reintentos con exponential backoff que consolida la lógica previamente duplicada en `uploadPhotoWithRetry` y `savePhotoDataWithRetry`. Los tiempos de espera y número máximo de intentos están definidos como constantes en `core/constants.ts`.
+- **`photoChangeFilter(event, filter?)`**: Genera la configuración de filtro PostgreSQL para las suscripciones realtime, eliminando duplicación entre `subscribeToPhotos` y `subscribeToAllPhotos`.
 
 #### Operaciones con Supabase en Detalle
 1. **Base de Datos (`public.photos` table)**:
@@ -314,18 +326,18 @@ subscribeToAllPhotos(
    - **Eliminación**: `deletePhoto` realiza una operación `.delete().eq('id', photoId)` sobre el ID primario del registro.
 2. **Almacenamiento (Bucket `photos`)**:
    - **Subida**: `uploadPhoto` ejecuta un almacenamiento binario puro en `uploads/{nombre_archivo}` con tipo MIME adecuado.
-   - **Enlaces Públicos**: `getPhotoPublicUrl` crea de manera síncrona el enlace estático final a través de la API CDN de Supabase (`storage.from('photos').getPublicUrl(path)`).
-   - **Enlaces Seguros**: `getPhotoDownloadUrl` crea de manera asíncrona un enlace firmado seguro de corta duración a través de `storage.from('photos').createSignedUrl(path, 60)` asegurando que las descargas masivas mantengan la integridad del storage.
-   - **Borrado Físico**: `deletePhoto` invoca `storage.from('photos').remove([photoPath])` para liberar el almacenamiento en la nube antes de eliminar el registro en la base de datos PostgreSQL.
+   - **Enlaces Públicos**: `getPhotoPublicUrl` crea de manera síncrona el enlace estático final a través de la API CDN de Supabase (`storage.from(PHOTOS_BUCKET).getPublicUrl(path)`).
+   - **Enlaces Seguros**: `getPhotoDownloadUrl` crea de manera asíncrona un enlace firmado seguro de corta duración a través de `storage.from(PHOTOS_BUCKET).createSignedUrl(path, SIGNED_URL_TTL_SECONDS)` asegurando que las descargas masivas mantengan la integridad del storage.
+   - **Borrado Físico**: `deletePhoto` invoca `storage.from(PHOTOS_BUCKET).remove([photoPath])` para liberar el almacenamiento en la nube antes de eliminar el registro en la base de datos PostgreSQL.
 3. **Tiempo Real (Postgres Changes CDC)**:
-   - **Canal de Administración (`photos_realtime`)**: Se suscribe de forma selectiva a eventos `INSERT` en el esquema público de la tabla `photos`.
-   - **Canal de Galería General (`home:photos`)**: Realiza una escucha bidireccional en tiempo real tanto para inserciones (`INSERT`) de nuevas capturas como para borrados físicos (`DELETE`), disparando las llamadas reactivas asociadas en la galería principal del usuario de forma inmediata.
+   - **Canal de Administración (`ADMIN_PHOTOS_CHANNEL`)**: Se suscribe de forma selectiva a eventos `INSERT` en el esquema público de la tabla `photos`.
+   - **Canal de Galería General (`HOME_PHOTOS_CHANNEL`)**: Realiza una escucha bidireccional en tiempo real tanto para inserciones (`INSERT`) de nuevas capturas como para borrados físicos (`DELETE`), disparando las llamadas reactivas asociadas en la galería principal del usuario de forma inmediata.
 
 #### Patrones de Manejo de Errores y Reintentos
 - **Retry Algorítmico Exponencial (Resiliencia en Bodas)**: 
-  Tanto la subida del binario a almacenamiento (`uploadPhotoWithRetry`) como la inserción en la base de datos (`savePhotoDataWithRetry`) emplean un patrón de reintento robusto basado en **Exponential Backoff** en caso de que ocurra una excepción en la red o Supabase devuelva un objeto `error`. 
-  - **Intentos Máximos**: 3 reintentos.
-  - **Tiempos de Espera**: `1000ms` para el primer reintento, `2000ms` para el segundo, y `4000ms` para el tercero.
+  Tanto la subida del binario a almacenamiento como la inserción en la base de datos emplean el helper genérico `withRetry<T>()` basado en **Exponential Backoff** en caso de que ocurra una excepción en la red o Supabase devuelva un objeto `error`. 
+  - **Intentos Máximos**: `RETRY_MAX_ATTEMPTS` (3 reintentos).
+  - **Tiempos de Espera**: `RETRY_BACKOFF_DELAYS_MS` (`1000ms`, `2000ms`, `4000ms`).
   - **Callback de Feedback**: Permite pasar opcionalmente una función `onRetry` que enlaza el frontend con el proceso de reintento. Esto le muestra al invitado de la boda mensajes dinámicos y tranquilizadores en el visor de progreso (ej: *"Reintentando subida (intento 2 de 3)..."*), evitando que el usuario cierre la aplicación o asuma que la app falló cuando solo fue un microcorte de red debido a la aglomeración de teléfonos en el banquete de bodas.
 
 ---
@@ -340,19 +352,45 @@ Servicio encargado de mejorar significativamente la experiencia del usuario fina
 
 #### Detalles de Implementación y Control de Fallos
 - **Optimización de Audio Base64**: Para evitar latencias de red en el momento del disparo y prevenir problemas de bloqueo de carga, los archivos de sonido del obturador y de la melodía de éxito están **codificados directamente en formato Base64 en código duro** dentro del propio servicio. Se precargan síncronamente al iniciar la app usando objetos `HTMLAudioElement` en memoria.
-- **Resiliencia ante Restricciones del Navegador**: El servicio atrapa cualquier excepción del motor de audio (como las políticas de reproducción automática que bloquean el audio en Safari móvil hasta que no se interactúe con el DOM) y del motor de vibración (`navigator.vibrate` ausente en navegadores de escritorio) mediante bloques `try/catch` vacíos o con `console.debug`. Si un dispositivo no admite vibración o bloquea el sonido, el servicio sigue funcionando perfectamente sin interrumpir el flujo de la aplicación.
+- **Resiliencia ante Restricciones del Navegador**: El servicio atrapa cualquier excepción del motor de audio (como las políticas de reproducción automática que bloquean el audio en Safari móvil hasta que no se interactúe con el DOM) y del motor de vibración (`navigator.vibrate` ausente en navegadores de escritorio) mediante bloques `try/catch` que delegan al `LoggerService`. Si un dispositivo no admite vibración o bloquea el sonido, el servicio sigue funcionando perfectamente sin interrumpir el flujo de la aplicación.
 
 ---
 
-### C. GlobalErrorHandlerService (`core/services/global-error-handler.ts`)
+### C. GlobalErrorHandlerService (`core/services/global-error-handler.service.ts`)
 Impedir en absoluto la aparición de pantallas en blanco del navegador que confundan a los usuarios no técnicos en momentos cruciales del evento.
 
 #### Método Público
 - `handleError(error: any): void`: Método de resolución obligatoria de la interfaz `ErrorHandler` de Angular. Intercepta de forma centralizada cualquier excepción o bug no controlado que ocurra en el hilo principal de ejecución de la aplicación.
 
 #### Mecanismo de Recuperación Extrema
-- Si un error fatal ocurre en el runtime (como un fallo crítico de carga o incompatibilidad de hardware), en lugar de congelar la pantalla o dejar la app en un estado inoperante, el servicio captura la excepción, la registra en la consola y ejecuta un reemplazo masivo del árbol del DOM de bajo nivel: `document.body.innerHTML = <HTML_FALLBACK_UI>`.
+- Si un error fatal ocurre en el runtime (como un fallo crítico de carga o incompatibilidad de hardware), en lugar de congelar la pantalla o dejar la app en un estado inoperante, el servicio captura la excepción, la registra a través del `LoggerService` y ejecuta un reemplazo masivo del árbol del DOM de bajo nivel: `document.body.innerHTML = <HTML_FALLBACK_UI>`.
 - Reemplaza todo el árbol de renderizado del navegador por una elegante landing page estática en español que cuenta con diseño responsive oscuro, tipografía pulida, iconos de advertencia en formato SVG en línea y un mensaje claro y amigable que le indica al invitado que ha ocurrido un error técnico inesperado y le aconseja actualizar el navegador o recargar el enlace abriéndolo directamente desde Safari (en iPhone) o Google Chrome (en Android).
+
+---
+
+### E. SessionService (`core/services/session.service.ts`)
+Servicio extraído de `SupabaseService` para separar las responsabilidades de identidad de sesión y acceso a datos. Posee la identidad anónima por navegador: un device_id estable (usado para atribuir propiedad de fotos) y la clave de evento activa (que delimita el alcance de cada consulta).
+
+#### Métodos Públicos
+- `getDeviceId(): string`: Devuelve un UUID anónimo estable para este navegador. Se genera una vez y se persiste en `localStorage` bajo la clave `DEVICE_ID_KEY`. Si `localStorage` no está disponible (SSR, Safari Private Mode, entornos de test), devuelve un fallback fijo `'ssr-fallback'` sin lanzar excepciones.
+- `getStoredEventKey(): string`: Devuelve la clave del evento activo. Resuelve en orden de prioridad: 1) parámetro URL `?e=<key>`, 2) valor persistido en `localStorage`, 3) constante `DEFAULT_EVENT_KEY` (`'demo'`).
+
+#### Detalles de Implementación
+- **Generación de UUID**: Usa `crypto.randomUUID()` cuando está disponible, con fallback a una implementación RFC4122v4 basada en `Math.random` para navegadores móviles antiguos que carecen de la API `crypto.randomUUID`.
+- **Guard de entorno**: Todas las lecturas de `localStorage` están protegidas con `typeof` checks para prevenir crashes en entornos sin `window` o con `localStorage` bloqueado (Safari Private Mode, Vitest/Node).
+
+---
+
+### F. LoggerService (`core/services/logger.service.ts`)
+Fachada de logging que centraliza todas las llamadas a consola de la aplicación. Permanece silenciosa en builds de producción (no genera ruido en la consola de los invitados) y redirige a la consola del navegador únicamente en desarrollo.
+
+#### Métodos Públicos
+- `error(message: string, ...details: unknown[]): void`: Registra errores. Solo emite en desarrollo.
+- `warn(message: string, ...details: unknown[]): void`: Registra advertencias. Solo emite en desarrollo.
+- `debug(message: string, ...details: unknown[]): void`: Registra información de depuración. Solo emite en desarrollo.
+
+#### Propósito Arquitectónico
+Centralizar el logging permite que en el futuro el sink de salida se pueda reemplazar por un servicio de reporte de errores remoto (como Sentry) sin necesidad de modificar ninguno de los puntos de llamada repartidos por toda la aplicación.
 
 ---
 
