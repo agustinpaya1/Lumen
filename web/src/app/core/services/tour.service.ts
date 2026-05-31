@@ -96,10 +96,9 @@ export class TourService {
   private currentIndex = 0;
   /** Bumped on every step change / teardown to invalidate in-flight async work. */
   private runToken = 0;
-  /** Suppresses the position transition on the very first paint (no glide from 0,0). */
-  private positioned = false;
   private prevBodyOverflow = '';
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
+  private settleTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Overlay DOM — created lazily in start(), removed in teardown().
   private root: HTMLElement | null = null;
@@ -141,7 +140,6 @@ export class TourService {
   start(): void {
     if (this.active || typeof window === 'undefined') return;
     this.active = true;
-    this.positioned = false;
     this.currentIndex = 0;
 
     this.buildOverlay();
@@ -151,8 +149,9 @@ export class TourService {
     window.addEventListener('orientationchange', this.onViewportChange);
 
     void this.showStep(0);
-    // Fade the dimming in once the first step is positioned.
-    requestAnimationFrame(() => this.root?.classList.add('lumen-tour--visible'));
+    // Enable position transitions once the first step is placed. setTimeout (not
+    // rAF) so it still fires when the tab is backgrounded and rAF is paused.
+    setTimeout(() => this.root?.classList.remove('lumen-tour--instant'), 0);
   }
 
   // OVERLAY CONSTRUCTION
@@ -160,7 +159,8 @@ export class TourService {
   private buildOverlay(): void {
     const doc = this.document;
     const root = doc.createElement('div');
-    root.className = 'lumen-tour';
+    // --instant suppresses position transitions until the first step is placed.
+    root.className = 'lumen-tour lumen-tour--instant';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-modal', 'true');
 
@@ -215,6 +215,10 @@ export class TourService {
       clearTimeout(this.pollTimer);
       this.pollTimer = null;
     }
+    if (this.settleTimer) {
+      clearTimeout(this.settleTimer);
+      this.settleTimer = null;
+    }
 
     const step = this.steps[index];
     this.renderContent(step, index);
@@ -240,9 +244,21 @@ export class TourService {
 
     if (target) {
       this.applyTargetPosition(target, step.placement ?? 'bottom');
+      this.scheduleSettle(token);
     } else {
       this.applyCentered();
     }
+  }
+
+  /**
+   * Re-measures a moment after a step is shown: late layout (images decoding or
+   * a change-detection flush) can resize the target after the first measure.
+   */
+  private scheduleSettle(token: number): void {
+    if (this.settleTimer) clearTimeout(this.settleTimer);
+    this.settleTimer = setTimeout(() => {
+      if (this.active && token === this.runToken) this.reposition();
+    }, 350);
   }
 
   private renderContent(step: TourStep, index: number): void {
@@ -289,57 +305,53 @@ export class TourService {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
-    this.paint(() => {
-      const left = this.clamp(rect.left - SPOTLIGHT_PADDING, 4, vw - 4);
-      const top = this.clamp(rect.top - SPOTLIGHT_PADDING, 4, vh - 4);
-      const right = this.clamp(rect.right + SPOTLIGHT_PADDING, 4, vw - 4);
-      const bottom = this.clamp(rect.bottom + SPOTLIGHT_PADDING, 4, vh - 4);
-      this.spotlight!.style.left = `${left}px`;
-      this.spotlight!.style.top = `${top}px`;
-      this.spotlight!.style.width = `${Math.max(right - left, 0)}px`;
-      this.spotlight!.style.height = `${Math.max(bottom - top, 0)}px`;
+    const left = this.clamp(rect.left - SPOTLIGHT_PADDING, 4, vw - 4);
+    const top = this.clamp(rect.top - SPOTLIGHT_PADDING, 4, vh - 4);
+    const right = this.clamp(rect.right + SPOTLIGHT_PADDING, 4, vw - 4);
+    const bottom = this.clamp(rect.bottom + SPOTLIGHT_PADDING, 4, vh - 4);
+    this.spotlight.style.left = `${left}px`;
+    this.spotlight.style.top = `${top}px`;
+    this.spotlight.style.width = `${Math.max(right - left, 0)}px`;
+    this.spotlight.style.height = `${Math.max(bottom - top, 0)}px`;
 
-      const tipW = this.tooltip!.offsetWidth;
-      const tipH = this.tooltip!.offsetHeight;
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
+    const tipW = this.tooltip.offsetWidth;
+    const tipH = this.tooltip.offsetHeight;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
 
-      let tx: number;
-      let ty: number;
-      switch (placement) {
-        case 'top':
-          tx = cx - tipW / 2;
-          ty = rect.top - tipH - TOOLTIP_GAP;
-          break;
-        case 'left':
-          tx = rect.left - tipW - TOOLTIP_GAP;
-          ty = cy - tipH / 2;
-          break;
-        case 'right':
-          tx = rect.right + TOOLTIP_GAP;
-          ty = cy - tipH / 2;
-          break;
-        case 'bottom':
-        default:
-          tx = cx - tipW / 2;
-          ty = rect.bottom + TOOLTIP_GAP;
-          break;
-      }
-      this.tooltip!.style.left = `${this.clamp(tx, VIEWPORT_MARGIN, vw - tipW - VIEWPORT_MARGIN)}px`;
-      this.tooltip!.style.top = `${this.clamp(ty, VIEWPORT_MARGIN, vh - tipH - VIEWPORT_MARGIN)}px`;
-    });
+    let tx: number;
+    let ty: number;
+    switch (placement) {
+      case 'top':
+        tx = cx - tipW / 2;
+        ty = rect.top - tipH - TOOLTIP_GAP;
+        break;
+      case 'left':
+        tx = rect.left - tipW - TOOLTIP_GAP;
+        ty = cy - tipH / 2;
+        break;
+      case 'right':
+        tx = rect.right + TOOLTIP_GAP;
+        ty = cy - tipH / 2;
+        break;
+      case 'bottom':
+      default:
+        tx = cx - tipW / 2;
+        ty = rect.bottom + TOOLTIP_GAP;
+        break;
+    }
+    this.tooltip.style.left = `${this.clamp(tx, VIEWPORT_MARGIN, vw - tipW - VIEWPORT_MARGIN)}px`;
+    this.tooltip.style.top = `${this.clamp(ty, VIEWPORT_MARGIN, vh - tipH - VIEWPORT_MARGIN)}px`;
   }
 
   /** Centers the tooltip and dims the whole screen (used for target-less / loading steps). */
   private applyCentered(): void {
     if (!this.root || !this.tooltip) return;
     this.root.classList.add('lumen-tour--no-target');
-    this.paint(() => {
-      const tipW = this.tooltip!.offsetWidth;
-      const tipH = this.tooltip!.offsetHeight;
-      this.tooltip!.style.left = `${Math.max((window.innerWidth - tipW) / 2, VIEWPORT_MARGIN)}px`;
-      this.tooltip!.style.top = `${Math.max((window.innerHeight - tipH) / 2, VIEWPORT_MARGIN)}px`;
-    });
+    const tipW = this.tooltip.offsetWidth;
+    const tipH = this.tooltip.offsetHeight;
+    this.tooltip.style.left = `${Math.max((window.innerWidth - tipW) / 2, VIEWPORT_MARGIN)}px`;
+    this.tooltip.style.top = `${Math.max((window.innerHeight - tipH) / 2, VIEWPORT_MARGIN)}px`;
   }
 
   private reposition(): void {
@@ -351,23 +363,6 @@ export class TourService {
     } else {
       this.applyCentered();
     }
-  }
-
-  /** Applies a layout mutation, suppressing the CSS transition on the first paint only. */
-  private paint(mutate: () => void): void {
-    if (this.positioned) {
-      mutate();
-      return;
-    }
-    if (this.spotlight) this.spotlight.style.transition = 'none';
-    if (this.tooltip) this.tooltip.style.transition = 'none';
-    mutate();
-    void this.tooltip?.offsetWidth; // force reflow so the next change animates
-    requestAnimationFrame(() => {
-      if (this.spotlight) this.spotlight.style.transition = '';
-      if (this.tooltip) this.tooltip.style.transition = '';
-    });
-    this.positioned = true;
   }
 
   // HELPERS
@@ -414,6 +409,10 @@ export class TourService {
     if (this.pollTimer) {
       clearTimeout(this.pollTimer);
       this.pollTimer = null;
+    }
+    if (this.settleTimer) {
+      clearTimeout(this.settleTimer);
+      this.settleTimer = null;
     }
     this.document.removeEventListener('keydown', this.onKeydown);
     window.removeEventListener('resize', this.onViewportChange);

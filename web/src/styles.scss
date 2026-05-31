@@ -13,12 +13,15 @@
   z-index: 10000;
   pointer-events: none; // children opt back in where interaction is needed
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  opacity: 0;
-  transition: opacity 0.25s ease;
+  // Opaque by default — no JS/animation gate, so the overlay can never get
+  // stuck dim (e.g. on a backgrounded tab where timers/rAF are throttled).
+}
 
-  &--visible {
-    opacity: 1;
-  }
+// First step is placed with transitions off (no glide from 0,0); the service
+// removes --instant once positioned so later steps animate between targets.
+.lumen-tour--instant .lumen-tour__spotlight,
+.lumen-tour--instant .lumen-tour__tooltip {
+  transition: none !important;
 }
 
 // Click/scroll blocker. Transparent while a target is spotlit (the spotlight
