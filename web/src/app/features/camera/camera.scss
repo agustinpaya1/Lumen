@@ -450,7 +450,7 @@ $transition-base: all 0.3s ease;
 
         .shutter-inner {
             transform: scale(0.9);
-            background-color: darken($primary-white, 5%);
+            background-color: color.adjust($primary-white, $lightness: -5%);
         }
     }
 }

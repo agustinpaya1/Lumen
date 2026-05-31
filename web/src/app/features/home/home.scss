@@ -328,7 +328,7 @@ $transition-base: all 0.3s ease;
     color: $text-dark;
 
     &:active {
-        background-color: darken($bg-soft-gray, 5%);
+        background-color: color.adjust($bg-soft-gray, $lightness: -5%);
     }
 }
 
@@ -340,7 +340,7 @@ $transition-base: all 0.3s ease;
     box-shadow: 0 4px 16px rgba($reveal-red, 0.35);
 
     &:active {
-        background-color: darken($reveal-red, 6%);
+        background-color: color.adjust($reveal-red, $lightness: -6%);
         box-shadow: 0 2px 8px rgba($reveal-red, 0.25);
     }
 }
@@ -723,7 +723,7 @@ $transition-base: all 0.3s ease;
     color: #fff;
 
     &:active {
-        background: darken($reveal-red, 8%);
+        background: color.adjust($reveal-red, $lightness: -8%);
     }
 }
 
@@ -879,7 +879,7 @@ $transition-base: all 0.3s ease;
 
     &:active {
         transform: scale(0.96);
-        background-color: darken($reveal-red, 5%);
+        background-color: color.adjust($reveal-red, $lightness: -5%);
     }
 }
 
