@@ -1,441 +1,1597 @@
 [
   {
     "id": "TC001",
-    "title": "Splash screen renders branding and illustration on initial load",
-    "description": "Verifies the onboarding splash screen loads and shows the expected event branding content before any navigation occurs.",
+    "title": "Splash screen renders branding and illustration when consent already given",
+    "description": "After the GDPR consent has been accepted (localStorage 'lumen_consent'='true') and the user has not yet entered the gallery, the OnboardingComponent shows the watercolour illustration, the couple name, and the 'Entrar a la galería' CTA. Consent modal must NOT appear because consent is already stored.",
     "category": "Onboarding Splash Screen",
     "priority": "High",
+    "coverage_note": "Validates the splash-screen branch of onboarding.html (the @else block). Previous TC001 looked for alt='watercolor illustration' (wrong — actual alt is 'Natacha y Lucas') and text 'Enter Gallery' (wrong — actual text is 'Entrar a la galería' in Spanish).",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Remove localStorage key 'hasSeenTutorial' if present"
+      },
       {
         "type": "action",
         "description": "Navigate to /"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"watercolor illustration\" is visible"
+        "description": "Verify element img[alt='Natacha y Lucas'] is visible (watercolour illustration)"
       },
       {
         "type": "assertion",
-        "description": "Verify text \"Enter Gallery\" is visible"
+        "description": "Verify text 'Entrar a la galería' is visible"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"/\""
+        "description": "Verify text 'Natacha y Lucas' is visible (wedding title h1)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains '/'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element with role='dialog' (consent modal) is NOT visible"
       }
     ]
   },
   {
     "id": "TC002",
-    "title": "Manual entry navigates immediately to Home and cancels auto-timer behavior",
-    "description": "Verifies clicking the manual entry button routes to Home without waiting for the full timer.",
+    "title": "Clicking 'Entrar a la galería' navigates to Home gallery",
+    "description": "When the user clicks the splash-screen CTA, goToApp() sets 'hasSeenTutorial'='true', calls getDeviceId(), and routes to /home. The Home screen must show the two tab buttons 'Galería Global' and 'Mis Fotos'.",
     "category": "Onboarding Splash Screen",
     "priority": "High",
+    "coverage_note": "Previous TC002 looked for 'Enter Gallery' (English) and 'Live Gallery' — neither exists. Actual button text is 'Entrar a la galería'; home header shows 'Natacha y Lucas' and photo counter. Also validates that the Angular router transition to /home completes successfully.",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Remove localStorage key 'hasSeenTutorial' if present"
+      },
       {
         "type": "action",
         "description": "Navigate to /"
       },
       {
         "type": "assertion",
-        "description": "Verify text \"Enter Gallery\" is visible"
+        "description": "Verify text 'Entrar a la galería' is visible"
       },
       {
         "type": "action",
-        "description": "Click on \"Enter Gallery\""
+        "description": "Click button containing text 'Entrar a la galería'"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"/home\""
+        "description": "Verify URL contains '/home'"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Live Gallery\" is visible"
+        "description": "Verify button containing text 'Galería Global' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Mis Fotos' is visible"
       }
     ]
   },
   {
     "id": "TC003",
-    "title": "Manual entry still succeeds when Device ID generation is slow (waits before routing)",
-    "description": "Verifies that when initialization takes time, onboarding does not route until ready and then proceeds to Home once complete.",
+    "title": "Returning user (consent + tutorial already seen) is redirected directly to /home",
+    "description": "When both 'lumen_consent'='true' and 'hasSeenTutorial'='true' are in localStorage, OnboardingComponent.proceedAfterConsent() fires on ngOnInit and navigates immediately to /home without showing the splash screen. The user never sees the onboarding splash again.",
     "category": "Onboarding Splash Screen",
     "priority": "Medium",
+    "coverage_note": "Replaces the fictional TC003 ('initializing' state) which tested a state that does not exist in the component. The real regression to guard is the auto-redirect for returning users — if proceedAfterConsent() breaks, returning users get stuck at the splash.",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'hasSeenTutorial' to 'true'"
+      },
       {
         "type": "action",
         "description": "Navigate to /"
       },
       {
-        "type": "action",
-        "description": "Click on \"Enter Gallery\""
+        "type": "assertion",
+        "description": "Verify URL contains '/home'"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"initializing\" is visible"
-      },
-      {
-        "type": "action",
-        "description": "Wait for element \"Live Gallery\" to appear"
+        "description": "Verify button containing text 'Galería Global' is visible"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"/home\""
+        "description": "Verify text 'Entrar a la galería' is NOT visible"
       }
     ]
   },
   {
     "id": "TC004",
-    "title": "Repeated quick taps on Enter Gallery do not cause errors and still end in Home",
-    "description": "Verifies the onboarding flow is resilient to rapid repeated user input on the entry button.",
+    "title": "Rapid double-tap on 'Entrar a la galería' still lands on /home without errors",
+    "description": "Simulates a mobile user who taps the CTA button twice quickly. The router.navigate call is idempotent; the component should not throw errors or show an error state. The final destination must be /home.",
     "category": "Onboarding Splash Screen",
     "priority": "Medium",
+    "coverage_note": "Previous TC004 used wrong English text selectors. The real risk is that goToApp() could race on double-tap. ngOnDestroy clears the autoNavTimer — verified that rapid re-click does not cause double navigation errors.",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Remove localStorage key 'hasSeenTutorial' if present"
+      },
       {
         "type": "action",
         "description": "Navigate to /"
       },
       {
         "type": "assertion",
-        "description": "Verify text \"Enter Gallery\" is visible"
+        "description": "Verify text 'Entrar a la galería' is visible"
       },
       {
         "type": "action",
-        "description": "Click on \"Enter Gallery\""
+        "description": "Click button containing text 'Entrar a la galería'"
       },
       {
         "type": "action",
-        "description": "Click on \"Enter Gallery\""
+        "description": "Click button containing text 'Entrar a la galería' again immediately (second tap)"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"/home\""
+        "description": "Verify URL contains '/home'"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Live Gallery\" is visible"
+        "description": "Verify no error banner or error message is visible on the page"
       }
     ]
   },
   {
     "id": "TC005",
-    "title": "Global to Personal tab switch filters the gallery by Device ID",
-    "description": "Verifies the Home gallery loads global photos and switching to Personal shows only photos tied to the local device.",
+    "title": "Switching between 'Galería Global' and 'Mis Fotos' tabs filters gallery content",
+    "description": "The Home gallery has two tabs: 'Galería Global' (all photos for the event) and 'Mis Fotos' (only this device's photos). Switching tabs updates activeTab signal and shows the correct photo subset or empty-state message.",
     "category": "Live Shared Gallery (Home)",
     "priority": "High",
+    "coverage_note": "Previous TC005 looked for 'Global' and 'Personal' (English) and 'Masonry grid' — none of these exist. Actual tab labels are 'Galería Global' and 'Mis Fotos'. The grid element is .photo-grid (not masonry). The personal tab may show the empty-state 'Aún no has subido ninguna foto' on a fresh device.",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'hasSeenTutorial' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_tour_completed' to 'true'"
+      },
       {
         "type": "action",
         "description": "Navigate to /home"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Global\" tab is visible"
+        "description": "Verify button containing text 'Galería Global' is visible"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Personal\" tab is visible"
+        "description": "Verify button containing text 'Mis Fotos' is visible"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Masonry grid\" is visible"
+        "description": "Verify element with data-tour='gallery' is visible (main content area)"
       },
       {
         "type": "action",
-        "description": "Click on \"Personal\" tab"
+        "description": "Click button containing text 'Mis Fotos'"
       },
       {
         "type": "assertion",
-        "description": "Verify text \"Personal\" is visible"
+        "description": "Verify button containing text 'Mis Fotos' has the active/selected class"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Masonry grid\" is visible"
+        "description": "Verify either .photo-grid or the empty-state text 'Aún no has subido ninguna foto' is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Galería Global'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Galería Global' has the active/selected class"
       }
     ]
   },
   {
     "id": "TC006",
-    "title": "Open a photo to view full-screen modal with caption and actions",
-    "description": "Verifies selecting a photo opens a full photo modal showing the image, dedication/caption, and available action buttons.",
+    "title": "Tapping a photo card opens the full-screen viewer overlay",
+    "description": "Clicking any .photo-card in the gallery calls openViewer() which sets selectedPhoto. The @if(viewerPhoto) overlay renders with the photo, an optional dedication caption, a 'Guardar' download button, and a close button with aria-label='Cerrar'.",
     "category": "Live Shared Gallery (Home)",
     "priority": "High",
+    "coverage_note": "Previous TC006 looked for 'Full photo modal' (not a real CSS class or text), 'Dedication/Capture caption', 'Save/Share' button — none match. Real selectors: .photo-viewer-overlay, .viewer-caption (conditional), aria-label='Cerrar' close button, and 'Guardar' button text. Test requires at least one photo in the demo event gallery.",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'hasSeenTutorial' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_tour_completed' to 'true'"
+      },
       {
         "type": "action",
         "description": "Navigate to /home"
       },
       {
-        "type": "assertion",
-        "description": "Verify element \"Masonry grid\" is visible"
+        "type": "action",
+        "description": "Wait for the gallery to finish loading (wait for .photo-grid or .empty-state to appear)"
       },
       {
         "type": "action",
-        "description": "Click on a photo tile in the masonry grid"
+        "description": "Click the first .photo-card element in the gallery"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Full photo modal\" is visible"
+        "description": "Verify .photo-viewer-overlay is visible"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Dedication/Capture caption\" is visible"
+        "description": "Verify img.viewer-photo inside the overlay is visible"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Save/Share\" button is visible"
+        "description": "Verify button containing text 'Guardar' is visible (download action)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button with aria-label='Cerrar' is visible (close button)"
       }
     ]
   },
   {
     "id": "TC007",
-    "title": "Close full photo modal returns to gallery",
-    "description": "Verifies the user can dismiss the photo modal and return to the masonry grid view.",
+    "title": "Clicking the close button dismisses the photo viewer and returns to gallery",
+    "description": "The close button (aria-label='Cerrar') at the top of the photo viewer calls closeViewer() which sets selectedPhoto to null, hiding the @if overlay and returning to the masonry grid.",
     "category": "Live Shared Gallery (Home)",
     "priority": "Medium",
+    "coverage_note": "Previous TC007 looked for a 'Close' button (English). Actual aria-label is 'Cerrar'. The test also previously failed due to Supabase network timeout before gallery loaded — now includes explicit wait for .photo-grid. Tests the closeViewer() → selectedPhoto(null) → overlay hidden path.",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'hasSeenTutorial' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_tour_completed' to 'true'"
+      },
       {
         "type": "action",
         "description": "Navigate to /home"
       },
       {
         "type": "action",
-        "description": "Click on a photo tile in the masonry grid"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify element \"Full photo modal\" is visible"
+        "description": "Wait for .photo-grid to appear (up to 15 seconds for Supabase to respond)"
       },
       {
         "type": "action",
-        "description": "Click on \"Close\" button in the full photo modal"
+        "description": "Click the first .photo-card element"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Full photo modal\" is not visible"
+        "description": "Verify .photo-viewer-overlay is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button with aria-label='Cerrar'"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Masonry grid\" is visible"
+        "description": "Verify .photo-viewer-overlay is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .photo-grid is visible (returned to gallery)"
       }
     ]
   },
   {
     "id": "TC008",
-    "title": "Delete owned photo with confirmation removes it from the gallery",
-    "description": "Verifies deleting an owned photo via the modal confirmation removes it from the gallery view.",
+    "title": "Delete owned photo: 'Borrar' → 'Sí, borrar' confirmation removes photo from gallery",
+    "description": "The delete button ('Borrar') only renders when photo.device_id === myDeviceId(). After clicking 'Borrar' the confirmation box appears ('¿Seguro que quieres borrarla?'). Clicking 'Sí, borrar' calls executeDelete(), which removes the photo from Supabase and closes the viewer.",
     "category": "Live Shared Gallery (Home)",
     "priority": "High",
+    "coverage_note": "Previous TC008 looked for 'Delete'/'Confirm'/'Deleted' (all English, none correct). Real texts: 'Borrar' (delete trigger), '¿Seguro que quieres borrarla?' (confirm warning), 'Sí, borrar' (confirm CTA), 'Cancelar' (cancel). No 'Deleted' toast exists — the viewer closes and the photo disappears from the grid. Requires seeding lumen_device_id to match an owned photo in the demo event.",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'hasSeenTutorial' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_device_id' to '{{SEEDED_OWNER_DEVICE_ID}}' (a device_id that owns at least one photo in the demo event)"
+      },
       {
         "type": "action",
         "description": "Navigate to /home"
       },
       {
         "type": "action",
-        "description": "Click on an owned photo tile in the masonry grid"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify element \"Delete\" button is visible"
+        "description": "Wait for .photo-grid to appear"
       },
       {
         "type": "action",
-        "description": "Click on \"Delete\" button"
+        "description": "Click a .photo-card that belongs to the seeded device_id"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Confirm deletion\" dialog is visible"
+        "description": "Verify button containing text 'Borrar' is visible (only shows for owned photos)"
       },
       {
         "type": "action",
-        "description": "Click on \"Confirm\" in the deletion dialog"
+        "description": "Click button containing text 'Borrar'"
       },
       {
         "type": "assertion",
-        "description": "Verify text \"Deleted\" is visible"
+        "description": "Verify .viewer-confirm-box is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text '¿Seguro que quieres borrarla?' is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Sí, borrar'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .photo-viewer-overlay is NOT visible (viewer closed after deletion)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the deleted photo no longer appears in the .photo-grid"
       }
     ]
   },
   {
     "id": "TC009",
-    "title": "Cancel delete keeps the photo in the gallery",
-    "description": "Verifies canceling deletion from the confirmation dialog does not remove the photo.",
+    "title": "Canceling delete ('Cancelar') keeps the photo in the viewer",
+    "description": "After clicking 'Borrar' and seeing the confirmation box, clicking 'Cancelar' calls cancelDelete() which sets isConfirmingDelete=false. The viewer remains open showing the same photo and no deletion occurs.",
     "category": "Live Shared Gallery (Home)",
     "priority": "Medium",
+    "coverage_note": "Previous TC009 used 'Cancel' (English) and relied on missing ownership seed. Actual cancel button text is 'Cancelar'. After cancel, the viewer-confirm-box disappears but .photo-viewer-overlay remains visible. Requires the same ownership seed as TC008.",
     "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'hasSeenTutorial' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_device_id' to '{{SEEDED_OWNER_DEVICE_ID}}'"
+      },
       {
         "type": "action",
         "description": "Navigate to /home"
       },
       {
         "type": "action",
-        "description": "Click on an owned photo tile in the masonry grid"
+        "description": "Wait for .photo-grid to appear"
       },
       {
         "type": "action",
-        "description": "Click on \"Delete\" button"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify element \"Confirm deletion\" dialog is visible"
+        "description": "Click a .photo-card belonging to the seeded device_id"
       },
       {
         "type": "action",
-        "description": "Click on \"Cancel\" in the deletion dialog"
+        "description": "Click button containing text 'Borrar'"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Full photo modal\" is visible"
+        "description": "Verify .viewer-confirm-box is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Cancelar'"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Dedication/Capture caption\" is visible"
+        "description": "Verify .photo-viewer-overlay is still visible (photo not deleted)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .viewer-confirm-box is NOT visible (confirmation dismissed)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify img.viewer-photo is still visible"
       }
     ]
   },
   {
     "id": "TC010",
-    "title": "Authenticated admin can open Admin view and see management controls",
-    "description": "Verifies that an authenticated user can access the Admin view and see gallery management controls.",
+    "title": "Admin PIN '2102' unlocks the Photo Dashboard",
+    "description": "The admin route (/admin) shows a PIN entry form — NOT an email/password login. Entering the 4-digit PIN '2102' and clicking 'Unlock Dashboard' authenticates the user, stores the flag in sessionStorage, and renders the Photo Dashboard with a grid of uploaded photos.",
     "category": "Admin View (Gallery Management)",
     "priority": "High",
+    "coverage_note": "Previous TC010 navigated to '/login' (route does not exist — redirects to /home) and used email/password fields. The admin component uses a numeric PIN input ('Enter 4-digit PIN') and 'Unlock Dashboard' button. The dashboard heading is 'Photo Dashboard'. No '/login' route exists in app.routes.ts.",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
-      },
-      {
-        "type": "action",
-        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Click the \"Log in\" button"
+        "description": "Navigate to /admin"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"home\""
+        "description": "Verify text 'Admin Access' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify input with placeholder 'Enter 4-digit PIN' is visible"
       },
       {
         "type": "action",
-        "description": "Click on the \"Admin\" link or menu item"
+        "description": "Type '2102' into the PIN input field"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Unlock Dashboard'"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"admin\""
+        "description": "Verify text 'Photo Dashboard' is visible"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Admin gallery list\" is visible"
+        "description": "Verify button containing text 'Logout' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .dashboard element is visible (admin gallery area)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains '/admin'"
       }
     ]
   },
   {
     "id": "TC011",
-    "title": "Admin can delete a photo and it disappears from the admin list",
-    "description": "Verifies successful deletion flow removes the selected photo from the admin gallery list.",
+    "title": "Admin delete: clicking trash icon → 'Delete' confirmation removes photo from dashboard",
+    "description": "In the authenticated admin dashboard, each photo card has a delete button (.btn-delete). Clicking it shows a modal with 'Delete Photo?' heading. Confirming with the 'Delete' button calls deletePhoto() which removes the photo from Supabase and from the local photos() signal.",
     "category": "Admin View (Gallery Management)",
     "priority": "High",
+    "coverage_note": "Previous TC011 used the wrong auth flow (email/password, /login route). Real flow: PIN '2102' at /admin. After deletion no 'Deleted' toast exists — the photo simply disappears from the grid and photo count decrements. Admin UI text is in English (unlike the guest UI which is in Spanish).",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
+        "description": "Navigate to /admin"
       },
       {
         "type": "action",
-        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
-      },
-      {
-        "type": "action",
-        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Click the \"Log in\" button"
+        "description": "Type '2102' into the PIN input; click 'Unlock Dashboard'"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"home\""
+        "description": "Verify 'Photo Dashboard' is visible"
       },
       {
         "type": "action",
-        "description": "Click on the \"Admin\" link or menu item"
+        "description": "Wait for .photo-grid to load in the dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Note the current number of photo cards in .photo-grid"
+      },
+      {
+        "type": "action",
+        "description": "Click the .btn-delete trash icon on the first photo card"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"admin\""
+        "description": "Verify modal overlay is visible with text 'Delete Photo?'"
       },
       {
         "type": "action",
-        "description": "Click on the first photo item in the admin gallery list"
-      },
-      {
-        "type": "action",
-        "description": "Click the \"Delete\" button"
-      },
-      {
-        "type": "action",
-        "description": "Click the \"Confirm\" button in the deletion confirmation dialog"
+        "description": "Click button containing text 'Delete' in the modal"
       },
       {
         "type": "assertion",
-        "description": "Verify text \"Deleted\" is visible"
+        "description": "Verify the modal overlay is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the photo count in .photo-grid has decreased by 1"
       }
     ]
   },
   {
     "id": "TC012",
-    "title": "Admin delete confirmation can be canceled without removing the photo",
-    "description": "Verifies canceling the delete confirmation keeps the photo in the admin list and no success message is shown.",
+    "title": "Admin cancel delete: clicking 'Cancel' keeps photo in dashboard list",
+    "description": "When the delete confirmation modal is shown, clicking 'Cancel' calls cancelDelete() which sets deleteConfirmId to null, hiding the modal without touching the database. The photo remains in the admin grid.",
     "category": "Admin View (Gallery Management)",
     "priority": "Medium",
+    "coverage_note": "Previous TC012 used wrong auth flow. The admin modal uses English: 'Cancel' and 'Delete'. After canceling, the .modal-overlay disappears and the photo count is unchanged. The dashboard grid (.photo-grid inside .dashboard) must still show the original photo.",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
+        "description": "Navigate to /admin"
       },
       {
         "type": "action",
-        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
-      },
-      {
-        "type": "action",
-        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Click the \"Log in\" button"
-      },
-      {
-        "type": "action",
-        "description": "Click on the \"Admin\" link or menu item"
+        "description": "Type '2102' into the PIN input; click 'Unlock Dashboard'"
       },
       {
         "type": "assertion",
-        "description": "Verify URL contains \"admin\""
+        "description": "Verify 'Photo Dashboard' is visible"
       },
       {
         "type": "action",
-        "description": "Click on the first photo item in the admin gallery list"
+        "description": "Wait for .photo-grid to load"
       },
       {
         "type": "action",
-        "description": "Click the \"Delete\" button"
+        "description": "Note the current number of photo cards"
+      },
+      {
+        "type": "action",
+        "description": "Click the .btn-delete icon on the first photo card"
       },
       {
         "type": "assertion",
-        "description": "Verify text \"Confirm\" is visible"
+        "description": "Verify modal with text 'Delete Photo?' is visible"
       },
       {
         "type": "action",
-        "description": "Click the \"Cancel\" button in the deletion confirmation dialog"
+        "description": "Click button containing text 'Cancel' in the modal"
       },
       {
         "type": "assertion",
-        "description": "Verify element \"Admin gallery list\" is visible"
+        "description": "Verify modal overlay is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the photo count in .photo-grid is unchanged"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "RGPD consent modal appears on first visit (no localStorage)",
+    "description": "When localStorage has no 'lumen_consent' key, OnboardingComponent.ngOnInit sets showConsentModal=true. A bottom-sheet dialog with aria-labelledby='consent-title' appears showing 'Antes de continuar', the privacy explanation, and two action buttons: 'Entendido, continuar' and 'No acepto'.",
+    "category": "RGPD Consent Gate",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. This is a legal requirement — every new user must see the consent modal before any data is stored. The splash-screen content is visible behind the modal (it's a bottom sheet overlay), but the modal must be present and interactable.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Clear all browser localStorage"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element with role='dialog' and aria-labelledby='consent-title' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'Antes de continuar' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Entendido, continuar' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'No acepto' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'identificador anónimo' is visible (privacy explanation text)"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Declining consent shows the blocked-access screen",
+    "description": "Clicking 'No acepto' calls declineConsent() which sets consentDeclined=true. The @if(consentDeclined) branch renders .consent-declined-screen with 'Para usar esta aplicación es necesario aceptar el uso de almacenamiento local.' The splash screen and consent modal must disappear.",
+    "category": "RGPD Consent Gate",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Declining consent is a valid user choice and must produce a clear, non-interactive blocked state. The user is instructed to reload if they change their mind.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Clear all browser localStorage"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify consent modal with 'Antes de continuar' is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'No acepto'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'Para usar esta aplicación es necesario aceptar el uso de almacenamiento local.' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the consent modal (role='dialog') is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the splash screen with 'Entrar a la galería' is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'Si cambias de opinión, recarga la página.' is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Accepting consent closes modal and shows the splash screen CTA",
+    "description": "Clicking 'Entendido, continuar' calls acceptConsent() which sets lumen_consent='true' in localStorage and calls proceedAfterConsent(). Since hasSeenTutorial is not set yet, the user stays on the splash screen (consent modal hidden) and sees 'Entrar a la galería'.",
+    "category": "RGPD Consent Gate",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Validates the happy-path consent flow that every new user must complete before reaching the gallery. After accepting, localStorage must contain lumen_consent='true'.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Clear all browser localStorage"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify consent modal is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Entendido, continuar'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the consent modal is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Entrar a la galería' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify localStorage key 'lumen_consent' equals 'true'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL still contains '/'"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Demo tour overlay appears on first visit in demo mode (no event key)",
+    "description": "When the event key resolves to DEFAULT_EVENT_KEY ('demo') and lumen_tour_completed is absent from localStorage, HomeComponent.ngOnInit calls tourService.maybeStart(true). The TourService renders a .lumen-tour overlay on document.body with 'Paso 1 de 6', step title 'Galería en tiempo real', 'Saltar tour' and 'Siguiente' buttons.",
+    "category": "Guided Demo Tour",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. The demo tour is the primary first-time onboarding experience for users arriving without a ?e= event key. Requires clearing lumen_tour_completed and lumen_event_key from localStorage to trigger the tour.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'hasSeenTutorial' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Remove localStorage key 'lumen_tour_completed' if present"
+      },
+      {
+        "type": "action",
+        "description": "Remove localStorage key 'lumen_event_key' if present"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element with class 'lumen-tour' is visible on the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'Paso 1 de 6' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'Galería en tiempo real' is visible (step 1 title)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Saltar tour' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Siguiente' is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Tour 'Saltar tour' button dismisses the overlay and marks tour as completed",
+    "description": "Clicking 'Saltar tour' calls end(true) which persists lumen_tour_completed='true' to localStorage and tears down the .lumen-tour element from document.body. The gallery renders normally without the dimmed overlay.",
+    "category": "Guided Demo Tour",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. The skip path is the most common exit for users who don't want to follow the tour. After skipping, lumen_tour_completed must be 'true' in localStorage so the tour never auto-starts again.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'hasSeenTutorial' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Remove localStorage key 'lumen_tour_completed' if present"
+      },
+      {
+        "type": "action",
+        "description": "Remove localStorage key 'lumen_event_key' if present"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .lumen-tour overlay is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Saltar tour'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .lumen-tour overlay is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify localStorage key 'lumen_tour_completed' equals 'true'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .home-container is fully visible and not dimmed"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Tour advances through all 6 steps via 'Siguiente' and completes with 'Empezar a explorar'",
+    "description": "Each click of 'Siguiente' advances currentIndex. Step 4 navigates to /camera (to spotlight the shutter button); step 5 returns to /home. Step 6 (last) shows 'Empezar a explorar' instead of 'Siguiente' and hides 'Saltar tour'. Clicking 'Empezar a explorar' ends the tour.",
+    "category": "Guided Demo Tour",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Validates the entire 6-step tour flow including cross-route navigation (step 4 → /camera, step 5 → /home). On the final step the skip button must be hidden and the next button must show 'Empezar a explorar'.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; remove 'lumen_tour_completed'; remove 'lumen_event_key'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Paso 1 de 6' and 'Galería en tiempo real' are visible"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Siguiente'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Paso 2 de 6' and 'Tu carrete personal' are visible"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Siguiente'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Paso 3 de 6' and 'Abre la cámara' are visible"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Siguiente'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Paso 4 de 6' and 'Dispara' are visible (URL now contains '/camera')"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Siguiente'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Paso 5 de 6' and 'Toca para ampliar' are visible (URL now contains '/home')"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Siguiente'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Paso 6 de 6' and 'Todo listo' are visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Empezar a explorar' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Saltar tour' button is NOT visible (hidden on last step)"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Empezar a explorar'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .lumen-tour is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify localStorage 'lumen_tour_completed' equals 'true'"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Pressing Escape key during the tour dismisses the overlay",
+    "description": "TourService registers a keydown listener that calls end(true) when event.key === 'Escape'. The tour overlay must disappear and lumen_tour_completed must be set, preventing the tour from restarting.",
+    "category": "Guided Demo Tour",
+    "priority": "Medium",
+    "coverage_note": "Zero coverage before. Accessibility requirement — keyboard users must be able to exit the tour without using the mouse.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; remove 'lumen_tour_completed'; remove 'lumen_event_key'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .lumen-tour overlay is visible"
+      },
+      {
+        "type": "action",
+        "description": "Press the Escape key"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .lumen-tour overlay is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify localStorage 'lumen_tour_completed' equals 'true'"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Tour does not reappear on second visit when already completed",
+    "description": "When lumen_tour_completed='true' is in localStorage, TourService.hasCompleted() returns true and maybeStart() is a no-op. Navigating to /home must NOT show the tour overlay, even in demo mode (no event key).",
+    "category": "Guided Demo Tour",
+    "priority": "Medium",
+    "coverage_note": "Zero coverage before. Validates that the one-time-per-device behaviour is enforced. The tour would be extremely annoying to returning guests if it re-fired on every visit.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'; remove 'lumen_event_key'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .lumen-tour is NOT present on the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .home-container is visible and unobstructed"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "ArrowRight key navigates to the next photo in the viewer",
+    "description": "When the photo viewer is open, the @HostListener('keydown') in HomeComponent dispatches to navigatePhoto(1) on ArrowRight. A 150 ms opacity fade swaps the photo. The viewer remains open and the displayed photo changes to the next one in globalPhotos().",
+    "category": "Live Shared Gallery (Home)",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Keyboard navigation is the primary desktop navigation path for the viewer. Tests that the ArrowRight → navigatePhoto(1) → setTimeout(150ms) → photo swap chain works end-to-end. Requires ≥2 photos in the demo event gallery.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "action",
+        "description": "Wait for .photo-grid to load with at least 2 photo cards"
+      },
+      {
+        "type": "action",
+        "description": "Click the first .photo-card to open the viewer"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .photo-viewer-overlay is visible"
+      },
+      {
+        "type": "action",
+        "description": "Record the src attribute of img.viewer-photo (photo 1)"
+      },
+      {
+        "type": "action",
+        "description": "Press the ArrowRight key"
+      },
+      {
+        "type": "action",
+        "description": "Wait 250 ms for the 150 ms fade animation to complete"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .photo-viewer-overlay is still visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the src of img.viewer-photo has changed (different from photo 1)"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Left swipe gesture in the viewer navigates to the next photo",
+    "description": "onTouchStart records touchStartX; onTouchEnd computes deltaX = changedTouches[0].clientX - touchStartX. A left swipe (deltaX < -50) calls navigatePhoto(1). The photo swaps to the next one.",
+    "category": "Live Shared Gallery (Home)",
+    "priority": "Medium",
+    "coverage_note": "Zero coverage before. Swipe is the primary mobile navigation path for the viewer. Simulate using Playwright touchscreen API: touchstart at x=300, touchend at x=200 (deltaX=-100, triggers navigation). Requires ≥2 photos in gallery.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "action",
+        "description": "Wait for .photo-grid with at least 2 cards"
+      },
+      {
+        "type": "action",
+        "description": "Click the first .photo-card"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .photo-viewer-overlay is visible"
+      },
+      {
+        "type": "action",
+        "description": "Record the src of img.viewer-photo"
+      },
+      {
+        "type": "action",
+        "description": "Simulate a left swipe: touchstart at coordinates (300, 400), touchend at (150, 400) — deltaX = -150, exceeds the 50 px threshold"
+      },
+      {
+        "type": "action",
+        "description": "Wait 250 ms for the fade animation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the src of img.viewer-photo has changed to the next photo"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Camera permission denied shows the permission helper overlay with 'Volver a la galería'",
+    "description": "When getUserMedia() throws NotAllowedError, CameraComponent.startCamera() sets permissionHelperVisible=true and errorMessage='Permiso de cámara denegado...'. The .permission-helper-overlay renders with heading 'Acceso a la cámara bloqueado' and a 'Volver a la galería' button.",
+    "category": "Camera",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. This is a critical UX state — guests at a real event who have blocked camera access are stranded without this screen. The browser context must be created with camera permission set to 'denied' for this test to trigger the correct error path.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set browser camera permission to DENIED for the test origin"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /camera"
+      },
+      {
+        "type": "action",
+        "description": "Wait up to 5 seconds for the camera start attempt to complete"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .permission-helper-overlay is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify heading 'Acceso a la cámara bloqueado' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Volver a la galería' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error banner containing 'Permiso de cámara denegado' is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "'Volver a la galería' in permission helper navigates back to /home",
+    "description": "Clicking 'Volver a la galería' in the permission helper card calls goBack() which stops the media stream and routes to /home. The Home gallery should render normally.",
+    "category": "Camera",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Without this button, users with denied camera permissions have no way to return to the gallery other than the browser back button. Tests the goBack() → router.navigate(['/home']) path under the permission-denied state.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set browser camera permission to DENIED"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /camera"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Volver a la galería' button is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Volver a la galería'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains '/home'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Galería Global' is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Photo counter in home header reflects the localStorage remaining count",
+    "description": "PhotoLimitService reads lumen_photos_remaining from localStorage on init. HomeComponent.getCounterColorClass() returns text-orange-500 for remaining ≤ 3 > 1, text-red-500 for ≤ 1. The header subtitle shows 'N fotos restantes'.",
+    "category": "Photo Limit Enforcement",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. The counter informs users of their remaining uploads — a key fairness mechanism. Verifies that the PhotoLimitService correctly reads the persisted value and that the color classes are applied based on thresholds (>3 gray, ≤3 orange, ≤1 red).",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_photos_remaining' to '7'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text '7 fotos restantes' is visible in the header"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the counter element has class 'text-gray-500' (remaining > 3)"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_photos_remaining' to '2'"
+      },
+      {
+        "type": "action",
+        "description": "Reload the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text '2 fotos restantes' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the counter element has class 'text-orange-500' (remaining ≤ 3 but > 1)"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_photos_remaining' to '1'"
+      },
+      {
+        "type": "action",
+        "description": "Reload the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text '1 fotos restantes' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the counter element has class 'text-red-500' (remaining ≤ 1)"
+      }
+    ]
+  },
+  {
+    "id": "TC026",
+    "title": "Camera FAB is blocked at 0 remaining — shows '¡Vaya! Carrete lleno' modal",
+    "description": "When lumen_photos_remaining=0, handleActionClick('camera') calls feedbackService.triggerWarning() and sets showLimitModal=true instead of navigating to /camera. The .limit-modal-content renders with '¡Vaya! Carrete lleno' heading and the 'Ir a mi Galería y liberar espacio' CTA.",
+    "category": "Photo Limit Enforcement",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. The limit enforcement is the core anti-abuse mechanism. When photosLeft()===0, the user must not be able to navigate to /camera. The 'Subir Foto' gallery button should trigger the same modal.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_photos_remaining' to '0'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text '0 fotos restantes' is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button with data-tour='camera-fab' (the 'Cámara' button)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .limit-modal-content is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text '¡Vaya! Carrete lleno' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'Has usado tus 10 fotos.' is visible (or 'tus 10 fotos')"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Ir a mi Galería y liberar espacio' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL does NOT contain '/camera' (navigation was blocked)"
+      }
+    ]
+  },
+  {
+    "id": "TC027",
+    "title": "Limit modal 'Ir a mi Galería y liberar espacio' switches to 'Mis Fotos' tab and closes modal",
+    "description": "Clicking this CTA calls goToPersonalGallery() which sets activeTab='personal' and showLimitModal=false. The .limit-modal-overlay disappears and the 'Mis Fotos' tab becomes active so the user can delete an older photo to free a slot.",
+    "category": "Photo Limit Enforcement",
+    "priority": "Medium",
+    "coverage_note": "Zero coverage before. This CTA is the recovery path — without it users with 0 remaining would have no in-app way to free a slot. Validates the entire modal→personal-tab flow.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'; set 'lumen_photos_remaining' to '0'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "action",
+        "description": "Click the 'Cámara' button to trigger the limit modal"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .limit-modal-content is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Ir a mi Galería y liberar espacio'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .limit-modal-overlay is NOT visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Mis Fotos' has the active class"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify either .photo-grid (with personal photos) or empty-state 'Aún no has subido ninguna foto' is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC028",
+    "title": "?e= URL parameter scopes the gallery to the specified event key",
+    "description": "SessionService.initEventKey() reads the ?e= query parameter, stores it in localStorage as lumen_event_key, and all subsequent Supabase queries filter by event_key=eq.{key}. Loading /home?e=test-isolated-event should show a different (likely empty) gallery than the default demo event.",
+    "category": "Multi-Tenant Isolation",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Multi-tenancy is critical for production — guests at different events must not see each other's photos. Verifies that the ?e= parameter is read, persisted to localStorage, and that the gallery content changes accordingly.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Remove localStorage key 'lumen_event_key' if present"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home?e=test-isolated-event-xyz"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify localStorage key 'lumen_event_key' equals 'test-isolated-event-xyz'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the gallery loads (either .photo-grid or empty-state '¡Sé el primero en capturar un momento!')"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home (no ?e= param)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify localStorage key 'lumen_event_key' still equals 'test-isolated-event-xyz' (persisted across navigation)"
+      }
+    ]
+  },
+  {
+    "id": "TC029",
+    "title": "Upload retry message 'Reintentando (N/3)' appears on connection failure",
+    "description": "SupabaseService.uploadPhotoWithRetry() uses withRetry() with RETRY_BACKOFF_DELAYS_MS [1000,2000,4000]. On each failed attempt, the onRetry callback sets retryMessage to 'Conexión débil. Reintentando (N/3)...' which the uploading state template renders in a .retry-toast element.",
+    "category": "Upload Reliability",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Retry feedback prevents guests from thinking the upload is frozen during a poor-connection event. Requires intercepting the first Supabase storage upload request to respond with 500 so the retry path fires. The test validates the UI feedback, not the network logic itself.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Intercept the first outbound request to Supabase storage upload endpoint and force a 500 error response"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /camera with a pre-loaded gallery image file in router state (isFromGallery=true path)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .state-preview is visible with img.polaroid-photo"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Revelar'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Enviando foto' heading is visible (uploading state)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .retry-toast element is visible containing text 'Reintentando (1/3)'"
+      }
+    ]
+  },
+  {
+    "id": "TC030",
+    "title": "After all retries fail, 'Reintentar subida' manual retry button appears",
+    "description": "When withRetry() exhausts RETRY_MAX_ATTEMPTS (3), uploadPhoto() catches the final error, sets errorMessage, and transitions back to 'preview' state. The template renders a .btn-retry button with text 'Reintentar subida'. Clicking it calls retryUpload() → uploadPhoto().",
+    "category": "Upload Reliability",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. The manual retry button is the last resort for guests on very poor connections. Without it, a failed upload silently traps the user in preview state with no clear recovery path. Requires intercepting all 3 upload attempts to fail.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Intercept ALL outbound Supabase storage upload requests and force 500 responses (to exhaust all 3 retry attempts)"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /camera with a test image in router state"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Revelar' to trigger upload"
+      },
+      {
+        "type": "action",
+        "description": "Wait for all 3 retry attempts to complete (approximately 7 seconds: 1s + 2s + 4s backoff)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .state-preview is visible (reverted from uploading)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error banner containing 'Error al subir la foto tras varios intentos' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Reintentar subida' is visible"
+      },
+      {
+        "type": "action",
+        "description": "Remove the network intercept"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Reintentar subida'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Enviando foto' heading appears (upload restarted)"
+      }
+    ]
+  },
+  {
+    "id": "TC031",
+    "title": "In-app browser detection shows warning banner for WhatsApp User-Agent",
+    "description": "AppComponent.ngOnInit checks navigator.userAgent for 'WhatsApp', 'Instagram', 'FBAN', 'FBAV'. When detected, isInAppBrowser=true renders a fixed yellow banner: 'Para usar la cámara y ver las fotos correctamente, abre este enlace en Safari o Chrome (pulsa los 3 puntos arriba a la derecha).'",
+    "category": "In-App Browser Detection",
+    "priority": "Medium",
+    "coverage_note": "Zero coverage before. Wedding guests often click QR-code links inside WhatsApp or Instagram, which restricts camera APIs. The banner is critical to direct users to a real browser. Test by overriding the User-Agent header to contain 'WhatsApp' in the Playwright browser context.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create browser context with User-Agent header containing 'WhatsApp'"
+      },
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a fixed banner element with yellow/warning background is visible at the top of the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'Para usar la cámara y ver las fotos correctamente, abre este enlace en Safari o Chrome' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the banner has z-index 9999 or is rendered above all other content"
+      }
+    ]
+  },
+  {
+    "id": "TC032",
+    "title": "Photo viewer 'Guardar' button triggers blob download and shows 'Guardando...' loading state",
+    "description": "downloadPhoto() in HomeComponent calls supabaseService.downloadImageAsBlob(photo.publicUrl, filename) which fetch()-es the image as a Blob and triggers a browser download via <a download>. isDownloading signal is true during the fetch, showing 'Guardando...' inside the button.",
+    "category": "Live Shared Gallery (Home)",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Photo download is explicitly mentioned as a key user feature. The Blob mechanism is used (not a direct link) to force-save on mobile, where cross-origin anchor downloads open in a new tab instead. Test validates the loading state and that a download is initiated.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /home"
+      },
+      {
+        "type": "action",
+        "description": "Wait for .photo-grid to appear"
+      },
+      {
+        "type": "action",
+        "description": "Click the first .photo-card to open the viewer"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Guardar' is visible (not in loading state)"
+      },
+      {
+        "type": "action",
+        "description": "Click button containing text 'Guardar'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button shows 'Guardando...' text (isDownloading=true state)"
+      },
+      {
+        "type": "action",
+        "description": "Wait for download to complete (Guardando... disappears)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button returns to showing 'Guardar' text (download finished, isDownloading=false)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .photo-viewer-overlay is still visible (download does not close the viewer)"
+      }
+    ]
+  },
+  {
+    "id": "TC033",
+    "title": "Admin wrong PIN shows 'Invalid PIN. Please try again.' error",
+    "description": "authenticate() compares pinInput() to the hardcoded '2102'. A wrong 4-digit PIN sets authError to 'Invalid PIN. Please try again.' The .auth-error paragraph renders this message and the dashboard does not appear.",
+    "category": "Admin View (Gallery Management)",
+    "priority": "Medium",
+    "coverage_note": "Zero coverage before. Without this test there is no verification that brute-force is surfaced with an error rather than silently ignored. Tests the failed authentication branch of the admin PIN flow.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /admin"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Admin Access' heading is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type '0000' into the PIN input (incorrect PIN)"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Unlock Dashboard'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text 'Invalid PIN. Please try again.' is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 'Photo Dashboard' heading is NOT visible (still on auth screen)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify PIN input is accessible for a second attempt"
+      }
+    ]
+  },
+  {
+    "id": "TC034",
+    "title": "Camera shutter button transitions from viewfinder to preview state",
+    "description": "With camera permission granted, startCamera() streams video to the <video> element. Clicking the shutter button (data-tour='shutter') calls capturePhoto() which draws the video frame to a canvas, converts it to a Blob, and transitions currentState to 'preview'. The .state-preview shows the polaroid card.",
+    "category": "Camera",
+    "priority": "High",
+    "coverage_note": "Zero coverage before. Capturing a photo is the core camera feature. Requires browser camera permission to be ALLOWED. Verifies the entire viewfinder→capture→preview state machine transition.",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set localStorage key 'lumen_consent' to 'true'; set 'hasSeenTutorial' to 'true'; set 'lumen_tour_completed' to 'true'"
+      },
+      {
+        "type": "action",
+        "description": "Set browser camera permission to ALLOWED"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /camera"
+      },
+      {
+        "type": "action",
+        "description": "Wait up to 5 seconds for video.video-feed element to become visible (camera started)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .state-viewfinder is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button with data-tour='shutter' is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the shutter button (data-tour='shutter')"
+      },
+      {
+        "type": "action",
+        "description": "Wait 500 ms for the capture and state transition"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .state-preview is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify img.polaroid-photo is visible (captured frame)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify button containing text 'Revelar' is visible (upload action)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify input with id='dedication-input' is visible (optional message field)"
       }
     ]
   }

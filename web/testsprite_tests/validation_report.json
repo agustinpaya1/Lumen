@@ -1,0 +1,167 @@
+{
+  "target": "https://lumen-umber.vercel.app",
+  "summary": {
+    "pass": 20,
+    "fail": 0,
+    "skip": 6,
+    "total": 26
+  },
+  "results": [
+    {
+      "id": "TC013",
+      "title": "RGPD consent modal appears on first visit",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC014",
+      "title": "Declining consent shows blocked-access screen",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC015",
+      "title": "Accepting consent reveals 'Entrar a la galería' CTA",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC001",
+      "title": "Splash shows branding after consent (no tutorial yet)",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC002",
+      "title": "'Entrar a la galería' button navigates to /home",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC003",
+      "title": "Returning user (consent+tutorial) redirected to /home",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC004",
+      "title": "Rapid double-tap on entry button still lands on /home",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC005",
+      "title": "Tab switch 'Galería Global' ↔ 'Mis Fotos'",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC006",
+      "title": "Photo card opens full-screen viewer overlay",
+      "status": "SKIP",
+      "note": "Gallery is empty — no photo cards to click"
+    },
+    {
+      "id": "TC007",
+      "title": "Close button (aria-label='Cerrar') dismisses viewer",
+      "status": "SKIP",
+      "note": "No photos in gallery"
+    },
+    {
+      "id": "TC021",
+      "title": "ArrowRight key navigates to next photo in viewer",
+      "status": "SKIP",
+      "note": "Need ≥2 photos, found 0"
+    },
+    {
+      "id": "TC032",
+      "title": "'Guardar' button shows 'Guardando...' while downloading",
+      "status": "SKIP",
+      "note": "No photos in gallery"
+    },
+    {
+      "id": "TC025",
+      "title": "Photo counter shows remaining count with correct colour class",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC026",
+      "title": "Camera FAB blocked at 0 remaining — limit modal appears",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC027",
+      "title": "Limit modal CTA switches to 'Mis Fotos' tab",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC028",
+      "title": "?e= URL param scopes gallery and persists to localStorage",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC016",
+      "title": "Demo tour appears on first demo-mode visit",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC017",
+      "title": "Tour 'Saltar tour' dismisses overlay, marks completed",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC018",
+      "title": "Tour advances all 6 steps; final step shows 'Empezar a explorar'",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC019",
+      "title": "Escape key dismisses tour overlay",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC020",
+      "title": "Tour absent on second visit (lumen_tour_completed=true)",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC010",
+      "title": "Admin PIN '2102' unlocks Photo Dashboard",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC033",
+      "title": "Admin wrong PIN shows 'Invalid PIN' error",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "id": "TC012",
+      "title": "Admin cancel delete keeps photo in list",
+      "status": "SKIP",
+      "note": "No photos in admin dashboard"
+    },
+    {
+      "id": "TC011",
+      "title": "Admin delete photo — confirmation modal then removal",
+      "status": "SKIP",
+      "note": "No photos in admin dashboard to delete"
+    },
+    {
+      "id": "TC031",
+      "title": "In-app browser banner visible with WhatsApp User-Agent",
+      "status": "PASS",
+      "note": ""
+    }
+  ]
+}

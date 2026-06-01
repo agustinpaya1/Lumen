@@ -1,0 +1,46 @@
+import asyncio
+from playwright import async_api
+from playwright.async_api import expect
+
+BASE_URL = "https://lumen-umber.vercel.app"
+TIMEOUT = 15_000
+
+
+async def run_test():
+    pw = browser = context = page = None
+    try:
+        pw = await async_api.async_playwright().start()
+        browser = await pw.chromium.launch(
+            headless=True,
+            args=["--window-size=1280,720", "--disable-dev-shm-usage", "--ipc=host"],
+        )
+        context = await browser.new_context(viewport={"width": 1280, "height": 720})
+        page = await context.new_page()
+
+        await page.goto(BASE_URL, wait_until="domcontentloaded", timeout=TIMEOUT)
+        await page.evaluate("localStorage.clear(); sessionStorage.clear()")
+        await page.evaluate("""() => {
+            localStorage.setItem('lumen_consent','true');
+            localStorage.setItem('hasSeenTutorial','true');
+            localStorage.setItem('lumen_tour_completed','true');
+            localStorage.setItem('lumen_photos_remaining','0');
+        }""")
+        await page.goto(BASE_URL + "/home", wait_until="domcontentloaded", timeout=TIMEOUT)
+        await expect(page.locator("text=0 fotos restantes")).to_be_visible(timeout=TIMEOUT)
+
+        await page.locator("[data-tour='camera-fab']").click()
+        await expect(page.locator(".limit-modal-content")).to_be_visible(timeout=3000)
+        await expect(page.locator("text=¡Vaya! Carrete lleno")).to_be_visible()
+        await expect(page.locator("button:has-text('Ir a mi Galería y liberar espacio')")).to_be_visible()
+        assert "/camera" not in page.url, f"Unexpectedly navigated to camera: {page.url}"
+        print("PASS")
+    finally:
+        if context:
+            await context.close()
+        if browser:
+            await browser.close()
+        if pw:
+            await pw.stop()
+
+
+asyncio.run(run_test())
