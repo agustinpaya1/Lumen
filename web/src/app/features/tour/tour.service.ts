@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { LUMEN_TOUR_KEY } from '@core/constants';
+import { isLastTourStep, nextTourIndex } from './tour-sequence';
 
 /** Side of the target the tooltip prefers; it is clamped to stay on-screen. */
 export type TourPlacement = 'top' | 'bottom' | 'left' | 'right';
@@ -269,16 +270,17 @@ export class TourService {
     this.nextBtn.textContent = step.nextLabel ?? 'Siguiente';
     // The last step is itself the exit, so the "Saltar tour" escape hatch hides
     // and its CTA spans the full width.
-    const isLast = index === this.steps.length - 1;
+    const isLast = isLastTourStep(index, this.steps.length);
     this.skipBtn.style.display = isLast ? 'none' : '';
     this.nextBtn.classList.toggle('lumen-tour__btn--full', isLast);
   }
 
   private next(): void {
-    if (this.currentIndex >= this.steps.length - 1) {
+    const nextIndex = nextTourIndex(this.currentIndex, this.steps.length);
+    if (nextIndex === null) {
       this.end(true);
     } else {
-      void this.showStep(this.currentIndex + 1);
+      void this.showStep(nextIndex);
     }
   }
 

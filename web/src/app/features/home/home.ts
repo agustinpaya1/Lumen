@@ -7,7 +7,7 @@ import { SessionService } from '@core/services/session.service';
 import { LoggerService } from '@core/services/logger.service';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
 import { FeedbackService } from '@core/services/feedback.service';
-import { TourService } from '@core/services/tour.service';
+import { TourService } from '@features/tour/tour.service';
 import { GalleryPhoto, Photo } from '@core/models/photo';
 import { DEFAULT_EVENT_KEY } from '@core/constants';
 
