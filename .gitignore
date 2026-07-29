@@ -6,6 +6,10 @@ bazel-out/
 /web/dist
 /web/out-tsc
 
+# Informes de cobertura: se regeneran con `ng test --coverage`, nunca se commitean.
+coverage/
+/web/coverage
+
 # IMPORTANTE: Ignorar caché de Angular (la que pedías)
 # Esto cubre tanto la raíz como dentro de /web
 .angular/

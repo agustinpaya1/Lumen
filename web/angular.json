@@ -74,7 +74,44 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "setupFiles": [
+              "src/test-setup.ts"
+            ],
+            "coverageInclude": [
+              "src/app/**/*.ts"
+            ],
+            "coverageExclude": [
+              "src/app/**/*.spec.ts"
+            ],
+            "coverageReporters": [
+              "text",
+              "html"
+            ],
+            "coverageThresholds": {
+              "statements": 12,
+              "branches": 21,
+              "functions": 11,
+              "lines": 12
+            }
+          },
+          "configurations": {
+            "logic": {
+              "coverageInclude": [
+                "src/app/core/**/*.ts"
+              ],
+              "coverageExclude": [
+                "src/app/core/**/*.spec.ts"
+              ],
+              "coverageThresholds": {
+                "statements": 26,
+                "branches": 34,
+                "functions": 24,
+                "lines": 26
+              }
+            }
+          }
         }
       }
     }
