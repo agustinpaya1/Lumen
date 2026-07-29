@@ -7,6 +7,7 @@ import { SupabaseService } from '@core/services/supabase.service';
 import { FeedbackService } from '@core/services/feedback.service';
 import { LoggerService } from '@core/services/logger.service';
 import { triggerBrowserDownload } from '@core/utils/download';
+import { counterColorClass, detectDevicePlatform } from '@core/utils/capture';
 import { Router } from '@angular/router';
 
 // State Machine — 5 stable states (no editor)
@@ -115,24 +116,14 @@ export class CameraComponent implements OnInit, OnDestroy {
 
   /** Returns the color class for the photo counter based on remaining photos */
   getCounterColorClass(): string {
-    const remaining = this.photoLimitService.photosLeft();
-    if (remaining > 3) return 'text-white';
-    if (remaining > 1) return 'text-yellow-300';
-    return 'text-red-400';
+    return counterColorClass(this.photoLimitService.photosLeft());
   }
 
   // DEVICE & LIFECYCLE
 
   /** Detect iOS / Android / unknown for permission helper UI */
   private detectDevicePlatform(): void {
-    const ua = navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(ua)) {
-      this.devicePlatform.set('ios');
-    } else if (/android/.test(ua)) {
-      this.devicePlatform.set('android');
-    } else {
-      this.devicePlatform.set('unknown');
-    }
+    this.devicePlatform.set(detectDevicePlatform(navigator.userAgent));
   }
 
   /** Warn users if they try to leave during upload */

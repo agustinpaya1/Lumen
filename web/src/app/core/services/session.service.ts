@@ -2,6 +2,17 @@ import { Injectable } from '@angular/core';
 import { DEFAULT_EVENT_KEY, DEVICE_ID_KEY, EVENT_KEY_STORAGE_KEY } from '@core/constants';
 
 /**
+ * Accepted shape of an event key: lowercase alphanumerics and inner hyphens,
+ * 3–40 characters. It mirrors the CHECK constraint on `events.key`.
+ *
+ * Validation is not cosmetic: the key is interpolated into a Realtime
+ * `postgres_changes` filter (`event_key=eq.<key>`), where a comma would let a
+ * crafted URL append further filter clauses. It also scopes every query, so an
+ * unconstrained value is a tenant-selection primitive handed to the caller.
+ */
+const EVENT_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
+
+/**
  * Owns the anonymous, per-browser session identity: a stable device id (used to
  * attribute photo ownership) and the active event key (which scopes every
  * query). Split out of SupabaseService so data access and session state can
@@ -61,12 +72,16 @@ export class SessionService {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
 
     const urlEventKey = new URLSearchParams(window.location.search).get('e');
-    if (urlEventKey) {
+    if (urlEventKey && EVENT_KEY_PATTERN.test(urlEventKey)) {
       localStorage.setItem(EVENT_KEY_STORAGE_KEY, urlEventKey);
       this.cachedEventKey = urlEventKey;
-    } else {
-      this.cachedEventKey = localStorage.getItem(EVENT_KEY_STORAGE_KEY) ?? DEFAULT_EVENT_KEY;
+      return;
     }
+
+    // A rejected (or absent) URL key must not clobber a valid stored one.
+    const storedKey = localStorage.getItem(EVENT_KEY_STORAGE_KEY);
+    this.cachedEventKey =
+      storedKey && EVENT_KEY_PATTERN.test(storedKey) ? storedKey : DEFAULT_EVENT_KEY;
   }
 
   /**

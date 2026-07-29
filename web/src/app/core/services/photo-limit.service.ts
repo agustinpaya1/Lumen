@@ -25,17 +25,34 @@ export class PhotoLimitService {
   readonly photosTaken = computed(() => this.maxPhotos - this.photoCountSignal());
 
   private initializeCount(): number {
-    // localStorage is absent in SSR/test environments and can be blocked by the
+    // localStorage is absent in SSR environments and can be blocked by the
     // browser — fall back to the default rather than throwing during construction.
     if (typeof localStorage === 'undefined') {
       return DEFAULT_PHOTO_LIMIT;
     }
-    const stored = localStorage.getItem(PHOTOS_REMAINING_KEY);
+    let stored: string | null;
+    try {
+      stored = localStorage.getItem(PHOTOS_REMAINING_KEY);
+    } catch {
+      // Safari private mode throws on access rather than returning null.
+      return DEFAULT_PHOTO_LIMIT;
+    }
     if (stored !== null) {
       const parsed = parseInt(stored, 10);
-      return isNaN(parsed) ? DEFAULT_PHOTO_LIMIT : parsed;
+      return isNaN(parsed) ? DEFAULT_PHOTO_LIMIT : this.clamp(parsed);
     }
     return DEFAULT_PHOTO_LIMIT;
+  }
+
+  /**
+   * Constrains a restored count to [0, DEFAULT_PHOTO_LIMIT]. The stored value is
+   * user-writable, so a tampered or corrupted entry must not yield a negative
+   * quota (which would push photosTaken above the maximum) nor an inflated one.
+   *
+   * This is a UX guard only — the authoritative limit is enforced server-side.
+   */
+  private clamp(count: number): number {
+    return Math.min(Math.max(count, 0), DEFAULT_PHOTO_LIMIT);
   }
 
   /** Consumes one unit of quota after a successful upload, persisting to localStorage. */
@@ -66,8 +83,14 @@ export class PhotoLimitService {
 
   /** Persists the remaining count, skipping write when localStorage is unavailable. */
   private persist(count: number): void {
-    if (typeof localStorage !== 'undefined') {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    try {
       localStorage.setItem(PHOTOS_REMAINING_KEY, count.toString());
+    } catch {
+      // Quota exceeded or blocked storage: the in-memory signal stays correct
+      // for this session, which is enough to keep the UI consistent.
     }
   }
 }
