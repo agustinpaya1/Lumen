@@ -6,12 +6,11 @@ import {
   HOME_PHOTOS_CHANNEL,
   PHOTOS_BUCKET,
   PHOTOS_TABLE,
-  RETRY_BACKOFF_DELAYS_MS,
-  RETRY_MAX_ATTEMPTS,
   SIGNED_URL_TTL_SECONDS,
 } from '@core/constants';
 import { Photo } from '@core/models/photo';
 import { triggerBrowserDownload } from '@core/utils/download';
+import { withRetry } from '@core/utils/retry';
 import { LoggerService } from './logger.service';
 import { SessionService } from './session.service';
 
@@ -32,47 +31,6 @@ export class SupabaseService {
 
   get client() {
     return this.supabase;
-  }
-
-  /** Resolves after `ms` milliseconds — used to space out retry attempts. */
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Runs a Supabase operation up to RETRY_MAX_ATTEMPTS times with exponential
-   * backoff, so a flaky guest connection doesn't lose a capture. Both a thrown
-   * error and a Supabase `{ error }` result count as a retryable failure; the
-   * last error is rethrown once attempts are exhausted.
-   * @param operation Produces a fresh Supabase result on each attempt.
-   * @param onRetry Optional hook invoked before each backoff wait (UI feedback).
-   * @returns The first result whose `error` is empty.
-   */
-  private async withRetry<T extends { error: unknown }>(
-    operation: () => Promise<T>,
-    onRetry?: (attemptNumber: number, maxAttempts: number) => void
-  ): Promise<T> {
-    let lastError: unknown;
-
-    for (let attempt = 1; attempt <= RETRY_MAX_ATTEMPTS; attempt++) {
-      try {
-        const result = await operation();
-        if (!result.error) {
-          return result;
-        }
-        lastError = result.error;
-      } catch (error) {
-        lastError = error;
-      }
-
-      if (attempt === RETRY_MAX_ATTEMPTS) {
-        break;
-      }
-      onRetry?.(attempt, RETRY_MAX_ATTEMPTS);
-      await this.delay(RETRY_BACKOFF_DELAYS_MS[attempt - 1]);
-    }
-
-    throw lastError;
   }
 
   /**
@@ -109,7 +67,7 @@ export class SupabaseService {
     path: string,
     onRetry?: (attemptNumber: number, maxAttempts: number) => void
   ) {
-    return this.withRetry(() => this.uploadPhoto(file, path), onRetry);
+    return withRetry(() => this.uploadPhoto(file, path), { onRetry });
   }
 
   /**
@@ -138,7 +96,7 @@ export class SupabaseService {
     dedication: string,
     onRetry?: (attemptNumber: number, maxAttempts: number) => void
   ) {
-    return this.withRetry(() => this.savePhotoData(url, dedication), onRetry);
+    return withRetry(() => this.savePhotoData(url, dedication), { onRetry });
   }
 
   // ADMIN METHODS
