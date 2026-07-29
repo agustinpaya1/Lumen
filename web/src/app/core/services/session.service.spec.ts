@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_EVENT_KEY, DEVICE_ID_KEY, EVENT_KEY_STORAGE_KEY } from '@core/constants';
 import { SessionService } from './session.service';
+import { SupabaseClientService } from './supabase-client.service';
 
 /** RFC4122 v4 shape — version nibble 4, variant nibble 8/9/a/b. */
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -19,6 +20,36 @@ function injectWithUrl(search: string): SessionService {
     configurable: true,
   });
   TestBed.configureTestingModule({});
+  return TestBed.inject(SessionService);
+}
+
+/** Fake auth client controlling what getSession/signInAnonymously resolve to. */
+function fakeSupabaseClientService(overrides: {
+  getSession?: () => Promise<{ data: { session: { user: { id: string } } | null } }>;
+  signInAnonymously?: () => Promise<{
+    data: { user: { id: string } | null };
+    error: unknown;
+  }>;
+}) {
+  return {
+    client: {
+      auth: {
+        getSession:
+          overrides.getSession ?? (() => Promise.resolve({ data: { session: null } })),
+        signInAnonymously:
+          overrides.signInAnonymously ??
+          (() => Promise.resolve({ data: { user: { id: 'new-user-id' } }, error: null })),
+      },
+    },
+  };
+}
+
+function injectWithAuth(overrides: Parameters<typeof fakeSupabaseClientService>[0]): SessionService {
+  TestBed.configureTestingModule({
+    providers: [
+      { provide: SupabaseClientService, useValue: fakeSupabaseClientService(overrides) },
+    ],
+  });
   return TestBed.inject(SessionService);
 }
 
@@ -132,6 +163,50 @@ describe('SessionService', () => {
           configurable: true,
         });
       }
+    });
+  });
+
+  describe('anonymous auth session', () => {
+    it('has no user id before ensureAuthSession resolves', () => {
+      const service = injectWithAuth({});
+      expect(service.getUserId()).toBeNull();
+    });
+
+    it('restores an existing session instead of signing in again', async () => {
+      const signInAnonymously = vi.fn();
+      const service = injectWithAuth({
+        getSession: () =>
+          Promise.resolve({ data: { session: { user: { id: 'restored-id' } } } }),
+        signInAnonymously,
+      });
+
+      await service.ensureAuthSession();
+
+      expect(service.getUserId()).toBe('restored-id');
+      expect(signInAnonymously).not.toHaveBeenCalled();
+    });
+
+    it('signs in anonymously when no session is stored', async () => {
+      const service = injectWithAuth({
+        getSession: () => Promise.resolve({ data: { session: null } }),
+        signInAnonymously: () =>
+          Promise.resolve({ data: { user: { id: 'fresh-id' } }, error: null }),
+      });
+
+      await service.ensureAuthSession();
+
+      expect(service.getUserId()).toBe('fresh-id');
+    });
+
+    it('throws when the anonymous sign-in fails, leaving the user id unset', async () => {
+      const service = injectWithAuth({
+        getSession: () => Promise.resolve({ data: { session: null } }),
+        signInAnonymously: () =>
+          Promise.resolve({ data: { user: null }, error: new Error('rate limited') }),
+      });
+
+      await expect(service.ensureAuthSession()).rejects.toThrow('rate limited');
+      expect(service.getUserId()).toBeNull();
     });
   });
 });

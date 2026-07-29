@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { DEFAULT_EVENT_KEY, DEVICE_ID_KEY, EVENT_KEY_STORAGE_KEY } from '@core/constants';
+import { SupabaseClientService } from './supabase-client.service';
 
 /**
  * Accepted shape of an event key: lowercase alphanumerics and inner hyphens,
@@ -20,11 +21,45 @@ const EVENT_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
+  private readonly supabaseClient = inject(SupabaseClientService);
+
   private cachedDeviceId: string | null = null;
   private cachedEventKey: string | null = null;
+  private cachedUserId: string | null = null;
 
   constructor() {
     this.initEventKey();
+  }
+
+  /**
+   * Ensures an anonymous Supabase Auth session exists for this browser,
+   * restoring a previously persisted one instead of minting a new user on
+   * every visit (the SDK persists sessions to localStorage and restores them
+   * automatically). Called once from an APP_INITIALIZER at bootstrap so
+   * `auth.uid()` is available before any guest-facing action needs it.
+   */
+  async ensureAuthSession(): Promise<void> {
+    const { data: { session } } = await this.supabaseClient.client.auth.getSession();
+
+    if (session?.user) {
+      this.cachedUserId = session.user.id;
+      return;
+    }
+
+    const { data, error } = await this.supabaseClient.client.auth.signInAnonymously();
+    if (error) {
+      throw error;
+    }
+
+    this.cachedUserId = data.user?.id ?? null;
+  }
+
+  /**
+   * The signed-in Supabase user id (`auth.uid()`) for this guest's anonymous
+   * session, or null if `ensureAuthSession()` hasn't resolved yet.
+   */
+  getUserId(): string | null {
+    return this.cachedUserId;
   }
 
   /**

@@ -1,6 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { environment } from '@environments/environment';
 import {
   ADMIN_PHOTOS_CHANNEL,
   HOME_PHOTOS_CHANNEL,
@@ -13,24 +11,22 @@ import { triggerBrowserDownload } from '@core/utils/download';
 import { withRetry } from '@core/utils/retry';
 import { LoggerService } from './logger.service';
 import { SessionService } from './session.service';
+import { SupabaseClientService } from './supabase-client.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SupabaseService {
+  private readonly clientService = inject(SupabaseClientService);
   private readonly session = inject(SessionService);
   private readonly logger = inject(LoggerService);
-  private supabase: SupabaseClient;
-
-  constructor() {
-    this.supabase = createClient(
-      environment.supabaseUrl,
-      environment.supabaseKey
-    );
-  }
 
   get client() {
-    return this.supabase;
+    return this.clientService.client;
+  }
+
+  private get supabase() {
+    return this.clientService.client;
   }
 
   /**
