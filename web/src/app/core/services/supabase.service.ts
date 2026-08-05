@@ -77,6 +77,7 @@ export class SupabaseService {
       dedication: dedication,
       device_id: this.session.getDeviceId(),
       event_key: this.session.getStoredEventKey(),
+      owner_id: this.session.getUserId(),
       created_at: new Date()
     }).select();
   }

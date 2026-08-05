@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { DEFAULT_EVENT_KEY, DEVICE_ID_KEY, EVENT_KEY_STORAGE_KEY } from '@core/constants';
+import { DEFAULT_EVENT_KEY, DEVICE_ID_KEY, EVENT_KEY_STORAGE_KEY, EVENT_MEMBERS_TABLE } from '@core/constants';
+import { LoggerService } from './logger.service';
 import { SupabaseClientService } from './supabase-client.service';
 
 /**
@@ -22,10 +23,19 @@ const EVENT_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 @Injectable({ providedIn: 'root' })
 export class SessionService {
   private readonly supabaseClient = inject(SupabaseClientService);
+  private readonly logger = inject(LoggerService);
 
   private cachedDeviceId: string | null = null;
   private cachedEventKey: string | null = null;
   private cachedUserId: string | null = null;
+
+  /**
+   * Whether the membership upsert into `event_members` succeeded for this
+   * session. When false the RLS policies will block SELECT/INSERT on `photos`,
+   * so the gallery will appear empty — but the app will not crash.
+   */
+  private _membershipReady = false;
+  get membershipReady(): boolean { return this._membershipReady; }
 
   constructor() {
     this.initEventKey();
@@ -43,15 +53,17 @@ export class SessionService {
 
     if (session?.user) {
       this.cachedUserId = session.user.id;
-      return;
+    } else {
+      const { data, error } = await this.supabaseClient.client.auth.signInAnonymously();
+      if (error) {
+        throw error;
+      }
+      this.cachedUserId = data.user?.id ?? null;
     }
 
-    const { data, error } = await this.supabaseClient.client.auth.signInAnonymously();
-    if (error) {
-      throw error;
-    }
-
-    this.cachedUserId = data.user?.id ?? null;
+    // With the auth session ready, register this user as a member of the
+    // active event so the RLS policies on `photos` grant access.
+    await this.ensureMembership();
   }
 
   /**
@@ -117,6 +129,46 @@ export class SessionService {
     const storedKey = localStorage.getItem(EVENT_KEY_STORAGE_KEY);
     this.cachedEventKey =
       storedKey && EVENT_KEY_PATTERN.test(storedKey) ? storedKey : DEFAULT_EVENT_KEY;
+  }
+
+  /**
+   * Upserts a row in `event_members` linking the current `auth.uid()` to the
+   * active event key. This is required by the RLS policies on `photos`:
+   * without a matching membership row, every SELECT / INSERT will be rejected.
+   *
+   * The upsert uses `onConflict: 'user_id,event_key'` so revisiting the same
+   * event (or a page reload) is a no-op rather than a constraint violation.
+   *
+   * Errors are caught and logged — the app stays functional but the gallery
+   * will appear empty (RLS blocks access) until the user retries.
+   */
+  private async ensureMembership(): Promise<void> {
+    const userId = this.cachedUserId;
+    const eventKey = this.getStoredEventKey();
+
+    if (!userId) {
+      this.logger.warn('ensureMembership skipped: no authenticated user id.');
+      return;
+    }
+
+    try {
+      const { error } = await this.supabaseClient.client
+        .from(EVENT_MEMBERS_TABLE)
+        .upsert(
+          { user_id: userId, event_key: eventKey },
+          { onConflict: 'user_id,event_key' }
+        );
+
+      if (error) {
+        this.logger.error('event_members upsert failed:', error);
+        return;
+      }
+
+      this._membershipReady = true;
+    } catch (err) {
+      // Network / unexpected failure — fail open so the app still loads.
+      this.logger.error('event_members upsert threw:', err);
+    }
   }
 
   /**

@@ -28,6 +28,7 @@ export const RETRY_BACKOFF_DELAYS_MS = [1000, 2000, 4000];
 // --- Supabase storage & realtime ---
 export const PHOTOS_BUCKET = 'photos';
 export const PHOTOS_TABLE = 'photos';
+export const EVENT_MEMBERS_TABLE = 'event_members';
 export const DEFAULT_EVENT_KEY = 'demo';
 export const ADMIN_PHOTOS_CHANNEL = 'photos_realtime';
 export const HOME_PHOTOS_CHANNEL = 'home:photos';
