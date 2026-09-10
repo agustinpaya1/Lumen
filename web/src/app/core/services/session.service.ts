@@ -156,7 +156,9 @@ export class SessionService {
         .from(EVENT_MEMBERS_TABLE)
         .upsert(
           { user_id: userId, event_key: eventKey },
-          { onConflict: 'user_id,event_key' }
+          // Existing memberships must be a no-op: guests intentionally have
+          // INSERT permission under RLS, but no UPDATE permission.
+          { onConflict: 'user_id,event_key', ignoreDuplicates: true }
         );
 
       if (error) {

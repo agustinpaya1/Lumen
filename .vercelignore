@@ -1,0 +1,17 @@
+# Local and development-only material outside the configured `web` root.
+Lumen_imagenes.zip
+datos_memoria.md
+evidencias_vitest_2026-09-07.txt
+
+# Development and verification material inside the Angular project.
+web/.angular/
+web/coverage/
+web/docs/
+web/scripts/
+web/testsprite_tests/
+
+# Local illustration variants retained for comparison, but not deployed.
+web/public/dibujo.png
+web/public/javier-paula-acuarela.png
+web/public/javier-paula-acuarela-v2.png
+web/public/javier-paula-acuarela-v3.png

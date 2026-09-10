@@ -71,15 +71,29 @@ export class SupabaseService {
    * savePhotoDataWithRetry. Scopes the row to the active event via event_key;
    * dedication holds the guest's optional free-text dedication.
    */
-  async savePhotoData(url: string, dedication: string) {
-    return this.supabase.from(PHOTOS_TABLE).insert({
-      url: url,
-      dedication: dedication,
-      device_id: this.session.getDeviceId(),
-      event_key: this.session.getStoredEventKey(),
-      owner_id: this.session.getUserId(),
-      created_at: new Date()
-    }).select();
+  async savePhotoData(
+    url: string,
+    dedication: string,
+    clientUploadId: string,
+    eventKey: string,
+    deviceId: string,
+    createdAt: number
+  ) {
+    return this.supabase
+      .from(PHOTOS_TABLE)
+      .upsert(
+        {
+          url,
+          dedication,
+          device_id: deviceId,
+          event_key: eventKey,
+          owner_id: this.session.getUserId(),
+          client_upload_id: clientUploadId,
+          created_at: new Date(createdAt).toISOString(),
+        },
+        { onConflict: 'client_upload_id', ignoreDuplicates: true }
+      )
+      .select();
   }
 
   /**
@@ -91,9 +105,23 @@ export class SupabaseService {
   async savePhotoDataWithRetry(
     url: string,
     dedication: string,
+    clientUploadId: string,
+    eventKey: string,
+    deviceId: string,
+    createdAt: number,
     onRetry?: (attemptNumber: number, maxAttempts: number) => void
   ) {
-    return withRetry(() => this.savePhotoData(url, dedication), { onRetry });
+    return withRetry(
+      () => this.savePhotoData(
+        url,
+        dedication,
+        clientUploadId,
+        eventKey,
+        deviceId,
+        createdAt
+      ),
+      { onRetry }
+    );
   }
 
   // ADMIN METHODS
@@ -248,7 +276,7 @@ export class SupabaseService {
 
     if (error) {
       this.logger.error('Error fetching all photos:', error);
-      return [];
+      throw error;
     }
 
     return data || [];
@@ -264,7 +292,7 @@ export class SupabaseService {
    */
   subscribeToAllPhotos(
     onInsert: (photo: Photo) => void,
-    onDelete: (photo: Photo) => void
+    onDelete: (photo: Pick<Photo, 'id'>) => void
   ) {
     const eventKey = this.session.getStoredEventKey();
 
@@ -273,8 +301,15 @@ export class SupabaseService {
       .on('postgres_changes', this.photoChangeFilter('INSERT', eventKey), (payload) => {
         onInsert(payload.new as Photo);
       })
-      .on('postgres_changes', this.photoChangeFilter('DELETE', eventKey), (payload) => {
-        onDelete(payload.old as Photo);
+      // DELETE payloads only carry the primary key, so Realtime cannot
+      // evaluate an event_key column filter for them. IDs are global and the
+      // component removes the matching row only from its already-scoped list.
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: PHOTOS_TABLE,
+      }, (payload) => {
+        onDelete(payload.old as Pick<Photo, 'id'>);
       })
       .subscribe();
   }

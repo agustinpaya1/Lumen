@@ -11,6 +11,7 @@ import { environment } from '@environments/environment';
 export class SupabaseClientService {
   readonly client: SupabaseClient = createClient(
     environment.supabaseUrl,
-    environment.supabaseKey
+    environment.supabaseKey,
+    { auth: { detectSessionInUrl: false } }
   );
 }

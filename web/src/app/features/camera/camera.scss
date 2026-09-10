@@ -5,17 +5,17 @@
 // ====================
 
 // Colors
-$bg-soft-gray: #f9fafb;
-$bg-white: #ffffff;
-$text-dark: #111827;
-$text-gray: #6b7280;
-$text-light-gray: #9ca3af;
-$border-gray: #e5e7eb;
-$primary-black: #111827;
-$primary-white: #ffffff;
+$bg-soft-gray: #faf9f3;
+$bg-white: #fffdf9;
+$text-dark: #3b342f;
+$text-gray: #6d625b;
+$text-light-gray: #9c8e83;
+$border-gray: #e8ded3;
+$primary-black: #26354b;
+$primary-white: #fffdf9;
 $error-red: #ef4444;
 $success-green: #10b981;
-$reveal-red: #a1d3c0;
+$reveal-red: #53653c;
 
 // Shadows
 $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -151,57 +151,6 @@ $transition-base: all 0.3s ease;
     }
 }
 
-// ====================
-// STATE 1: Landing
-// ====================
-
-.state-landing {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 100vh;
-}
-
-.welcome-card {
-    .polaroid-icon {
-        font-size: 4rem;
-        margin-bottom: $spacing-unit * 1.5;
-    }
-
-    .photo-count {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: $spacing-unit * 2 0;
-        padding: $spacing-unit * 1.5;
-        background-color: $bg-soft-gray;
-        border-radius: $rounded-lg;
-
-        .count-number {
-            font-size: 3rem;
-            font-weight: 800;
-            color: $text-dark;
-            line-height: 1;
-        }
-
-        .count-label {
-            font-size: 1rem;
-            color: $text-gray;
-            margin-top: $spacing-unit * 0.25;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-    }
-}
-
-.limit-reached {
-    .limit-icon {
-        font-size: 4rem;
-        margin-bottom: $spacing-unit * 1.5;
-        opacity: 0.5;
-    }
-}
 
 // ====================
 // STATE 2: Viewfinder
@@ -320,6 +269,26 @@ $transition-base: all 0.3s ease;
     z-index: 1;
     overflow: hidden;
     background-color: #000;
+    touch-action: manipulation;
+}
+
+.focus-indicator {
+    position: absolute;
+    z-index: 30;
+    width: 64px;
+    height: 64px;
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 2px 12px rgba(0, 0, 0, 0.22);
+    animation: focusPulse 0.85s ease-out both;
+}
+
+@keyframes focusPulse {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); }
+    18%, 72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
 }
 
 // 3D Flip Container
@@ -416,12 +385,54 @@ $transition-base: all 0.3s ease;
     left: 0;
     right: 0;
     padding: $spacing-unit * 3;
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
     z-index: 50;
     padding-bottom: calc(#{$spacing-unit * 3} + env(safe-area-inset-bottom));
+}
+
+.camera-file-input {
+    position: fixed;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.viewfinder-gallery-button {
+    width: 72px;
+    min-height: 52px;
+    padding: 6px 4px;
+    align-self: center;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: 0;
+    border-radius: 16px;
+    background: rgba(20, 20, 20, 0.48);
+    color: #fff;
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    &:active { transform: scale(0.94); }
+}
+
+.viewfinder-footer-spacer {
+    width: 72px;
+    justify-self: center;
 }
 
 .shutter-button {
@@ -466,7 +477,7 @@ $transition-base: all 0.3s ease;
     gap: $spacing-unit * 1.25;
     width: 100%;
     max-width: 480px;
-    padding: $spacing-unit * 1.5 $spacing-unit;
+    padding: $spacing-unit * 1.5 $spacing-unit calc(#{$spacing-unit * 1.5} + env(safe-area-inset-bottom));
     animation: fadeInUp 0.4s ease;
 }
 
@@ -499,12 +510,10 @@ $transition-base: all 0.3s ease;
 
     .polaroid-photo {
         width: 100%;
+        height: auto;
         display: block;
         border-radius: 4px;
-        // object-contain keeps the FULL frame visible — no cropping
-        object-fit: contain;
-        max-height: 60dvh;
-        background-color: #111; // letterbox bars are dark, not obtrusive
+        background-color: #f7f3ec;
     }
 
     // ── Inline dedication area ──
@@ -545,7 +554,7 @@ $transition-base: all 0.3s ease;
             }
 
             &:focus {
-                border-bottom-color: #a1d3c0; // $brand-accent
+                border-bottom-color: #53653c;
             }
         }
     }
@@ -572,17 +581,19 @@ $transition-base: all 0.3s ease;
 
 // ── Action Buttons Row ──
 .action-buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1.12fr);
     gap: $spacing-unit * 0.75;
     width: 100%;
+    max-width: 420px;
     align-items: center;
 }
 
 // Retake — circular icon button (trash)
 .btn-retake {
-    width: $min-touch-height;
-    height: $min-touch-height;
-    min-width: $min-touch-height;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
     border-radius: $rounded-full;
     border: 2px solid $border-gray;
     background-color: $bg-white;
@@ -595,8 +606,8 @@ $transition-base: all 0.3s ease;
     flex-shrink: 0;
 
     svg {
-        width: 22px;
-        height: 22px;
+        width: 19px;
+        height: 19px;
     }
 
     &:hover {
@@ -612,9 +623,9 @@ $transition-base: all 0.3s ease;
 
 // Save to Gallery — ghost/outline button
 .btn-save {
-    min-height: $min-touch-height;
-    padding: $spacing-unit $spacing-unit * 1.25;
-    font-size: 1rem;
+    min-height: 48px;
+    padding: $spacing-unit * 0.65 $spacing-unit * 0.75;
+    font-size: 0.9rem;
     font-weight: 600;
     border-radius: $rounded-full;
     border: 2px solid $border-gray;
@@ -627,12 +638,11 @@ $transition-base: all 0.3s ease;
     gap: $spacing-unit * 0.4;
     transition: $transition-base;
     font-family: inherit;
-    flex: 1;
     box-sizing: border-box;
 
     .btn-icon {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         flex-shrink: 0;
     }
 
@@ -646,11 +656,11 @@ $transition-base: all 0.3s ease;
     }
 }
 
-// "Revelar" — Vibrant Red #a1d3c0
+// "Revelar" — warm terracotta accent
 .btn-reveal {
-    min-height: $min-touch-height;
-    padding: $spacing-unit $spacing-unit * 1.75;
-    font-size: 1.125rem;
+    min-height: 48px;
+    padding: $spacing-unit * 0.65 $spacing-unit * 0.8;
+    font-size: 0.95rem;
     font-weight: 700;
     border-radius: $rounded-full;
     border: none;
@@ -663,13 +673,12 @@ $transition-base: all 0.3s ease;
     gap: $spacing-unit * 0.5;
     transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;
     font-family: inherit;
-    flex: 2;
     box-shadow: 0 4px 14px rgba($reveal-red, 0.4);
     box-sizing: border-box;
 
     .btn-icon {
-        width: 22px;
-        height: 22px;
+        width: 19px;
+        height: 19px;
         flex-shrink: 0;
     }
 
@@ -744,6 +753,54 @@ $transition-base: all 0.3s ease;
     justify-content: center;
     width: 100%;
     min-height: 100vh;
+}
+
+.state-queued {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+}
+
+.queued-minimal {
+    max-width: 330px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: springScaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.queued-icon {
+    width: 92px;
+    height: 92px;
+    display: grid;
+    place-items: center;
+    border-radius: $rounded-full;
+    margin-bottom: $spacing-unit * 1.5;
+    color: $reveal-red;
+    background: rgba($reveal-red, 0.1);
+
+    svg {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+.queued-title {
+    margin: 0 0 0.65rem;
+    color: $text-dark;
+    font-size: 1.45rem;
+    font-weight: 700;
+}
+
+.queued-body {
+    margin: 0;
+    color: $text-gray;
+    font-size: 1rem;
+    line-height: 1.55;
 }
 
 .success-minimal {
@@ -887,7 +944,27 @@ $transition-base: all 0.3s ease;
 
 @media (max-width: 640px) {
     .camera-container {
-        padding: $spacing-unit;
+        padding: 0;
+        min-height: 100dvh;
+        justify-content: flex-start;
+    }
+
+    .state-preview {
+        box-sizing: border-box;
+        padding: 18px 12px calc(106px + env(safe-area-inset-bottom));
+        gap: 18px;
+    }
+    .state-preview .action-buttons {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        box-sizing: border-box;
+        max-width: 480px;
+        padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+        background: #faf9f3f5;
+        border-top: 1px solid #dcded0;
     }
 
     .card {
@@ -908,7 +985,18 @@ $transition-base: all 0.3s ease;
     }
 
     .polaroid-card {
-        padding: 10px 10px 40px;
+        box-sizing: border-box;
+        padding: 9px 9px 18px;
+        max-width: none;
+    }
+
+    .polaroid-card .polaroid-input-area .polaroid-label {
+        font-size: 12px;
+        color: #687457;
+    }
+
+    .polaroid-card .polaroid-input-area .polaroid-input {
+        font-size: 20px;
     }
 }
 
@@ -1087,8 +1175,8 @@ $transition-base: all 0.3s ease;
 }
 
 // ====================
-// Double-Tap to Flip — disable browser double-tap-to-zoom
-// so that (dblclick) fires reliably on mobile browsers.
+// Double-tap to flip — disable browser double-tap-to-zoom while retaining
+// pointer events for the custom tap-focus / double-tap gesture recogniser.
 // ====================
 
 .tap-to-flip {
@@ -1148,6 +1236,7 @@ $transition-base: all 0.3s ease;
         padding-right: calc(#{$spacing-unit * 1.25} + env(safe-area-inset-right));
 
         // Centre the shutter button vertically
+        display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -1155,6 +1244,17 @@ $transition-base: all 0.3s ease;
         // Re-orient gradient to come from the right edge
         background: linear-gradient(to left, rgba(0, 0, 0, 0.7), transparent);
     }
+
+
+    .viewfinder-gallery-button {
+        width: 52px;
+        min-height: 52px;
+        font-size: 0;
+
+        svg { transform: rotate(90deg); }
+    }
+
+    .viewfinder-footer-spacer { display: none; }
 
     // ── Rotate all in-button SVG icons 90° so they are upright ──
     // This targets every svg inside the icon buttons in the top-bar

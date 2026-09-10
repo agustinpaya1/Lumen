@@ -1,202 +1,169 @@
-import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { SupabaseService } from '@core/services/supabase.service';
-import { RealtimeChannel } from '@supabase/supabase-js';
-import { ADMIN_AUTH_KEY } from '@core/constants';
+import { AdminAccessService } from '@core/services/admin-access.service';
+import { EventService } from '@core/services/event.service';
+import { SessionService } from '@core/services/session.service';
 import { Photo } from '@core/models/photo';
-import { LoggerService } from '@core/services/logger.service';
 import { triggerBrowserDownload } from '@core/utils/download';
 
 @Component({
   selector: 'app-admin',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
 })
-export class AdminComponent implements OnInit, OnDestroy {
-  private readonly supabaseService = inject(SupabaseService);
-  private readonly logger = inject(LoggerService);
-
-  // Auth state
-  readonly isAuthenticated = signal<boolean>(false);
-  readonly pinInput = signal<string>('');
-  readonly authError = signal<string | null>(null);
-
-  // Admin state
+export class AdminComponent implements OnInit {
+  readonly access = inject(AdminAccessService);
+  readonly event = inject(EventService);
+  private readonly session = inject(SessionService);
+  readonly eventKey = this.session.getStoredEventKey();
+  readonly albumUrl = '/home?e=' + encodeURIComponent(this.eventKey);
+  readonly isAuthenticated = signal(false);
+  readonly busy = signal(false);
+  readonly message = signal('');
+  readonly email = signal('');
+  readonly password = signal('');
+  readonly registering = signal(false);
   readonly photos = signal<Photo[]>([]);
-  readonly isLoading = signal<boolean>(false);
-  readonly errorMessage = signal<string | null>(null);
+  readonly confirmLaunch = signal(false);
   readonly deleteConfirmId = signal<number | null>(null);
-
-  // Realtime subscription
-  private realtimeChannel: RealtimeChannel | null = null;
-
-  // TODO(auth): replace PIN with Supabase Auth + RLS role when multi-tenant admin is implemented
-  private readonly ADMIN_PIN = '2102';
-
-  ngOnInit(): void {
-    // Check if already authenticated in session
-    const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY);
-    if (isAuth === 'true') {
-      this.isAuthenticated.set(true);
-      this.loadPhotos();
-      this.setupRealtimeSubscription();
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.cleanupRealtimeSubscription();
-  }
-
-  /**
-   * Verify PIN and authenticate
-   */
-  authenticate(): void {
-    const pin = this.pinInput();
-
-    if (pin === this.ADMIN_PIN) {
-      this.isAuthenticated.set(true);
-      sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
-      this.authError.set(null);
-      this.pinInput.set('');
-
-      // Load photos and setup realtime
-      this.loadPhotos();
-      this.setupRealtimeSubscription();
-    } else {
-      this.authError.set('Invalid PIN. Please try again.');
-    }
-  }
-
-  /**
-   * Handle PIN input changes
-   */
-  onPinInput(value: string): void {
-    // Only allow digits, max 4 characters
-    const cleaned = value.replace(/\D/g, '').slice(0, 4);
-    this.pinInput.set(cleaned);
-    this.authError.set(null);
-  }
-
-  /**
-   * Logout from admin
-   */
-  logout(): void {
-    this.isAuthenticated.set(false);
-    sessionStorage.removeItem(ADMIN_AUTH_KEY);
-    this.photos.set([]);
-    this.cleanupRealtimeSubscription();
-  }
-
-  /**
-   * Load all photos from Supabase
-   */
-  async loadPhotos(): Promise<void> {
+  async ngOnInit(): Promise<void> {
+    await this.event.initialize();
     try {
-      this.isLoading.set(true);
-      this.errorMessage.set(null);
-
-      const photos = await this.supabaseService.fetchPhotos();
-      this.photos.set(photos);
-    } catch (error) {
-      this.logger.error('Error loading photos:', error);
-      this.errorMessage.set('Failed to load photos. Please refresh.');
+      await this.checkAccess();
+    } catch {
+      this.message.set('No se pudo comprobar la sesión. Inicia sesión de nuevo.');
+    }
+  }
+  private async checkAccess(): Promise<void> {
+    const allowed = await this.access.hasAccess(this.eventKey);
+    this.isAuthenticated.set(allowed);
+    if (allowed) await this.loadPhotos();
+  }
+  async authenticate(): Promise<void> {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.message.set('');
+    try {
+      if (this.registering()) {
+        await this.access.register(this.email(), this.password(), this.eventKey);
+        this.message.set(
+          'Revisa tu correo y confirma la cuenta. Después vuelve aquí e inicia sesión. La cuenta debe estar autorizada para este evento.',
+        );
+        this.registering.set(false);
+      } else {
+        await this.access.signIn(this.email(), this.password());
+        await this.checkAccess();
+        if (!this.isAuthenticated())
+          this.message.set(
+            'La cuenta no tiene acceso a este evento. Comprueba que tu correo está autorizado y confirmado.',
+          );
+      }
+      this.password.set('');
+    } catch {
+      this.message.set(
+        'No se pudo completar el acceso. Comprueba el correo, la contraseña y la confirmación de tu cuenta; si acabas de solicitar un correo, espera un minuto antes de reintentarlo.',
+      );
     } finally {
-      this.isLoading.set(false);
+      this.busy.set(false);
     }
   }
-
-  /**
-   * Setup Realtime subscription for new photos
-   */
-  private setupRealtimeSubscription(): void {
-    this.realtimeChannel = this.supabaseService.subscribeToPhotos((newPhoto: Photo) => {
-      // Add new photo to the beginning of the array
-      this.photos.update(current => [newPhoto, ...current]);
-    });
-  }
-
-  /**
-   * Cleanup Realtime subscription
-   */
-  private cleanupRealtimeSubscription(): void {
-    if (this.realtimeChannel) {
-      this.supabaseService.client.removeChannel(this.realtimeChannel);
-      this.realtimeChannel = null;
+  async logout(): Promise<void> {
+    const { error } = await this.access.client.auth.signOut({ scope: 'local' });
+    if (error) {
+      this.message.set('No se pudo cerrar la sesión. Inténtalo de nuevo.');
+      return;
     }
+    this.isAuthenticated.set(false);
+    this.photos.set([]);
+    this.message.set('');
   }
-
-  /**
-   * Show delete confirmation modal
-   */
-  confirmDelete(photoId: number): void {
-    this.deleteConfirmId.set(photoId);
-  }
-
-  /**
-   * Cancel delete operation
-   */
-  cancelDelete(): void {
-    this.deleteConfirmId.set(null);
-  }
-
-  /**
-   * Delete photo from DB and Storage
-   */
-  async deletePhoto(photoId: number): Promise<void> {
+  async setOpen(): Promise<void> {
+    if (this.busy() || !this.isAuthenticated()) return;
+    this.busy.set(true);
+    this.message.set('');
     try {
-      const photo = this.photos().find(p => p.id === photoId);
-      if (!photo) return;
-
-      this.errorMessage.set(null);
-
-      // Delete from Supabase (DB + Storage)
-      await this.supabaseService.deletePhoto(photoId, photo.url);
-
-      // Remove from local state
-      this.photos.update(current => current.filter(p => p.id !== photoId));
-      this.deleteConfirmId.set(null);
-    } catch (error) {
-      this.logger.error('Error deleting photo:', error);
-      this.errorMessage.set('Failed to delete photo. Please try again.');
-      this.deleteConfirmId.set(null);
+      const { error } = await this.access.client.rpc('set_event_uploads_open', {
+        p_event_key: this.eventKey,
+        p_open: !this.event.canUpload(),
+      });
+      if (error) throw error;
+      await this.event.refresh();
+      if (this.event.error()) throw new Error('State refresh failed');
+      this.confirmLaunch.set(false);
+      this.message.set(
+        this.event.canUpload()
+          ? '¡Álbum abierto! Los invitados pueden compartir sus fotos.'
+          : 'El evento muestra la invitación. Las fotos existentes siguen guardadas.',
+      );
+    } catch {
+      this.message.set(
+        'No se ha podido confirmar el cambio. Recarga antes de intentarlo de nuevo.',
+      );
+    } finally {
+      this.busy.set(false);
     }
   }
-
-  /**
-   * Download photo
-   */
+  async loadPhotos(): Promise<void> {
+    const { data, error } = await this.access.client
+      .from('photos')
+      .select('*')
+      .eq('event_key', this.eventKey)
+      .order('created_at', { ascending: false })
+      .limit(1000);
+    if (error) throw error;
+    this.photos.set(data ?? []);
+  }
+  async refresh(): Promise<void> {
+    this.busy.set(true);
+    try {
+      await this.event.refresh();
+      await this.loadPhotos();
+    } catch {
+      this.message.set('No se pudo actualizar el panel.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+  async deletePhoto(id: number): Promise<void> {
+    if (this.busy()) return;
+    const photo = this.photos().find((p) => p.id === id);
+    if (!photo) return;
+    this.busy.set(true);
+    this.message.set('');
+    try {
+      // Storage policies resolve ownership through the row, so remove the object first.
+      const storage = await this.access.client.storage.from('photos').remove([photo.url]);
+      if (storage.error) throw storage.error;
+      const row = await this.access.client
+        .from('photos')
+        .delete()
+        .eq('id', id)
+        .eq('event_key', this.eventKey)
+        .select('id');
+      if (row.error || !row.data?.length) throw row.error ?? new Error('No row deleted');
+      this.photos.update((p) => p.filter((photo) => photo.id !== id));
+      this.deleteConfirmId.set(null);
+    } catch {
+      this.message.set(
+        'No se pudo completar el borrado. Si la imagen ya no aparece, reintenta para retirar su registro del álbum.',
+      );
+    } finally {
+      this.busy.set(false);
+    }
+  }
+  getPhotoUrl(path: string): string {
+    return this.access.client.storage.from('photos').getPublicUrl(path).data.publicUrl;
+  }
   async downloadPhoto(photo: Photo): Promise<void> {
     try {
-      this.errorMessage.set(null);
-
-      // Signed URL is remote (cross-origin), so open via _blank as a fallback.
-      const downloadUrl = await this.supabaseService.getPhotoDownloadUrl(photo.url);
-      triggerBrowserDownload(downloadUrl, `lumen_photo_${photo.id}.jpg`, '_blank');
-    } catch (error) {
-      this.logger.error('Error downloading photo:', error);
-      this.errorMessage.set('Failed to download photo. Please try again.');
+      const { data, error } = await this.access.client.storage
+        .from('photos')
+        .createSignedUrl(photo.url, 60, { download: 'lumen_' + photo.id + '.jpg' });
+      if (error || !data?.signedUrl) throw error ?? new Error('Missing URL');
+      triggerBrowserDownload(data.signedUrl, 'lumen_' + photo.id + '.jpg', '_blank');
+    } catch {
+      this.message.set('No se pudo preparar la descarga. Inténtalo con conexión.');
     }
-  }
-
-  /**
-   * Get photo thumbnail URL
-   */
-  getPhotoUrl(path: string): string {
-    return this.supabaseService.getPhotoPublicUrl(path);
-  }
-
-  /**
-   * Format date for display
-   */
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   }
 }

@@ -1,0 +1,85 @@
+LUMEN — SALIDA LOCAL DE PRUEBAS (sin red)
+Revisión: 4284e8f977e832ab5479cccca8500d3bc01bc755
+Entorno observado: Node v26.0.0; npm 11.12.1; Vitest 4.1.9
+Fecha local: 2026-09-07 (Europe/Madrid)
+
+EJECUCIÓN 1 — invocación descartada por cwd incorrecto, conservada como fallo
+Fecha: 2026-09-07T07:29:42+02:00
+Comando: ./node_modules/.bin/vitest run --coverage
+Contexto: configuración apuntada a la copia temporal, pero cwd en la raíz del repositorio.
+
+ RUN  v4.1.9 /Users/agustinpayaalamar/dev/Lumen
+      Coverage enabled with v8
+
+ ❯ web/src/app/core/utils/capture.spec.ts (0 test)
+ ❯ web/src/app/core/utils/download.spec.ts (0 test)
+ ❯ web/src/app/core/utils/retry.spec.ts (0 test)
+
+ Failed Suites 3
+ Error: Cannot find module '/Users/agustinpayaalamar/dev/Lumen/src/test-setup.ts'
+
+ Test Files  3 failed (3)
+      Tests  no tests
+   Duration  3.36s
+EXIT: 1
+
+EJECUCIÓN 2 — cobertura amplia del builder Angular
+Fecha: 2026-09-07T07:29:52+02:00 (generación del bundle, UTC en la salida original)
+Comando: ./node_modules/.bin/ng test --coverage --watch=false
+Directorio: copia temporal /tmp/lumen-review-4284e8f-20260907
+
+Initial chunk files             | Names                        | Raw size
+styles.css                      | styles                       | 10.07 kB
+spec-app-core-utils-retry.js    | spec-app-core-utils-retry    |  6.89 kB
+chunk-CGZBV6BD.js               | -                            |  4.07 kB
+spec-app-core-utils-capture.js  | spec-app-core-utils-capture  |  2.73 kB
+spec-app-core-utils-download.js | spec-app-core-utils-download |  2.54 kB
+init-testbed.js                 | init-testbed                 |  1.21 kB
+Initial total                                                  | 27.52 kB
+
+ Test Files  3 passed (3)
+      Tests  29 passed (29)
+   Duration  4.00s (transform 295ms, setup 2.81s, import 158ms, tests 136ms, environment 4.71s)
+
+Coverage summary
+Statements   : 4.39% (40/910)
+Branches     : 6.68% (21/314)
+Functions    : 3.04% (6/197)
+Lines        : 4.31% (36/834)
+
+ERROR: Coverage for lines (4.31%) does not meet global threshold (12%)
+ERROR: Coverage for functions (3.04%) does not meet global threshold (11%)
+ERROR: Coverage for statements (4.39%) does not meet global threshold (12%)
+ERROR: Coverage for branches (6.68%) does not meet global threshold (21%)
+EXIT: 1
+
+EJECUCIÓN 3 — script Vitest directo, cwd correcto
+Fecha: 2026-09-07T07:30:06+02:00
+Comando: ./node_modules/.bin/vitest run --coverage
+Directorio: copia temporal /tmp/lumen-review-4284e8f-20260907
+
+ RUN  v4.1.9 /private/tmp/lumen-review-4284e8f-20260907
+      Coverage enabled with v8
+
+ Test Files  3 passed (3)
+      Tests  29 passed (29)
+   Duration  2.39s (transform 438ms, setup 206ms, import 365ms, tests 119ms, environment 4.89s)
+
+Coverage summary
+Statements   : 100% (55/55)
+Branches     : 100% (21/21)
+Functions    : 100% (6/6)
+Lines        : 100% (51/51)
+EXIT: 0
+
+Nota: el 100% solo cubre los cuatro módulos importados por las specs
+(constants.ts y utils/capture.ts, download.ts, retry.ts). No equivale a cobertura
+de la aplicación. La ejecución amplia fuerza la inclusión de src/app/**/*.ts.
+
+COMPROBACIÓN DE BUILD (sin despliegue)
+Fecha: 2026-09-07T07:32:29+02:00
+Comando: ./node_modules/.bin/ng build --output-path /tmp/lumen-build-4284e8f-20260907
+Salida: “Building...”
+EXIT: 134
+No se generó un resultado utilizable; esta única ejecución no demuestra que el
+proyecto no compile en un entorno soportado/configurado de CI.

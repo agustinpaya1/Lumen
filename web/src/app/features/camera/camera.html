@@ -113,8 +113,7 @@
     </div>
 
     <!-- Immersive Video Feed (Full Screen) -->
-    <!-- tap-to-flip: touch-action:manipulation disables double-tap-to-zoom so dblclick fires reliably on mobile -->
-    <div class="video-wrapper tap-to-flip" (dblclick)="toggleCamera()">
+    <div class="video-wrapper tap-to-flip" (pointerup)="handleViewfinderTap($event)">
       <div class="flip-container" [class.is-flipping]="isFlipping()">
         <video #videoRef class="video-feed" autoplay playsinline [class.mirrored]="facingMode() === 'user'"
           [attr.aria-label]="'Live camera viewfinder'">
@@ -130,16 +129,31 @@
         <div class="grid-line grid-line--h2"></div>
       </div>
       }
+
+      @if (focusPoint(); as point) {
+      <div class="focus-indicator" [style.left.%]="point.x" [style.top.%]="point.y" aria-hidden="true"></div>
+      }
     </div>
 
     <!-- Camera Flash Overlay -->
     <div class="camera-flash" [class.active]="feedbackService.flashActive()"></div>
 
-    <!-- Shutter Button (Floating) -->
+    <input #cameraFileInput type="file" accept="image/*" [multiple]="false"
+      (change)="onDeviceFileSelected($event)" class="camera-file-input" />
+
+    <!-- Camera actions (Floating) -->
     <div class="viewfinder-footer">
+      <button class="viewfinder-gallery-button" (click)="openDevicePhotoPicker()" aria-label="Elegir foto del dispositivo">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2 1.6-1.6a2 2 0 012.8 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Galería</span>
+      </button>
       <button class="shutter-button" (click)="capturePhoto()" [attr.aria-label]="'Capture photo'" data-tour="shutter">
         <div class="shutter-inner"></div>
       </button>
+      <span class="viewfinder-footer-spacer" aria-hidden="true"></span>
     </div>
   </div>
   }
@@ -151,7 +165,7 @@
     <!-- CSS Polaroid Card: full image + integrated dedication input -->
     <div class="polaroid-card">
       <!-- Full, uncropped photo — object-contain shows the entire frame -->
-      <img [src]="rawUrl" alt="Captured photo" class="polaroid-photo" />
+      <img [src]="rawUrl" alt="Vista previa de tu foto" class="polaroid-photo" />
 
       <!-- Dedication input lives inside the card border, like writing on a print -->
       <div class="polaroid-input-area">
@@ -166,7 +180,7 @@
     <!-- Action Buttons -->
     <div class="action-buttons">
       <!-- Retake (Trash icon) -->
-      <button class="btn-retake" (click)="discardPhoto()" aria-label="Retake photo">
+      <button class="btn-retake" (click)="discardPhoto()" aria-label="Descartar foto">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -183,12 +197,12 @@
       </button>
 
       <!-- Revelar (Primary Red Button) -->
-      <button class="btn-reveal" (click)="uploadPhoto()">
+      <button class="btn-reveal" (click)="uploadPhoto()" [disabled]="!event.canUpload()">
         <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
         </svg>
-        Revelar
+        Compartir
       </button>
     </div>
 
@@ -244,6 +258,25 @@
         </svg>
       </div>
       <h2 class="success-text">¡Enviada!</h2>
+    </div>
+  </div>
+  }
+
+  <!-- STATE 6: Safely queued on this device -->
+  @if (state === 'queued') {
+  <div class="state-queued">
+    <div class="queued-minimal">
+      <div class="queued-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M4 16.5V7.8A1.8 1.8 0 015.8 6h12.4A1.8 1.8 0 0120 7.8v8.7a1.8 1.8 0 01-1.8 1.8H5.8A1.8 1.8 0 014 16.5z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 14l2.2-2.2a1 1 0 011.4 0L15 15.2" />
+          <circle cx="16.5" cy="9.5" r="1.2" />
+          <path stroke-linecap="round" d="M8 21h8" />
+        </svg>
+      </div>
+      <h2 class="queued-title">Guardada en este dispositivo</h2>
+      <p class="queued-body">La enviaremos automáticamente cuando vuelva la conexión.</p>
     </div>
   </div>
   }

@@ -1,0 +1,138 @@
+<dialog
+  #dialog
+  class="memories"
+  aria-labelledby="memories-title"
+  (close)="closed.emit()"
+  (keydown)="onKeydown($event)"
+>
+  <div
+    #presentation
+    class="memories-shell"
+    [class.is-cinema]="cinemaMode()"
+    [class.controls-hidden]="controlsHidden()"
+  >
+    <header class="memories-header">
+      <div>
+        <span class="eyebrow">LUMEN · EL ÁLBUM VIVO</span>
+        <h2 id="memories-title">Pase de recuerdos</h2>
+      </div>
+      <div class="view-options">
+        <button (click)="cinemaMode.set(!cinemaMode())">
+          {{ cinemaMode() ? 'Ver marco' : 'Modo TV' }}
+        </button>
+        <button (click)="fullscreen()" aria-label="Alternar pantalla completa">⛶</button>
+        @if (cinemaMode()) {
+          <button (click)="controlsHidden.set(true)">Ocultar controles</button>
+        }
+      </div>
+      <button
+        class="circle-button"
+        (click)="dismiss()"
+        aria-label="Cerrar pase de recuerdos"
+        autofocus
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="m6 6 12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </header>
+    @if (fullscreenMessage() && !controlsHidden()) {
+      <p class="fullscreen-message" role="status">{{ fullscreenMessage() }}</p>
+    }
+    @if (controlsHidden()) {
+      <button
+        class="restore-controls"
+        (click)="controlsHidden.set(false)"
+        aria-label="Mostrar controles del pase"
+      >
+        •••
+      </button>
+    }
+
+    <div class="memories-stage">
+      @for (photo of frame(); track photo.id + ':' + retryVersion()) {
+        <figure class="memory-print" [class.is-ready]="ready()">
+          <div class="memory-image-wrap">
+            <img
+              class="memory-image"
+              [src]="photo.publicUrl"
+              [alt]="photo.dedication || 'Un recuerdo de la reboda'"
+              (load)="imageLoaded(photo.id)"
+              (error)="imageFailed(photo.id)"
+            />
+            @if (!ready()) {
+              <div class="image-status" role="status">
+                @if (failed()) {
+                  <p>No se pudo cargar esta foto. Comprueba la conexión o pasa a la siguiente.</p>
+                  <button (click)="retry()">Reintentar foto</button>
+                } @else {
+                  <span class="loader" aria-hidden="true"></span>
+                  <p>Revelando este recuerdo…</p>
+                }
+              </div>
+            }
+          </div>
+          <figcaption>
+            <span class="memory-number">{{ position().toString().padStart(2, '0') }}</span>
+            <p>
+              {{
+                photo.dedication && photo.dedication !== 'gallery-upload'
+                  ? photo.dedication
+                  : 'Lo bonito es vivirlo juntos.'
+              }}
+            </p>
+            <span class="memory-mark" aria-hidden="true">P & J</span>
+          </figcaption>
+        </figure>
+      } @empty {
+        <div class="no-memories">
+          <span class="memory-mark">P & J</span>
+          <h3>Los recuerdos están por llegar.</h3>
+          <p>Las nuevas fotos aparecerán aquí.</p>
+        </div>
+      }
+    </div>
+
+    <footer class="memories-footer">
+      <div class="memory-context"><span>PAULA & JAVIER</span><span>12 · 09 · 2026</span></div>
+      <div class="playback-controls" aria-label="Controles del pase">
+        <button
+          class="circle-button"
+          (click)="advance(-1)"
+          [disabled]="photos().length < 2"
+          aria-label="Recuerdo anterior"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="m14 6-6 6 6 6" />
+          </svg>
+        </button>
+        <button
+          class="play-button"
+          (click)="togglePlayback()"
+          [disabled]="photos().length < 2 || failed()"
+          [attr.aria-label]="playing() ? 'Pausar pase' : 'Reproducir pase'"
+        >
+          @if (playing()) {
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7 5h3v14H7zm7 0h3v14h-3z" />
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="m8 5 11 7-11 7z" /></svg>
+          }
+          <span>{{ playing() ? 'Pausar' : 'Reproducir' }}</span>
+        </button>
+        <button
+          class="circle-button"
+          (click)="advance(1)"
+          [disabled]="photos().length < 2"
+          aria-label="Recuerdo siguiente"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="m10 6 6 6-6 6" />
+          </svg>
+        </button>
+      </div>
+      <p class="memory-counter">{{ position() }} / {{ photos().length }} <span>recuerdos</span></p>
+    </footer>
+  </div>
+</dialog>

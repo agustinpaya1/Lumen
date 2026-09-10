@@ -1,9 +1,9 @@
 {
   "target": "https://lumen-umber.vercel.app",
   "summary": {
-    "pass": 20,
+    "pass": 22,
     "fail": 0,
-    "skip": 6,
+    "skip": 4,
     "total": 26
   },
   "results": [
@@ -148,14 +148,14 @@
     {
       "id": "TC012",
       "title": "Admin cancel delete keeps photo in list",
-      "status": "SKIP",
-      "note": "No photos in admin dashboard"
+      "status": "PASS",
+      "note": ""
     },
     {
       "id": "TC011",
       "title": "Admin delete photo — confirmation modal then removal",
-      "status": "SKIP",
-      "note": "No photos in admin dashboard to delete"
+      "status": "PASS",
+      "note": ""
     },
     {
       "id": "TC031",

@@ -1,17 +1,28 @@
-import { Component, signal, computed, viewChild, ElementRef, inject, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  signal,
+  computed,
+  viewChild,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { CommonModule } from '@angular/common';
 import imageCompression from 'browser-image-compression';
 import { PhotoLimitService } from '@core/services/photo-limit.service';
-import { SupabaseService } from '@core/services/supabase.service';
+import { UploadQueueService } from '@core/services/upload-queue.service';
 import { FeedbackService } from '@core/services/feedback.service';
 import { LoggerService } from '@core/services/logger.service';
 import { triggerBrowserDownload } from '@core/utils/download';
 import { counterColorClass, detectDevicePlatform } from '@core/utils/capture';
 import { Router } from '@angular/router';
+import { EventService } from '@core/services/event.service';
+import { AnalyticsService } from '@core/services/analytics.service';
 
 // State Machine — 5 stable states (no editor)
-type CameraState = 'viewfinder' | 'preview' | 'uploading' | 'success';
+type CameraState = 'viewfinder' | 'preview' | 'uploading' | 'success' | 'queued';
 
 interface DedicationModel {
   dedication: string;
@@ -24,15 +35,18 @@ interface DedicationModel {
   styleUrl: './camera.scss',
 })
 export class CameraComponent implements OnInit, OnDestroy {
+  readonly event = inject(EventService);
   // Services
   readonly photoLimitService = inject(PhotoLimitService);
   readonly feedbackService = inject(FeedbackService);
-  private readonly supabaseService = inject(SupabaseService);
+  private readonly uploadQueue = inject(UploadQueueService);
   private readonly router = inject(Router);
   private readonly logger = inject(LoggerService);
+  private readonly analytics = inject(AnalyticsService);
 
   // View children
   readonly videoElement = viewChild<ElementRef<HTMLVideoElement>>('videoRef');
+  readonly cameraFileInput = viewChild<ElementRef<HTMLInputElement>>('cameraFileInput');
 
   // Core state signals
   readonly currentState = signal<CameraState>('viewfinder');
@@ -44,6 +58,9 @@ export class CameraComponent implements OnInit, OnDestroy {
   readonly devicePlatform = signal<'ios' | 'android' | 'unknown'>('unknown');
   /** Camera facing mode: 'environment' (back) or 'user' (front) */
   readonly facingMode = signal<'environment' | 'user'>('environment');
+
+  /** Position of the temporary tap-to-focus indicator, as viewfinder percentages. */
+  readonly focusPoint = signal<{ x: number; y: number } | null>(null);
 
   /** Whether the camera is currently flipping (for animation) */
   readonly isFlipping = signal<boolean>(false);
@@ -75,6 +92,10 @@ export class CameraComponent implements OnInit, OnDestroy {
 
   // Media stream
   private mediaStream: MediaStream | null = null;
+  private lastViewfinderTap: { at: number; clientX: number; clientY: number } | null = null;
+  private focusIndicatorTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private readonly doubleTapWindowMs = 320;
+  private readonly doubleTapDistancePx = 48;
 
   // Signal Form for dedication text
   private readonly dedicationModel = signal<DedicationModel>({ dedication: '' });
@@ -86,13 +107,20 @@ export class CameraComponent implements OnInit, OnDestroy {
 
   // Beforeunload handler reference
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
+  private destroyed = false;
 
   constructor() {
     this.detectDevicePlatform();
     this.setupBeforeUnloadHandler();
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.event.initialize();
+    if (this.destroyed) return;
+    if (!this.event.canUpload()) {
+      this.goBack();
+      return;
+    }
     // Check if a file was passed via router state from the gallery
     const passedState = history.state as { file?: File };
 
@@ -159,7 +187,7 @@ export class CameraComponent implements OnInit, OnDestroy {
         video: {
           facingMode: this.facingMode(),
           width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          height: { ideal: 1080 },
         },
         audio: false,
       };
@@ -175,7 +203,7 @@ export class CameraComponent implements OnInit, OnDestroy {
             video: {
               facingMode: this.facingMode(),
               width: { ideal: 1280 },
-              height: { ideal: 720 }
+              height: { ideal: 720 },
             },
             audio: false,
           };
@@ -186,7 +214,7 @@ export class CameraComponent implements OnInit, OnDestroy {
               this.logger.warn('1280x720 not supported, using generic video constraints');
               constraints = {
                 video: { facingMode: this.facingMode() },
-                audio: false
+                audio: false,
               };
               stream = await navigator.mediaDevices.getUserMedia(constraints);
             } else {
@@ -198,15 +226,21 @@ export class CameraComponent implements OnInit, OnDestroy {
         }
       }
 
+      if (this.destroyed || !this.event.canUpload()) {
+        stream?.getTracks().forEach((track) => track.stop());
+        return;
+      }
       this.mediaStream = stream;
       this.currentState.set('viewfinder');
 
       // Wait for the video element to render, then assign stream
       setTimeout(() => {
+        if (this.destroyed) return;
         const video = this.videoElement()?.nativeElement;
         if (video && stream) {
           video.srcObject = stream;
-          video.play();
+          void video.play();
+          void this.enableContinuousFocus(stream.getVideoTracks()[0]);
         } else {
           this.logger.error('Video element not found after state change');
         }
@@ -217,7 +251,9 @@ export class CameraComponent implements OnInit, OnDestroy {
         if (error.name === 'NotAllowedError') {
           this.feedbackService.triggerError();
           this.permissionHelperVisible.set(true);
-          this.errorMessage.set('Permiso de cámara denegado. Sigue las instrucciones de abajo para habilitar el acceso a la cámara.');
+          this.errorMessage.set(
+            'Permiso de cámara denegado. Sigue las instrucciones de abajo para habilitar el acceso a la cámara.',
+          );
         } else if (error.name === 'NotFoundError') {
           this.errorMessage.set('No se encontró ninguna cámara en este dispositivo.');
         } else {
@@ -258,23 +294,104 @@ export class CameraComponent implements OnInit, OnDestroy {
       setTimeout(() => {
         this.isFlipping.set(false);
       }, 300);
-
     }, 300);
   }
 
   /**
-   * Public alias for flipCamera(), bound to (dblclick) on the video wrapper.
-   * Allows users to double-tap the viewfinder to switch between cameras.
+   * A short, spatially-close double tap flips camera. A single tap requests
+   * focus at that point when the browser/device exposes the camera controls.
    */
-  toggleCamera(): void {
-    this.flipCamera();
+  handleViewfinderTap(event: PointerEvent): void {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    const now = performance.now();
+    const previous = this.lastViewfinderTap;
+    const distance = previous
+      ? Math.hypot(event.clientX - previous.clientX, event.clientY - previous.clientY)
+      : Number.POSITIVE_INFINITY;
+
+    if (
+      previous &&
+      now - previous.at <= this.doubleTapWindowMs &&
+      distance <= this.doubleTapDistancePx
+    ) {
+      this.lastViewfinderTap = null;
+      this.clearFocusIndicator();
+      this.flipCamera();
+      return;
+    }
+
+    this.lastViewfinderTap = { at: now, clientX: event.clientX, clientY: event.clientY };
+    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const normalizedX = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width));
+    const normalizedY = Math.min(1, Math.max(0, (event.clientY - bounds.top) / bounds.height));
+    this.showFocusIndicator(normalizedX * 100, normalizedY * 100);
+    void this.focusAt(normalizedX, normalizedY);
+  }
+
+  private async focusAt(x: number, y: number): Promise<void> {
+    const track = this.mediaStream?.getVideoTracks()[0];
+    if (!track) return;
+
+    try {
+      const capabilities = track.getCapabilities?.() as MediaTrackCapabilities & {
+        focusMode?: string[];
+        pointsOfInterest?: boolean;
+      };
+      const focusMode = capabilities?.focusMode?.includes('single-shot')
+        ? 'single-shot'
+        : capabilities?.focusMode?.includes('continuous')
+          ? 'continuous'
+          : undefined;
+      const advanced: Record<string, unknown> = {};
+
+      if (focusMode) advanced['focusMode'] = focusMode;
+      if (capabilities?.pointsOfInterest) advanced['pointsOfInterest'] = [{ x, y }];
+      if (Object.keys(advanced).length) {
+        await track.applyConstraints({ advanced: [advanced as MediaTrackConstraintSet] });
+      }
+    } catch (error) {
+      // Safari/iOS commonly keeps autofocus under native control.
+      this.logger.debug('Tap-to-focus is not exposed by this browser:', error);
+    }
+  }
+
+  private async enableContinuousFocus(track: MediaStreamTrack | undefined): Promise<void> {
+    if (!track) return;
+    try {
+      const capabilities = track.getCapabilities?.() as MediaTrackCapabilities & {
+        focusMode?: string[];
+      };
+      if (capabilities?.focusMode?.includes('continuous')) {
+        await track.applyConstraints({
+          advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet],
+        });
+      }
+    } catch (error) {
+      this.logger.debug('Continuous focus is not exposed by this browser:', error);
+    }
+  }
+
+  private showFocusIndicator(x: number, y: number): void {
+    if (this.focusIndicatorTimeoutId) clearTimeout(this.focusIndicatorTimeoutId);
+    this.focusPoint.set({ x, y });
+    this.focusIndicatorTimeoutId = setTimeout(() => {
+      this.focusPoint.set(null);
+      this.focusIndicatorTimeoutId = null;
+    }, 850);
+  }
+
+  private clearFocusIndicator(): void {
+    if (this.focusIndicatorTimeoutId) clearTimeout(this.focusIndicatorTimeoutId);
+    this.focusIndicatorTimeoutId = null;
+    this.focusPoint.set(null);
   }
 
   // CAMERA CONTROLS (Grid & Flash)
 
   /** Toggle the 3×3 rule-of-thirds grid overlay */
   toggleGrid(): void {
-    this.showGrid.update(v => !v);
+    this.showGrid.update((v) => !v);
   }
 
   /** Toggle flash mode and attempt hardware torch */
@@ -287,7 +404,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     if (track) {
       try {
         await track.applyConstraints({
-          advanced: [{ torch: newMode === 'on' } as any]
+          advanced: [{ torch: newMode === 'on' } as any],
         });
       } catch (err) {
         // Keep flashMode as 'on' — the software screen flash will be used instead.
@@ -302,7 +419,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     if (track) {
       try {
         await track.applyConstraints({
-          advanced: [{ torch: false } as any]
+          advanced: [{ torch: false } as any],
         });
       } catch (error) {
         // Torch may not be supported — nothing actionable, just trace it.
@@ -313,12 +430,36 @@ export class CameraComponent implements OnInit, OnDestroy {
 
   // CAPTURE — viewfinder → preview (DIRECT, no editor)
 
+  /** Open the device's native image picker without leaving the camera flow. */
+  openDevicePhotoPicker(): void {
+    this.cameraFileInput()?.nativeElement.click();
+  }
+
+  /** Use a device image in the same preview/upload flow as a camera capture. */
+  onDeviceFileSelected(event: Event): void {
+    if (!this.event.canUpload()) return;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    this.stopCamera();
+    this.isFromGallery.set(true);
+    this.rawPhotoBlob.set(file);
+    this.currentState.set('preview');
+    this.feedbackService.triggerButtonPress();
+  }
+
   /**
    * Capture the current video frame and transition DIRECTLY to preview.
    * If flash is on, triggers a software screen flash (white overlay) for 150ms
    * to illuminate faces before capturing.
    */
   async capturePhoto(): Promise<void> {
+    if (!this.event.canUpload()) {
+      this.goBack();
+      return;
+    }
     const video = this.videoElement()?.nativeElement;
 
     if (!video) {
@@ -332,22 +473,55 @@ export class CameraComponent implements OnInit, OnDestroy {
     // If flash is on, show software screen flash and wait for illumination
     if (this.flashMode() === 'on') {
       this.isFlashing.set(true);
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
     } else {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     // Create a temporary off-screen canvas to extract the frame
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = video.videoWidth;
-    tempCanvas.height = video.videoHeight;
+    // The viewfinder uses object-fit: cover. Crop the sensor frame to the same
+    // aspect ratio so preview and final image exactly match what the guest saw.
+    const sourceWidth = video.videoWidth;
+    const sourceHeight = video.videoHeight;
+    const viewfinderRatio = video.clientWidth / video.clientHeight;
+    const sourceRatio = sourceWidth / sourceHeight;
+    let sourceX = 0;
+    let sourceY = 0;
+    let cropWidth = sourceWidth;
+    let cropHeight = sourceHeight;
+
+    if (sourceRatio > viewfinderRatio) {
+      cropWidth = sourceHeight * viewfinderRatio;
+      sourceX = (sourceWidth - cropWidth) / 2;
+    } else if (sourceRatio < viewfinderRatio) {
+      cropHeight = sourceWidth / viewfinderRatio;
+      sourceY = (sourceHeight - cropHeight) / 2;
+    }
+
+    tempCanvas.width = Math.round(cropWidth);
+    tempCanvas.height = Math.round(cropHeight);
     const ctx = tempCanvas.getContext('2d');
     if (!ctx) {
       this.isFlashing.set(false);
       this.errorMessage.set('Error al capturar la foto. Por favor, inténtalo de nuevo.');
       return;
     }
-    ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+    if (this.facingMode() === 'user') {
+      ctx.translate(tempCanvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(
+      video,
+      sourceX,
+      sourceY,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      tempCanvas.width,
+      tempCanvas.height,
+    );
 
     // Turn off screen flash and hardware torch
     this.isFlashing.set(false);
@@ -356,13 +530,17 @@ export class CameraComponent implements OnInit, OnDestroy {
     }
 
     // Convert to blob and go STRAIGHT to preview
-    tempCanvas.toBlob((blob) => {
-      if (blob) {
-        this.rawPhotoBlob.set(blob);
-        this.currentState.set('preview');
-        this.stopCamera();
-      }
-    }, 'image/jpeg', 0.95);
+    tempCanvas.toBlob(
+      (blob) => {
+        if (blob) {
+          this.rawPhotoBlob.set(blob);
+          this.currentState.set('preview');
+          this.stopCamera();
+        }
+      },
+      'image/jpeg',
+      0.95,
+    );
   }
 
   // PREVIEW — download & upload
@@ -399,6 +577,12 @@ export class CameraComponent implements OnInit, OnDestroy {
   // UPLOAD — with compression & retry
 
   async uploadPhoto(): Promise<void> {
+    if (!this.event.canUpload()) {
+      this.errorMessage.set(
+        'El álbum aún no admite fotos. Tu imagen sigue aquí; podrás compartirla cuando se abra.',
+      );
+      return;
+    }
     const rawBlob = this.rawPhotoBlob();
     if (!rawBlob) return;
 
@@ -419,66 +603,58 @@ export class CameraComponent implements OnInit, OnDestroy {
           onProgress: (progress) => {
             this.uploadProgress.set(progress * 0.5); // Compression = 50% of total
           },
-        }
+        },
       );
 
       this.uploadProgress.set(50);
 
-      // Generate unique filename
-      const timestamp = Date.now();
-      const filename = `photo_${timestamp}.jpg`;
-      const filepath = `uploads/${filename}`;
-
-      // Upload to Supabase WITH RETRY
-      const { error: uploadError } = await this.supabaseService.uploadPhotoWithRetry(
-        compressedFile,
-        filepath,
-        (attempt, maxAttempts) => {
-          this.retryMessage.set(`Conexión débil. Reintentando (${attempt}/${maxAttempts})...`);
-        }
-      );
-
-      if (uploadError) throw uploadError;
-
-      this.retryMessage.set(null);
-      this.uploadProgress.set(75);
-
-      // Save photo metadata WITH RETRY
       const dedication = this.dedicationModel().dedication || '';
-      await this.supabaseService.savePhotoDataWithRetry(
-        filepath,
-        dedication,
-        (attempt, maxAttempts) => {
-          this.retryMessage.set(`Guardando metadatos. Reintentando (${attempt}/${maxAttempts})...`);
-        }
-      );
+      const result = await this.uploadQueue.enqueueAndUpload(compressedFile, dedication, {
+        onStorageRetry: (attempt, maxAttempts) => {
+          this.retryMessage.set(`Conexión débil. Reintentando (${attempt}/${maxAttempts})...`);
+        },
+        onStorageComplete: () => {
+          this.retryMessage.set(null);
+          this.uploadProgress.set(75);
+        },
+        onMetadataRetry: (attempt, maxAttempts) => {
+          this.retryMessage.set(`Guardando la foto. Reintentando (${attempt}/${maxAttempts})...`);
+        },
+      });
 
       this.retryMessage.set(null);
       this.uploadProgress.set(100);
       this.isUploading.set(false);
 
-      // Decrement the photo count
-      this.photoLimitService.decrementCount();
-
       // Trigger success feedback
       this.feedbackService.triggerSuccess();
 
-      // Show success state
-      this.currentState.set('success');
+      // A queued photo is already durable, so releasing the in-memory blob and
+      // navigating away is safe even though Supabase has not accepted it yet.
+      this.currentState.set(result === 'published' ? 'success' : 'queued');
+      if (result === 'published') {
+        this.analytics.track('upload_success', {
+          viewportWidth: window.innerWidth,
+          online: navigator.onLine,
+          source: this.isFromGallery() ? 'gallery' : 'camera',
+        });
+      }
 
-      // Reset after 1.2 seconds and navigate back to Home
-      setTimeout(() => {
-        this.rawPhotoBlob.set(null);
-        this.dedicationModel.set({ dedication: '' });
-        this.router.navigate(['/home']);
-      }, 1200);
-
+      // Give the guest time to read the stronger offline confirmation.
+      setTimeout(
+        () => {
+          this.rawPhotoBlob.set(null);
+          this.dedicationModel.set({ dedication: '' });
+          this.router.navigate(['/home']);
+        },
+        result === 'published' ? 1200 : 2200,
+      );
     } catch (error) {
       this.logger.error('Upload error:', error);
       this.isUploading.set(false);
       this.retryMessage.set(null);
       this.errorMessage.set(
-        'Error al subir la foto tras varios intentos. La foto está guardada localmente — pulsa "Reintentar subida" para volver a intentarlo.'
+        'No se pudo guardar la foto de forma segura. Déjala abierta y pulsa "Reintentar subida".',
       );
       this.currentState.set('preview');
     }
@@ -495,16 +671,16 @@ export class CameraComponent implements OnInit, OnDestroy {
   /** Stop the camera media stream */
   private stopCamera(): void {
     if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream.getTracks().forEach((track) => track.stop());
       this.mediaStream = null;
     }
   }
 
-
-
   /** Cleanup on component destroy */
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.stopCamera();
+    this.clearFocusIndicator();
     if (this.beforeUnloadHandler) {
       window.removeEventListener('beforeunload', this.beforeUnloadHandler);
     }

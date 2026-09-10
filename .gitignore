@@ -52,3 +52,11 @@ testem.log
 # --- Sistema Operativo (Mac/Windows) ---
 .DS_Store
 Thumbs.db
+.vercel
+
+# --- Material de trabajo local (no forma parte de la aplicación) ---
+/agent-ops/
+/Lumen_imagenes.zip
+/web/public/javier-paula-acuarela.png
+/web/public/javier-paula-acuarela-v2.png
+/web/public/javier-paula-acuarela-v3.png

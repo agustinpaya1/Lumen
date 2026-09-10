@@ -54,8 +54,6 @@ export class OnboardingComponent implements OnInit, OnDestroy {
   }
 
   private proceedAfterConsent(): void {
-    if (localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true') {
-      this.router.navigate(['/home']);
-    }
+    this.router.navigate(['/home']);
   }
 }

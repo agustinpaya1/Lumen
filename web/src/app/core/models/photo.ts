@@ -11,6 +11,8 @@ export interface Photo {
   dedication: string | null;
   device_id: string;
   event_key: string;
+  /** Stable client-generated id used to make offline retries idempotent. */
+  client_upload_id?: string | null;
   created_at: string;
 }
 

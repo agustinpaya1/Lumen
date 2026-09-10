@@ -1,5 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { DEFAULT_PHOTO_LIMIT, PHOTOS_REMAINING_KEY } from '@core/constants';
+import { SessionService } from './session.service';
 
 /**
  * Regulates per-device photo usage by maintaining a reactive counter backed by
@@ -10,6 +11,7 @@ import { DEFAULT_PHOTO_LIMIT, PHOTOS_REMAINING_KEY } from '@core/constants';
   providedIn: 'root'
 })
 export class PhotoLimitService {
+  private readonly session = inject(SessionService);
   private readonly photoCountSignal = signal<number>(this.initializeCount());
 
   /** Remaining photos this device is allowed to upload. */
@@ -32,7 +34,7 @@ export class PhotoLimitService {
     }
     let stored: string | null;
     try {
-      stored = localStorage.getItem(PHOTOS_REMAINING_KEY);
+      stored = localStorage.getItem(this.storageKey);
     } catch {
       // Safari private mode throws on access rather than returning null.
       return DEFAULT_PHOTO_LIMIT;
@@ -49,7 +51,8 @@ export class PhotoLimitService {
    * user-writable, so a tampered or corrupted entry must not yield a negative
    * quota (which would push photosTaken above the maximum) nor an inflated one.
    *
-   * This is a UX guard only — the authoritative limit is enforced server-side.
+   * This is a UX guard only; a future server-side quota must remain the
+   * authoritative protection against a modified browser client.
    */
   private clamp(count: number): number {
     return Math.min(Math.max(count, 0), DEFAULT_PHOTO_LIMIT);
@@ -87,10 +90,15 @@ export class PhotoLimitService {
       return;
     }
     try {
-      localStorage.setItem(PHOTOS_REMAINING_KEY, count.toString());
+      localStorage.setItem(this.storageKey, count.toString());
     } catch {
       // Quota exceeded or blocked storage: the in-memory signal stays correct
       // for this session, which is enough to keep the UI consistent.
     }
+  }
+
+  /** Keeps one event's local quota from leaking into the next event. */
+  private get storageKey(): string {
+    return `${PHOTOS_REMAINING_KEY}:${this.session.getStoredEventKey()}`;
   }
 }
