@@ -88,7 +88,6 @@
         }
         <p class="eyebrow">12 SEPTIEMBRE 2026 · VILLARLUENGO</p>
         <h1 id="invitation-title">Paula <em>&</em> Javier</h1>
-        <p class="invitation-subtitle">Diez años. Y todos los que quedan.</p>
         <figure class="couple-print">
           <img
             src="/javier-paula-acuarela-v3.webp"
@@ -97,21 +96,17 @@
             height="1774"
             fetchpriority="high"
           />
-          <figcaption>Y volvería a elegirte.</figcaption>
         </figure>
         <div class="invitation-message">
-          <span class="eyebrow">EL ÁLBUM LO ESCRIBIMOS ENTRE TODOS</span>
-          <h2>Tu mirada también<br />es parte de este día.</h2>
-          <p>
-            Un abrazo, una risa, un reencuentro. Aquí reuniremos las fotos de todos, sin registros
-            ni contraseñas.
-          </p>
+          <span class="eyebrow">ÁLBUM COMPARTIDO</span>
+          <h2>Comparte tus fotos del día.</h2>
+          <p>Haz una foto o elige una del móvil. No necesitas instalar nada ni crear una cuenta.</p>
           @if (event.waiting()) {
             <div class="opening-note" role="status">
-              <span class="status-dot"></span><strong>Estamos preparando el álbum</strong>
+              <span class="status-dot"></span><strong>El álbum todavía está cerrado</strong>
               <p>
-                Cuando los anfitriones den la salida, aquí aparecerán las fotos y los botones para
-                compartir las tuyas. No tienes que recargar.
+                Los anfitriones lo abrirán el día del evento. Esta página se actualizará
+                automáticamente.
               </p>
             </div>
           }
@@ -119,7 +114,7 @@
         <section class="event-places" aria-label="Dónde y cuándo">
           <article>
             <span class="eyebrow">SÁBADO 12 · 12:00 H</span>
-            <h3>Volvemos a decir «sí»</h3>
+            <h3>Ceremonia</h3>
             <p>Iglesia de la Asunción<br />Villarluengo, Teruel</p>
             <a
               href="https://www.google.com/maps/search/?api=1&query=Iglesia+de+la+Asuncion+Villarluengo+Teruel"
@@ -129,9 +124,9 @@
             >
           </article>
           <article>
-            <span class="eyebrow">DESPUÉS, SEGUIMOS CELEBRANDO</span>
-            <h3>Brindis y reencuentros</h3>
-            <p>Comida, recena y copas<br />Hostal de la Trucha</p>
+            <span class="eyebrow">DESPUÉS</span>
+            <h3>Comida y celebración</h3>
+            <p>Hostal de la Trucha<br />Villarluengo, Teruel</p>
             <a
               href="https://www.google.com/maps/search/?api=1&query=Hostal+de+la+Trucha+Villarluengo"
               target="_blank"
@@ -141,21 +136,21 @@
           </article>
         </section>
         <section class="how-it-works" aria-labelledby="how-title">
-          <h2 id="how-title">Así de sencillo.</h2>
+          <h2 id="how-title">Cómo subir fotos</h2>
           <ol>
             <li>
-              <strong>Abre este mismo enlace.</strong
-              ><span>Guárdalo para el sábado. No necesitas instalar nada.</span>
+              <strong>Guarda este enlace.</strong
+              ><span>No necesitas instalar ninguna aplicación.</span>
             </li>
             <li>
               <strong>Haz una foto o elige una del móvil.</strong
-              ><span>Cuando se abra el álbum, verás los dos botones abajo.</span>
+              ><span>Los botones aparecerán cuando el álbum esté abierto.</span>
             </li>
             <li>
-              <strong>Compártela con todos.</strong
+              <strong>Pulsa Compartir.</strong
               ><span
-                >Si pierdes cobertura, guardamos la foto en este dispositivo. Vuelve a abrir Lumen
-                con conexión para enviarla.</span
+                >Si no tienes cobertura, la foto quedará guardada en este móvil hasta que vuelvas a
+                conectarte.</span
               >
             </li>
           </ol>
@@ -307,7 +302,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path d="M4 6h4l2-3h4l2 3h4v14H4z" />
           <circle cx="12" cy="12" r="4" /></svg
-        ><span>Hacer foto</span>
+        ><span>Abrir cámara</span>
       </button>
       <button
         class="action-btn action-btn-gallery"
@@ -318,7 +313,7 @@
           <rect x="3" y="3" width="18" height="18" rx="3" />
           <path d="m3 16 5-5 7 10m-3-6 4-4 5 5" />
           <circle cx="15.5" cy="7.5" r="1" /></svg
-        ><span>Desde el móvil</span>
+        ><span>Elegir foto</span>
       </button>
     </nav>
   }

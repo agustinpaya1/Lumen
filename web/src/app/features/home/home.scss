@@ -215,12 +215,25 @@ h3 {
 }
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+  gap: 12px;
   align-items: start;
 }
 .photo-column {
   min-width: 0;
+}
+.photo-column:first-child .photo-card:nth-child(even) {
+  width: 88%;
+  margin-left: auto;
+}
+.photo-column:last-child {
+  padding-top: 24px;
+}
+.photo-column:last-child .photo-card:nth-child(odd) {
+  width: 90%;
+}
+.photo-column:last-child .photo-card:nth-child(even) {
+  margin-left: auto;
 }
 .photo-grid--single {
   grid-template-columns: 1fr;
@@ -229,6 +242,13 @@ h3 {
 }
 .photo-grid--single .photo-column:empty {
   display: none;
+}
+.photo-grid--single .photo-column {
+  padding-top: 0;
+}
+.photo-grid--single .photo-card {
+  width: 100%;
+  margin-inline: 0;
 }
 .photo-card {
   display: inline-block;
@@ -275,38 +295,45 @@ h3 {
 .action-dock {
   position: fixed;
   z-index: 30;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 50%;
+  width: min(calc(100% - 24px), 430px);
+  transform: translateX(-50%);
   display: flex;
-  gap: 8px;
-  padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom))
-    max(12px, env(safe-area-inset-left));
-  border-top: 1px solid var(--line);
-  background: #faf9f3f5;
-  backdrop-filter: blur(16px);
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid #d7dccb;
+  border-radius: 999px;
+  background: #fffdf7eb;
+  box-shadow: 0 12px 34px #30372b2b;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 8px;
   flex: 1;
-  min-height: 52px;
-  padding: 10px 8px;
-  border-radius: 14px;
-  border: 1px solid #d8decb;
-  font-size: 16px;
+  min-height: 48px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 0;
+  font-size: 15px;
   font-weight: 700;
 }
+.action-btn svg {
+  width: 20px;
+  height: 20px;
+}
 .action-btn-camera {
-  flex: 1.35;
+  flex: 1.15;
   background: var(--olive);
   color: #fffdf7;
-  border-color: var(--olive);
+  box-shadow: 0 5px 14px #35442b30;
 }
 .action-btn-gallery {
-  background: transparent;
+  background: #eef0e5;
   color: var(--olive);
 }
 .invitation {
@@ -327,13 +354,8 @@ h3 {
 .invitation h1 em {
   font-size: 0.75em;
 }
-.invitation-subtitle {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 24px;
-  margin: 6px 0 26px;
-}
 .couple-print {
-  margin: 0 auto 30px;
+  margin: 24px auto 30px;
   padding: 14px 14px 10px;
   width: 200px;
   background: #fffdf7;
@@ -346,13 +368,6 @@ h3 {
   height: 270px;
   display: block;
   margin: auto;
-}
-.couple-print figcaption {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-style: italic;
-  color: var(--olive);
-  font-size: 20px;
-  padding-top: 10px;
 }
 .invitation-message h2 {
   font-size: 36px;
@@ -588,15 +603,9 @@ h3 {
     margin-bottom: 16px;
   }
   .action-dock {
-    left: 50%;
-    right: auto;
     bottom: 20px;
     width: 440px;
-    transform: translateX(-50%);
-    border: 1px solid var(--line);
-    border-radius: 22px;
-    padding: 12px;
-    box-shadow: 0 8px 32px #30372b15;
+    padding: 7px;
   }
   .event-places {
     grid-template-columns: 1fr 1fr;
@@ -608,6 +617,11 @@ h3 {
 @media (max-width: 359px) {
   .header-occasion {
     display: none;
+  }
+  .album-context {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
   }
   .tab-btn {
     padding-inline: 10px;
@@ -625,7 +639,7 @@ h3 {
     top: 48px;
   }
   .action-dock {
-    padding-top: 6px;
+    bottom: max(6px, env(safe-area-inset-bottom));
   }
   .action-btn {
     min-height: 44px;
