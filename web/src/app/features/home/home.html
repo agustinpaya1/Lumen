@@ -120,8 +120,10 @@
               href="https://www.google.com/maps/search/?api=1&query=Iglesia+de+la+Asuncion+Villarluengo+Teruel"
               target="_blank"
               rel="noopener noreferrer"
-              >Cómo llegar a la iglesia</a
-            >
+              ><span>Cómo llegar a la iglesia</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" /></svg
+            ></a>
           </article>
           <article>
             <span class="eyebrow">DESPUÉS</span>
@@ -131,8 +133,10 @@
               href="https://www.google.com/maps/search/?api=1&query=Hostal+de+la+Trucha+Villarluengo"
               target="_blank"
               rel="noopener noreferrer"
-              >Cómo llegar al hostal</a
-            >
+              ><span>Cómo llegar al hostal</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" /></svg
+            ></a>
           </article>
         </section>
         <section class="how-it-works" aria-labelledby="how-title">
@@ -230,6 +234,8 @@
                 @for (photo of column; track photo.id) {
                   <button
                     class="photo-card"
+                    [class.photo-card--tall]="($index + columnIndex) % 3 === 0"
+                    [class.photo-card--short]="($index + columnIndex) % 3 === 1"
                     (click)="openViewer(photo)"
                     [attr.data-tour]="columnIndex === 0 && $first ? 'photo-card' : null"
                     [attr.aria-label]="'Ver foto: ' + (photo.dedication || 'recuerdo de la reboda')"

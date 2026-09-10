@@ -22,7 +22,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
       this.showConsentModal = true;
       return;
     }
-    this.proceedAfterConsent();
+    if (localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true') this.proceedAfterConsent();
   }
 
   ngOnDestroy(): void {
@@ -35,7 +35,6 @@ export class OnboardingComponent implements OnInit, OnDestroy {
   acceptConsent(): void {
     localStorage.setItem(LUMEN_CONSENT_KEY, 'true');
     this.showConsentModal = false;
-    this.proceedAfterConsent();
   }
 
   declineConsent(): void {

@@ -76,9 +76,6 @@ export class CameraComponent implements OnInit, OnDestroy {
   /** Flash mode: 'off' or 'on' (hardware torch attempt + software screen flash) */
   readonly flashMode = signal<'off' | 'on'>('off');
 
-  /** Whether the white screen flash overlay is currently active */
-  readonly isFlashing = signal<boolean>(false);
-
   // Photo signals
 
   /** Raw photo blob captured from viewfinder */
@@ -394,22 +391,25 @@ export class CameraComponent implements OnInit, OnDestroy {
     this.showGrid.update((v) => !v);
   }
 
-  /** Toggle flash mode and attempt hardware torch */
-  async toggleFlash(): Promise<void> {
+  /** Toggle flash mode without leaving the hardware torch continuously enabled. */
+  toggleFlash(): void {
     const newMode = this.flashMode() === 'off' ? 'on' : 'off';
     this.flashMode.set(newMode);
+    if (newMode === 'off') void this.turnOffTorch();
+  }
 
-    // Attempt hardware torch (safe — will silently fail on iOS/unsupported)
+  /** Pulse the device torch only for the shutter when the browser exposes it. */
+  private async turnOnTorch(): Promise<boolean> {
     const track = this.mediaStream?.getVideoTracks()[0];
-    if (track) {
-      try {
-        await track.applyConstraints({
-          advanced: [{ torch: newMode === 'on' } as any],
-        });
-      } catch (err) {
-        // Keep flashMode as 'on' — the software screen flash will be used instead.
-        this.logger.warn('Hardware flash not supported:', err);
-      }
+    if (!track) return false;
+    const capabilities = track.getCapabilities?.() as MediaTrackCapabilities & { torch?: boolean };
+    if (!capabilities?.torch) return false;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: true } as MediaTrackConstraintSet] });
+      return true;
+    } catch (error) {
+      this.logger.warn('Hardware flash not supported:', error);
+      return false;
     }
   }
 
@@ -452,8 +452,8 @@ export class CameraComponent implements OnInit, OnDestroy {
 
   /**
    * Capture the current video frame and transition DIRECTLY to preview.
-   * If flash is on, triggers a software screen flash (white overlay) for 150ms
-   * to illuminate faces before capturing.
+   * If flash is on, pulses the hardware torch when available and always uses a
+   * brief software blink as a fallback before capturing.
    */
   async capturePhoto(): Promise<void> {
     if (!this.event.canUpload()) {
@@ -470,10 +470,10 @@ export class CameraComponent implements OnInit, OnDestroy {
     // Trigger shutter feedback (haptic + audio + flash)
     this.feedbackService.triggerShutter();
 
-    // If flash is on, show software screen flash and wait for illumination
+    let hardwareFlashActive = false;
     if (this.flashMode() === 'on') {
-      this.isFlashing.set(true);
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      hardwareFlashActive = await this.turnOnTorch();
+      await new Promise((resolve) => setTimeout(resolve, 140));
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
@@ -503,7 +503,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     tempCanvas.height = Math.round(cropHeight);
     const ctx = tempCanvas.getContext('2d');
     if (!ctx) {
-      this.isFlashing.set(false);
+      if (hardwareFlashActive) await this.turnOffTorch();
       this.errorMessage.set('Error al capturar la foto. Por favor, inténtalo de nuevo.');
       return;
     }
@@ -523,11 +523,8 @@ export class CameraComponent implements OnInit, OnDestroy {
       tempCanvas.height,
     );
 
-    // Turn off screen flash and hardware torch
-    this.isFlashing.set(false);
-    if (this.flashMode() === 'on') {
-      await this.turnOffTorch();
-    }
+    // End the hardware pulse immediately after the frame has been captured.
+    if (hardwareFlashActive) await this.turnOffTorch();
 
     // Convert to blob and go STRAIGHT to preview
     tempCanvas.toBlob(
