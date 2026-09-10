@@ -7,594 +7,440 @@
 
 <div class="home-container">
   <header class="home-header">
-    <a class="wordmark" [href]="albumAnchor" aria-label="Lumen, ir al álbum"
-      >lumen<svg class="wordmark-star" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 2v20M2 12h20M5 5l14 14M5 19 14 5" /></svg
-    ></a>
+    <a class="wordmark" [href]="albumAnchor" aria-label="Lumen, ir al álbum">lumen<svg class="wordmark-star"
+        viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2v20M2 12h20M5 5l14 14M5 19 14 5" />
+      </svg></a>
     <span class="header-occasion">PAULA & JAVIER</span>
     <div class="more-container">
-      <button
-        #menuToggle
-        class="menu-toggle"
-        (click)="extrasOpen.set(!extrasOpen())"
-        aria-label="Más opciones del evento"
-        [attr.aria-expanded]="extrasOpen()"
-        aria-controls="event-menu"
-      >
+      <button #menuToggle class="menu-toggle" (click)="extrasOpen.set(!extrasOpen())"
+        aria-label="Más opciones del evento" [attr.aria-expanded]="extrasOpen()" aria-controls="event-menu">
         •••
       </button>
       @if (extrasOpen()) {
-        <nav class="event-menu" id="event-menu" aria-label="Opciones del evento">
-          <button (click)="invitationOpen.set(!invitationOpen()); extrasOpen.set(false)">
-            {{ invitationOpen() ? 'Volver al álbum' : 'La invitación' }}
-          </button>
-          <button (click)="shareAlbum($event); extrasOpen.set(false)">Compartir enlace</button>
-          @if (event.canUpload()) {
-            <button (click)="openMemories()" [disabled]="!photos.length">Pase de recuerdos</button>
-            <button (click)="openMemories(true)" [disabled]="!photos.length">
-              Modo TV · foto completa
-            </button>
-          }
-        </nav>
+      <nav class="event-menu" id="event-menu" aria-label="Opciones del evento">
+        <button (click)="invitationOpen.set(!invitationOpen()); extrasOpen.set(false)">
+          {{ invitationOpen() ? 'Volver al álbum' : 'La invitación' }}
+        </button>
+        <button (click)="shareAlbum($event); extrasOpen.set(false)">Compartir enlace</button>
+        @if (event.canUpload()) {
+        <button (click)="openMemories()" [disabled]="!photos.length">Pase de recuerdos</button>
+        <button (click)="openMemories(true)" [disabled]="!photos.length">
+          Modo TV · foto completa
+        </button>
+        }
+      </nav>
       }
     </div>
   </header>
 
   <main class="home-content">
     @if (shareMessage() || pending > 0) {
-      <div class="status-stack" aria-label="Estado del álbum">
-        @if (shareMessage()) {
-          <aside class="share-notice" role="status">
-            <span>{{ shareMessage() }}</span>
-            @if (shareFallbackUrl()) {
-              <input
-                aria-label="Enlace del álbum para copiar"
-                readonly
-                [value]="shareFallbackUrl()"
-                #shareLink
-                (focus)="shareLink.select()"
-              />
-            }
-            <button (click)="shareMessage.set('')" aria-label="Cerrar mensaje">×</button>
-          </aside>
+    <div class="status-stack" aria-label="Estado del álbum">
+      @if (shareMessage()) {
+      <aside class="share-notice" role="status">
+        <span>{{ shareMessage() }}</span>
+        @if (shareFallbackUrl()) {
+        <input aria-label="Enlace del álbum para copiar" readonly [value]="shareFallbackUrl()" #shareLink
+          (focus)="shareLink.select()" />
         }
-        @if (pending > 0) {
-          <aside class="queue-banner" aria-live="polite">
-            <div>
-              <strong
-                >{{ pending }} {{ pending === 1 ? 'foto guardada' : 'fotos guardadas' }} en este
-                móvil</strong
-              >
-              <p>
-                {{
-                  online ? 'Pendientes de enviar al álbum.' : 'Se enviarán al recuperar conexión.'
-                }}
-              </p>
-            </div>
-            @if (online && event.canUpload() && !uploadQueue.isProcessing()) {
-              <button (click)="retryPendingUploads()">Reintentar</button>
-            }
-          </aside>
+        <button (click)="shareMessage.set('')" aria-label="Cerrar mensaje">×</button>
+      </aside>
+      }
+      @if (pending > 0) {
+      <aside class="queue-banner" aria-live="polite">
+        <div>
+          <strong>{{ pending }} {{ pending === 1 ? 'foto guardada' : 'fotos guardadas' }} en este
+            móvil</strong>
+          <p>
+            {{
+            online ? 'Pendientes de enviar al álbum.' : 'Se enviarán al recuperar conexión.'
+            }}
+          </p>
+        </div>
+        @if (online && event.canUpload() && !uploadQueue.isProcessing()) {
+        <button (click)="retryPendingUploads()">Reintentar</button>
         }
-      </div>
+      </aside>
+      }
+    </div>
     }
 
     @if (event.waiting() || invitationOpen()) {
-      <section class="invitation" aria-labelledby="invitation-title">
-        @if (event.canUpload()) {
-          <button class="back-to-album" (click)="invitationOpen.set(false)">
-            ← Volver a las fotos
-          </button>
+    <section class="invitation" aria-labelledby="invitation-title">
+      @if (event.canUpload()) {
+      <button class="back-to-album" (click)="invitationOpen.set(false)">
+        ← Volver a las fotos
+      </button>
+      }
+      <p class="eyebrow">12 SEPTIEMBRE 2026 · VILLARLUENGO</p>
+      <h1 id="invitation-title">Paula <em>&</em> Javier</h1>
+      <figure class="couple-print">
+        <img src="/javier-paula-acuarela-v3.webp" alt="Acuarela de Paula y Javier el día de su boda" width="887"
+          height="1774" fetchpriority="high" />
+      </figure>
+      <div class="invitation-message">
+        <span class="eyebrow">ÁLBUM COMPARTIDO</span>
+        <h2>Comparte tus fotos del día.</h2>
+        <p>Haz una foto o elige una del móvil. No necesitas instalar nada ni crear una cuenta.</p>
+        @if (event.waiting()) {
+        <div class="opening-note" role="status">
+          <span class="status-dot"></span><strong>El álbum todavía está cerrado</strong>
+          <p>
+            Los anfitriones lo abrirán el día del evento. Esta página se actualizará
+            automáticamente.
+          </p>
+        </div>
         }
-        <p class="eyebrow">12 SEPTIEMBRE 2026 · VILLARLUENGO</p>
-        <h1 id="invitation-title">Paula <em>&</em> Javier</h1>
-        <figure class="couple-print">
-          <img
-            src="/javier-paula-acuarela-v3.webp"
-            alt="Acuarela de Paula y Javier el día de su boda"
-            width="887"
-            height="1774"
-            fetchpriority="high"
-          />
-        </figure>
-        <div class="invitation-message">
-          <span class="eyebrow">ÁLBUM COMPARTIDO</span>
-          <h2>Comparte tus fotos del día.</h2>
-          <p>Haz una foto o elige una del móvil. No necesitas instalar nada ni crear una cuenta.</p>
-          @if (event.waiting()) {
-            <div class="opening-note" role="status">
-              <span class="status-dot"></span><strong>El álbum todavía está cerrado</strong>
-              <p>
-                Los anfitriones lo abrirán el día del evento. Esta página se actualizará
-                automáticamente.
-              </p>
-            </div>
+      </div>
+      <section class="event-places" aria-label="Dónde y cuándo">
+        <article>
+          <span class="eyebrow">SÁBADO 12 · 12:00 H</span>
+          <h3>Ceremonia</h3>
+          <p>Iglesia de la Asunción<br />Villarluengo, Teruel</p>
+          <a href="https://www.google.com/maps/search/?api=1&query=Iglesia+de+la+Asuncion+Villarluengo+Teruel"
+            target="_blank" rel="noopener noreferrer"><span>Cómo llegar a la iglesia</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 18l6-6-6-6" />
+            </svg></a>
+        </article>
+        <article>
+          <span class="eyebrow">DESPUÉS</span>
+          <h3>Comida y celebración</h3>
+          <p>Hostal de la Trucha<br />Villarluengo, Teruel</p>
+          <a href="https://www.google.com/maps/search/?api=1&query=Hostal+de+la+Trucha+Villarluengo" target="_blank"
+            rel="noopener noreferrer"><span>Cómo llegar al hostal</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 18l6-6-6-6" />
+            </svg></a>
+        </article>
+      </section>
+      <section class="how-it-works" aria-labelledby="how-title">
+        <h2 id="how-title">Cómo subir fotos</h2>
+        <ol>
+          <li>
+            <strong>Guarda este enlace.</strong><span>No necesitas instalar ninguna aplicación.</span>
+          </li>
+          <li>
+            <strong>Haz una foto o elige una del móvil.</strong><span>Los botones aparecerán cuando el álbum esté
+              abierto.</span>
+          </li>
+          <li>
+            <strong>Pulsa Compartir.</strong><span>Si no tienes cobertura, la foto quedará guardada en este móvil hasta
+              que vuelvas a
+              conectarte.</span>
+          </li>
+        </ol>
+      </section>
+      <button class="primary-link" (click)="shareAlbum($event)">Compartir la invitación</button>
+    </section>
+    } @else if (event.canUpload()) {
+    <section id="album" class="gallery-section" aria-labelledby="gallery-title" data-tour="gallery">
+      <div class="album-controls">
+        <div class="album-context">
+          <h1 id="gallery-title" class="eyebrow">LA REBODA · 12 SEPTIEMBRE</h1>
+          <span class="photo-quota" [class.photo-quota--low]="remaining <= 3 && remaining > 0"
+            [class.photo-quota--empty]="remaining === 0" aria-live="polite">
+            <strong>{{ remaining }}</strong>
+            {{ remaining === 1 ? 'foto disponible' : 'fotos disponibles' }}
+            <span class="sr-only"> en este móvil</span>
+          </span>
+        </div>
+        <div class="gallery-toolbar">
+          <div class="tab-bar" data-tour="tabs" role="group" aria-label="Filtrar fotografías">
+            <button class="tab-btn" [class.tab-btn--active]="tab === 'global'" [attr.aria-pressed]="tab === 'global'"
+              (click)="setTab('global')">
+              Todas <span>{{ photos.length }}</span>
+            </button>
+            <button class="tab-btn" [class.tab-btn--active]="tab === 'personal'"
+              [attr.aria-pressed]="tab === 'personal'" (click)="setTab('personal')">
+              Mis fotos <span>{{ myPhotos().length }}</span>
+            </button>
+          </div>
+          @if (!online) {
+          <span class="offline-note">Sin conexión</span>
           }
         </div>
-        <section class="event-places" aria-label="Dónde y cuándo">
-          <article>
-            <span class="eyebrow">SÁBADO 12 · 12:00 H</span>
-            <h3>Ceremonia</h3>
-            <p>Iglesia de la Asunción<br />Villarluengo, Teruel</p>
-            <a
-              href="https://www.google.com/maps/search/?api=1&query=Iglesia+de+la+Asuncion+Villarluengo+Teruel"
-              target="_blank"
-              rel="noopener noreferrer"
-              ><span>Cómo llegar a la iglesia</span>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 18l6-6-6-6" /></svg
-            ></a>
-          </article>
-          <article>
-            <span class="eyebrow">DESPUÉS</span>
-            <h3>Comida y celebración</h3>
-            <p>Hostal de la Trucha<br />Villarluengo, Teruel</p>
-            <a
-              href="https://www.google.com/maps/search/?api=1&query=Hostal+de+la+Trucha+Villarluengo"
-              target="_blank"
-              rel="noopener noreferrer"
-              ><span>Cómo llegar al hostal</span>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 18l6-6-6-6" /></svg
-            ></a>
-          </article>
-        </section>
-        <section class="how-it-works" aria-labelledby="how-title">
-          <h2 id="how-title">Cómo subir fotos</h2>
-          <ol>
-            <li>
-              <strong>Guarda este enlace.</strong
-              ><span>No necesitas instalar ninguna aplicación.</span>
-            </li>
-            <li>
-              <strong>Haz una foto o elige una del móvil.</strong
-              ><span>Los botones aparecerán cuando el álbum esté abierto.</span>
-            </li>
-            <li>
-              <strong>Pulsa Compartir.</strong
-              ><span
-                >Si no tienes cobertura, la foto quedará guardada en este móvil hasta que vuelvas a
-                conectarte.</span
-              >
-            </li>
-          </ol>
-        </section>
-        <button class="primary-link" (click)="shareAlbum($event)">Compartir la invitación</button>
-      </section>
-    } @else if (event.canUpload()) {
-      <section
-        id="album"
-        class="gallery-section"
-        aria-labelledby="gallery-title"
-        data-tour="gallery"
-      >
-        <div class="album-controls">
-          <div class="album-context">
-            <h1 id="gallery-title" class="eyebrow">LA REBODA · 12 SEPTIEMBRE</h1>
-            <span
-              class="photo-quota"
-              [class.photo-quota--low]="remaining <= 3 && remaining > 0"
-              [class.photo-quota--empty]="remaining === 0"
-              aria-live="polite"
-            >
-              <strong>{{ remaining }}</strong>
-              {{ remaining === 1 ? 'foto disponible' : 'fotos disponibles' }}
-              <span class="sr-only"> en este móvil</span>
-            </span>
-          </div>
-          <div class="gallery-toolbar">
-            <div class="tab-bar" data-tour="tabs" role="group" aria-label="Filtrar fotografías">
-              <button
-                class="tab-btn"
-                [class.tab-btn--active]="tab === 'global'"
-                [attr.aria-pressed]="tab === 'global'"
-                (click)="setTab('global')"
-              >
-                Todas <span>{{ photos.length }}</span>
-              </button>
-              <button
-                class="tab-btn"
-                [class.tab-btn--active]="tab === 'personal'"
-                [attr.aria-pressed]="tab === 'personal'"
-                (click)="setTab('personal')"
-              >
-                Mis fotos <span>{{ myPhotos().length }}</span>
-              </button>
-            </div>
-            @if (!online) {
-              <span class="offline-note">Sin conexión</span>
-            }
-          </div>
-        </div>
-        @if (loadError()) {
-          <aside class="gallery-error" role="status">
-            <p>
-              {{
-                online
-                  ? 'No hemos podido actualizar el álbum.'
-                  : 'Necesitas conexión para cargar las fotos del álbum.'
-              }}
-              Puedes seguir capturando recuerdos.
-            </p>
-            @if (online && !loading) {
-              <button (click)="reconnectGallery()">Volver a cargar</button>
-            }
-          </aside>
-        }
-        @if (loading && !photos.length) {
-          <div class="skeleton-grid" aria-label="Cargando recuerdos" role="status">
-            @for (item of [1, 2, 3, 4]; track item) {
-              <div class="skeleton-print"></div>
-            }
-          </div>
-        } @else if (visiblePhotos().length) {
-          <div class="photo-grid" [class.photo-grid--single]="visiblePhotos().length === 1">
-            @for (column of photoColumns(); track $index; let columnIndex = $index) {
-              <div class="photo-column">
-                @for (photo of column; track photo.id) {
-                  <button
-                    class="photo-card"
-                    [class.photo-card--tall]="($index + columnIndex) % 3 === 0"
-                    [class.photo-card--short]="($index + columnIndex) % 3 === 1"
-                    (click)="openViewer(photo)"
-                    [attr.data-tour]="columnIndex === 0 && $first ? 'photo-card' : null"
-                    [attr.aria-label]="'Ver foto: ' + (photo.dedication || 'recuerdo de la reboda')"
-                  >
-                    <div class="photo-image">
-                      <img
-                        [src]="photo.publicUrl"
-                        [alt]="photo.dedication || 'Recuerdo de la reboda'"
-                        class="photo-thumbnail"
-                        [class.photo-thumbnail--failed]="unavailablePhotos().has(photo.id)"
-                        (error)="markPhotoUnavailable(photo.id)"
-                        [loading]="$index < 4 ? 'eager' : 'lazy'"
-                        decoding="async"
-                      />
-                      @if (unavailablePhotos().has(photo.id)) {
-                        <span class="unavailable-photo">Foto no disponible</span>
-                      }
-                    </div>
-                    @if (photo.dedication && photo.dedication !== 'gallery-upload') {
-                      <p class="caption-text">{{ photo.dedication }}</p>
-                    }
-                  </button>
-                }
-              </div>
-            }
-          </div>
-        } @else if (!loadError()) {
-          <div class="empty-state">
-            <h2>
-              {{ tab === 'global' ? 'Todavía no hay fotos.' : 'Aquí van tus recuerdos.' }}
-            </h2>
-            @if (tab === 'personal') {
-              <p>Las fotos que compartas desde este dispositivo aparecerán aquí.</p>
-            }
-          </div>
-        }
-      </section>
-    } @else {
-      <section class="connection-state" role="status">
-        <h1>Un momento para encontrarnos.</h1>
+      </div>
+      @if (loadError()) {
+      <aside class="gallery-error" role="status">
         <p>
           {{
-            event.error()
-              ? 'No hemos podido consultar el evento. Comprueba tu conexión y vuelve a intentarlo.'
-              : 'Preparando vuestro álbum…'
+          online
+          ? 'No hemos podido actualizar el álbum.'
+          : 'Necesitas conexión para cargar las fotos del álbum.'
           }}
+          Puedes seguir capturando recuerdos.
         </p>
-        @if (event.error()) {
-          <button class="primary-link" (click)="retryEvent()">Reintentar</button>
+        @if (online && !loading) {
+        <button (click)="reconnectGallery()">Volver a cargar</button>
         }
-      </section>
+      </aside>
+      }
+      @if (loading && !photos.length) {
+      <div class="skeleton-grid" aria-label="Cargando recuerdos" role="status">
+        @for (item of [1, 2, 3, 4]; track item) {
+        <div class="skeleton-print"></div>
+        }
+      </div>
+      } @else if (visiblePhotos().length) {
+      <div class="photo-grid" [class.photo-grid--single]="visiblePhotos().length === 1">
+        @for (column of photoColumns(); track $index; let columnIndex = $index) {
+        <div class="photo-column">
+          @for (photo of column; track photo.id) {
+          <button class="photo-card" [class.photo-card--tall]="($index + columnIndex) % 3 === 0"
+            [class.photo-card--short]="($index + columnIndex) % 3 === 1" (click)="openViewer(photo)"
+            [attr.data-tour]="columnIndex === 0 && $first ? 'photo-card' : null"
+            [attr.aria-label]="'Ver foto: ' + (photo.dedication || 'recuerdo de la reboda')">
+            <div class="photo-image">
+              <img [src]="photo.publicUrl" [alt]="photo.dedication || 'Recuerdo de la reboda'" class="photo-thumbnail"
+                [class.photo-thumbnail--failed]="unavailablePhotos().has(photo.id)"
+                (error)="markPhotoUnavailable(photo.id)" [loading]="$index < 4 ? 'eager' : 'lazy'" decoding="async" />
+              @if (unavailablePhotos().has(photo.id)) {
+              <span class="unavailable-photo">Foto no disponible</span>
+              }
+            </div>
+            @if (photo.dedication && photo.dedication !== 'gallery-upload') {
+            <p class="caption-text">{{ photo.dedication }}</p>
+            }
+          </button>
+          }
+        </div>
+        }
+      </div>
+      } @else if (!loadError()) {
+      <div class="empty-state">
+        <h2>
+          {{ tab === 'global' ? 'Todavía no hay fotos.' : 'Aquí van tus recuerdos.' }}
+        </h2>
+        @if (tab === 'personal') {
+        <p>Las fotos que compartas desde este dispositivo aparecerán aquí.</p>
+        }
+      </div>
+      }
+    </section>
+    } @else {
+    <section class="connection-state" role="status">
+      <h1>Un momento para encontrarnos.</h1>
+      <p>
+        {{
+        event.error()
+        ? 'No hemos podido consultar el evento. Comprueba tu conexión y vuelve a intentarlo.'
+        : 'Preparando vuestro álbum…'
+        }}
+      </p>
+      @if (event.error()) {
+      <button class="primary-link" (click)="retryEvent()">Reintentar</button>
+      }
+    </section>
     }
   </main>
-  <input
-    type="file"
-    accept="image/*"
-    [multiple]="false"
-    #fileInput
-    (change)="onGalleryFileSelected($event)"
-    class="hidden"
-  />
+  <input type="file" accept="image/*" [multiple]="false" #fileInput (change)="onGalleryFileSelected($event)"
+    class="hidden" />
   @if (event.canUpload() && !invitationOpen()) {
-    <nav class="action-dock" aria-label="Añadir una foto">
-      <button
-        class="action-btn action-btn-camera"
-        (click)="handleActionClick('camera')"
-        aria-label="Hacer una foto con la cámara"
-        data-tour="camera-fab"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M4 6h4l2-3h4l2 3h4v14H4z" />
-          <circle cx="12" cy="12" r="4" /></svg
-        ><span>Abrir cámara</span>
-      </button>
-      <button
-        class="action-btn action-btn-gallery"
-        (click)="handleActionClick('upload')"
-        aria-label="Subir una foto desde este móvil"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <rect x="3" y="3" width="18" height="18" rx="3" />
-          <path d="m3 16 5-5 7 10m-3-6 4-4 5 5" />
-          <circle cx="15.5" cy="7.5" r="1" /></svg
-        ><span>Elegir foto</span>
-      </button>
-    </nav>
+  <nav class="action-dock" aria-label="Añadir una foto">
+    <button class="action-btn action-btn-camera" (click)="handleActionClick('camera')"
+      aria-label="Hacer una foto con la cámara" data-tour="camera-fab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M4 6h4l2-3h4l2 3h4v14H4z" />
+        <circle cx="12" cy="12" r="4" />
+      </svg><span>Hacer foto</span>
+    </button>
+    <button class="action-btn action-btn-gallery" (click)="handleActionClick('upload')"
+      aria-label="Subir una foto desde este móvil">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <path d="m3 16 5-5 7 10m-3-6 4-4 5 5" />
+        <circle cx="15.5" cy="7.5" r="1" />
+      </svg><span>Elegir foto</span>
+    </button>
+  </nav>
   }
 </div>
 @defer (when showMemories()) {
-  @if (showMemories()) {
-    <app-memories
-      [photos]="globalPhotos()"
-      [cinema]="memoriesCinema()"
-      (closed)="showMemories.set(false)"
-    />
-  }
+@if (showMemories()) {
+<app-memories [photos]="globalPhotos()" [cinema]="memoriesCinema()" (closed)="showMemories.set(false)" />
+}
 } @loading {
-  <div class="share-notice" role="status">Preparando el pase de recuerdos…</div>
+<div class="share-notice" role="status">Preparando el pase de recuerdos…</div>
 } @error {
-  <div class="share-notice" role="status">
-    El pase necesita conexión para abrirse por primera vez. Recarga cuando tengas cobertura.
-  </div>
+<div class="share-notice" role="status">
+  El pase necesita conexión para abrirse por primera vez. Recarga cuando tengas cobertura.
+</div>
 }
 
 <!-- Full-Screen Uploading Overlay -->
 
 @if (isUploading()) {
-  <div class="upload-overlay">
-    <div class="upload-overlay-content">
-      <div class="upload-spinner"></div>
-      <p class="upload-text">Subiendo foto...</p>
-      <p class="upload-subtext">¡No cierres la app!</p>
-    </div>
+<div class="upload-overlay">
+  <div class="upload-overlay-content">
+    <div class="upload-spinner"></div>
+    <p class="upload-text">Subiendo foto...</p>
+    <p class="upload-subtext">¡No cierres la app!</p>
   </div>
+</div>
 }
 
 <!-- Full-Screen Photo Viewer -->
 
 @let viewerPhoto = selectedPhoto();
 @if (viewerPhoto) {
-  <div
-    class="photo-viewer-overlay"
-    (click)="closeViewer()"
-    (touchstart)="onTouchStart($event)"
-    (touchend)="onTouchEnd($event)"
-  >
-    <!-- Top Bar -->
-    <div class="viewer-top-bar">
-      <button class="viewer-close-btn" (click)="closeViewer()" aria-label="Cerrar">
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-    </div>
-
-    <!-- Nav arrows (desktop only) -->
-    <button
-      class="viewer-nav-btn viewer-nav-btn--prev"
-      (click)="$event.stopPropagation(); navigatePhoto(-1)"
-      aria-label="Foto anterior"
-    >
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <polyline points="15 18 9 12 15 6"></polyline>
+<div class="photo-viewer-overlay" (click)="closeViewer()" (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)">
+  <!-- Top Bar -->
+  <div class="viewer-top-bar">
+    <button class="viewer-close-btn" (click)="closeViewer()" aria-label="Cerrar">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
       </svg>
     </button>
-    <button
-      class="viewer-nav-btn viewer-nav-btn--next"
-      (click)="$event.stopPropagation(); navigatePhoto(1)"
-      aria-label="Foto siguiente"
-    >
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <polyline points="9 18 15 12 9 6"></polyline>
-      </svg>
-    </button>
-
-    <!-- Full-Size Photo -->
-    <div
-      class="viewer-photo-wrapper"
-      [class.viewer-photo-wrapper--hidden]="!viewerPhotoVisible()"
-      (click)="$event.stopPropagation()"
-    >
-      <img
-        [src]="viewerPhoto.publicUrl"
-        [alt]="viewerPhoto.dedication || 'Foto'"
-        class="viewer-photo"
-      />
-      @if (viewerPhoto.dedication && viewerPhoto.dedication !== 'gallery-upload') {
-        <p class="viewer-caption">"{{ viewerPhoto.dedication }}"</p>
-      }
-    </div>
-
-    <!-- Bottom Action Bar -->
-    <div class="viewer-bottom-bar" (click)="$event.stopPropagation()">
-      @if (!isConfirmingDelete()) {
-        <!-- Normal Actions -->
-        <div class="viewer-actions">
-          <button
-            class="viewer-action-btn save-btn"
-            (click)="downloadPhoto()"
-            [disabled]="isDownloading()"
-          >
-            @if (isDownloading()) {
-              <div class="btn-spinner"></div>
-              <span>Guardando...</span>
-            } @else {
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              <span>Guardar</span>
-            }
-          </button>
-
-          @if (viewerPhoto.device_id === myDeviceId()) {
-            <button class="viewer-action-btn delete-btn" (click)="confirmDelete()">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="3 6 5 6 21 6" />
-                <path
-                  d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
-                />
-                <line x1="10" y1="11" x2="10" y2="17" />
-                <line x1="14" y1="11" x2="14" y2="17" />
-              </svg>
-              <span>Borrar</span>
-            </button>
-          }
-        </div>
-      } @else {
-        <!-- Delete Confirmation (only reachable if isMyPhoto) -->
-        <div class="viewer-confirm-box">
-          <p class="confirm-warning">¿Seguro que quieres borrarla? Esta acción es definitiva.</p>
-          <div class="confirm-actions">
-            <button class="confirm-cancel-btn" (click)="cancelDelete()" [disabled]="isDeleting()">
-              Cancelar
-            </button>
-            <button class="confirm-delete-btn" (click)="executeDelete()" [disabled]="isDeleting()">
-              @if (isDeleting()) {
-                <div class="btn-spinner"></div>
-                <span>Borrando...</span>
-              } @else {
-                <span>Sí, borrar</span>
-              }
-            </button>
-          </div>
-        </div>
-      }
-    </div>
   </div>
+
+  <!-- Nav arrows (desktop only) -->
+  <button class="viewer-nav-btn viewer-nav-btn--prev" (click)="$event.stopPropagation(); navigatePhoto(-1)"
+    aria-label="Foto anterior">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </button>
+  <button class="viewer-nav-btn viewer-nav-btn--next" (click)="$event.stopPropagation(); navigatePhoto(1)"
+    aria-label="Foto siguiente">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </button>
+
+  <!-- Full-Size Photo -->
+  <div class="viewer-photo-wrapper" [class.viewer-photo-wrapper--hidden]="!viewerPhotoVisible()"
+    (click)="$event.stopPropagation()">
+    <img [src]="viewerPhoto.publicUrl" [alt]="viewerPhoto.dedication || 'Foto'" class="viewer-photo" />
+    @if (viewerPhoto.dedication && viewerPhoto.dedication !== 'gallery-upload') {
+    <p class="viewer-caption">"{{ viewerPhoto.dedication }}"</p>
+    }
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <div class="viewer-bottom-bar" (click)="$event.stopPropagation()">
+    @if (!isConfirmingDelete()) {
+    <!-- Normal Actions -->
+    <div class="viewer-actions">
+      <button class="viewer-action-btn save-btn" (click)="downloadPhoto()" [disabled]="isDownloading()">
+        @if (isDownloading()) {
+        <div class="btn-spinner"></div>
+        <span>Guardando...</span>
+        } @else {
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span>Guardar</span>
+        }
+      </button>
+
+      @if (viewerPhoto.device_id === myDeviceId()) {
+      <button class="viewer-action-btn delete-btn" (click)="confirmDelete()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+          <line x1="10" y1="11" x2="10" y2="17" />
+          <line x1="14" y1="11" x2="14" y2="17" />
+        </svg>
+        <span>Borrar</span>
+      </button>
+      }
+    </div>
+    } @else {
+    <!-- Delete Confirmation (only reachable if isMyPhoto) -->
+    <div class="viewer-confirm-box">
+      <p class="confirm-warning">¿Seguro que quieres borrarla? Esta acción es definitiva.</p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel-btn" (click)="cancelDelete()" [disabled]="isDeleting()">
+          Cancelar
+        </button>
+        <button class="confirm-delete-btn" (click)="executeDelete()" [disabled]="isDeleting()">
+          @if (isDeleting()) {
+          <div class="btn-spinner"></div>
+          <span>Borrando...</span>
+          } @else {
+          <span>Sí, borrar</span>
+          }
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+</div>
 }
 
 @if (shareQrOpen()) {
-  <div class="share-qr-overlay" (click)="closeShareQr()">
-    <section
-      #shareModal
-      class="share-qr-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="share-qr-title"
-      aria-describedby="share-qr-description"
-      (click)="$event.stopPropagation()"
-    >
-      <button class="share-qr-close" (click)="closeShareQr()" aria-label="Cerrar código QR">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+<div class="share-qr-overlay" (click)="closeShareQr()">
+  <section #shareModal class="share-qr-modal" role="dialog" aria-modal="true" aria-labelledby="share-qr-title"
+    aria-describedby="share-qr-description" (click)="$event.stopPropagation()">
+    <button class="share-qr-close" (click)="closeShareQr()" aria-label="Cerrar código QR">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 6l12 12M18 6 6 18" />
+      </svg>
+    </button>
+    <p class="eyebrow">PAULA & JAVIER</p>
+    <h2 id="share-qr-title">Comparte el álbum</h2>
+    <p id="share-qr-description">Escanea este código con la cámara de otro móvil.</p>
+    <div class="share-qr-frame">
+      @if (shareQrDataUrl()) {
+      <img [src]="shareQrDataUrl()" alt="Código QR para abrir el álbum de Paula y Javier" />
+      } @else {
+      <p>El QR no está disponible. Puedes copiar el enlace.</p>
+      }
+    </div>
+    <div class="share-qr-actions">
+      <button class="share-copy-btn" (click)="copyShareLink()">
+        {{ shareCopied() ? 'Enlace copiado' : 'Copiar enlace' }}
       </button>
-      <p class="eyebrow">PAULA & JAVIER</p>
-      <h2 id="share-qr-title">Comparte el álbum</h2>
-      <p id="share-qr-description">Escanea este código con la cámara de otro móvil.</p>
-      <div class="share-qr-frame">
-        @if (shareQrDataUrl()) {
-          <img [src]="shareQrDataUrl()" alt="Código QR para abrir el álbum de Paula y Javier" />
-        } @else {
-          <p>El QR no está disponible. Puedes copiar el enlace.</p>
-        }
-      </div>
-      <div class="share-qr-actions">
-        <button class="share-copy-btn" (click)="copyShareLink()">
-          {{ shareCopied() ? 'Enlace copiado' : 'Copiar enlace' }}
-        </button>
-        @if (canNativeShare) {
-          <button class="share-native-btn" (click)="openNativeShare()">Más opciones</button>
-        }
-      </div>
-    </section>
-  </div>
+      @if (canNativeShare) {
+      <button class="share-native-btn" (click)="openNativeShare()">Más opciones</button>
+      }
+    </div>
+  </section>
+</div>
 }
 
 <!-- Limit Reached Modal -->
 
 @if (showLimitModal()) {
-  <div class="limit-modal-overlay">
-    <div class="limit-modal-content">
-      <button class="limit-close-btn" (click)="closeLimitModal()" aria-label="Cerrar modal">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
+<div class="limit-modal-overlay">
+  <div class="limit-modal-content">
+    <button class="limit-close-btn" (click)="closeLimitModal()" aria-label="Cerrar modal">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
 
-      <div class="limit-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-          />
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-          <line x1="9" y1="9" x2="15" y2="15" />
-        </svg>
-      </div>
-      <h3 class="limit-title">¡Vaya! Carrete lleno</h3>
-      <p class="limit-body">
-        Has usado tus {{ photoLimitService.maxPhotos }} fotos. Para seguir disparando, necesitas
-        liberar espacio borrando alguna de tus fotos anteriores.
-      </p>
-      <div class="limit-actions">
-        <button class="limit-btn-primary" (click)="goToPersonalGallery()">
-          Ir a mi Galería y liberar espacio
-        </button>
-      </div>
+    <div class="limit-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+    </div>
+    <h3 class="limit-title">¡Vaya! Carrete lleno</h3>
+    <p class="limit-body">
+      Has usado tus {{ photoLimitService.maxPhotos }} fotos. Para seguir disparando, necesitas
+      liberar espacio borrando alguna de tus fotos anteriores.
+    </p>
+    <div class="limit-actions">
+      <button class="limit-btn-primary" (click)="goToPersonalGallery()">
+        Ir a mi Galería y liberar espacio
+      </button>
     </div>
   </div>
+</div>
 }
