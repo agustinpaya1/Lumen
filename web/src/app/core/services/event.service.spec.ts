@@ -3,6 +3,7 @@ import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import { EventService } from './event.service';
 import { SupabaseClientService } from './supabase-client.service';
 import { SessionService } from './session.service';
+import { LoggerService } from './logger.service';
 
 describe('EventService launch and offline state', () => {
   const key = 'test-launch';
@@ -15,9 +16,11 @@ describe('EventService launch and offline state', () => {
   });
   let result: { data: unknown; error: unknown };
   const rpc = vi.fn();
+  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), critical: vi.fn() };
   let update: () => void;
   beforeEach(() => {
     TestBed.resetTestingModule();
+    vi.clearAllMocks();
     localStorage.clear();
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
     result = { data: state(true), error: null };
@@ -31,6 +34,7 @@ describe('EventService launch and offline state', () => {
     };
     TestBed.configureTestingModule({
       providers: [
+        { provide: LoggerService, useValue: logger },
         { provide: SessionService, useValue: { getStoredEventKey: () => key } },
         {
           provide: SupabaseClientService,
@@ -61,6 +65,8 @@ describe('EventService launch and offline state', () => {
     expect(event.canUpload()).toBe(true);
     expect(event.error()).toBe(true);
     expect(rpc).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledOnce();
+    expect(logger.critical).not.toHaveBeenCalled();
   });
   it('does not mistake a network failure for permission to open a waiting event', async () => {
     localStorage.setItem('lumen:event:' + key, JSON.stringify(state(false)));
@@ -69,6 +75,8 @@ describe('EventService launch and offline state', () => {
     await event.refresh();
     expect(event.waiting()).toBe(true);
     expect(event.canUpload()).toBe(false);
+    expect(logger.warn).toHaveBeenCalledOnce();
+    expect(logger.critical).not.toHaveBeenCalled();
   });
   it('clears a cached event when the server confirms it no longer exists', async () => {
     localStorage.setItem('lumen:event:' + key, JSON.stringify(state(true)));
@@ -94,5 +102,35 @@ describe('EventService launch and offline state', () => {
     update();
     await event.refresh();
     expect(event.canUpload()).toBe(true);
+  });
+
+  it('alerts once for an unavailable event and re-arms after recovery', async () => {
+    result = { data: null, error: new Error('backend unavailable') };
+    const event = TestBed.inject(EventService);
+    await event.refresh();
+    await event.refresh();
+    expect(logger.critical).toHaveBeenCalledOnce();
+    expect(logger.critical).toHaveBeenCalledWith(
+      'Event state unavailable without usable cache',
+      result.error,
+    );
+
+    result = { data: state(true), error: null };
+    await event.refresh();
+    result = { data: null, error: null };
+    await event.refresh();
+    expect(logger.critical).toHaveBeenCalledTimes(2);
+  });
+
+  it('records upload-state changes without logging every successful poll', async () => {
+    const event = TestBed.inject(EventService);
+    await event.refresh();
+    await event.refresh();
+    result = { data: state(false), error: null };
+    await event.refresh();
+    expect(logger.info.mock.calls).toEqual([
+      ['Event upload state changed', { uploadsOpen: true }],
+      ['Event upload state changed', { uploadsOpen: false }],
+    ]);
   });
 });

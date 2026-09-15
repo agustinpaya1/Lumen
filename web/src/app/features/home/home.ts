@@ -1,3 +1,4 @@
+import { PHOTO_SAVE_HINT } from '@core/utils/save-photo';
 import {
   Component,
   signal,
@@ -147,6 +148,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   /** Loading state during download */
   readonly isDownloading = signal<boolean>(false);
+  readonly saveMessage = signal(PHOTO_SAVE_HINT);
 
   constructor() {
     effect(() => {
@@ -229,7 +231,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       this.loadError.set(true);
-      this.logger.error('Error loading photos:', error);
+      this.logger.warn('Gallery refresh unavailable', error);
     } finally {
       this.isLoading.set(false);
     }
@@ -426,6 +428,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   @HostListener('window:online')
   async reconnectGallery(): Promise<void> {
+    this.logger.info('Connection restored; refreshing gallery');
     this.analytics.track('recovery_action', { ...this.analyticsContext(), recovery: 'gallery' });
     try {
       await this.sessionService.ensureAuthSession();
@@ -540,17 +543,20 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Download the selected photo using blob fetch (mobile-safe) */
+  /** Offer native photo actions for the selected image. */
   async downloadPhoto(): Promise<void> {
     const photo = this.selectedPhoto();
-    if (!photo) return;
+    if (!photo || this.isDownloading()) return;
 
+    this.saveMessage.set(PHOTO_SAVE_HINT);
     this.isDownloading.set(true);
     try {
       const filename = `lumen_foto_${photo.id}.jpg`;
-      await this.supabaseService.downloadImageAsBlob(photo.publicUrl, filename);
+      const message = await this.supabaseService.downloadImageAsBlob(photo.publicUrl, filename);
+      if (this.selectedPhoto()?.id === photo.id) this.saveMessage.set(message);
     } catch (error) {
       this.logger.error('Error downloading photo:', error);
+      this.saveMessage.set('No se pudo preparar la foto. Comprueba tu conexión y vuelve a pulsar Guardar.');
     } finally {
       this.isDownloading.set(false);
     }

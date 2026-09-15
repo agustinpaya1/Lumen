@@ -24,17 +24,20 @@ export const appConfig: ApplicationConfig = {
       const uploadQueue = inject(UploadQueueService);
       const logger = inject(LoggerService);
       const event = inject(EventService);
+      logger.info('Application initialization started');
       // Fail open: a guest must never be blocked from using the app because
       // the anonymous auth session couldn't be established (e.g. offline, or
       // Anonymous sign-ins not yet enabled in the Supabase dashboard).
       return session
         .ensureAuthSession()
-        .catch((error) => {
-          logger.error('Failed to establish anonymous auth session:', error);
+        .catch(() => {
+          // SessionService records the failure with its operational severity.
+          logger.debug('Continuing initialization while authentication is unavailable');
         })
         .then(async () => {
           await event.initialize();
           await uploadQueue.initialize();
+          logger.info('Application initialization completed');
           void uploadQueue.processPending();
         })
         .catch((error) => {

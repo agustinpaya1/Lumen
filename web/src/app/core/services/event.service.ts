@@ -1,6 +1,7 @@
 import { Injectable, DestroyRef, computed, inject, signal } from '@angular/core';
 import { SupabaseClientService } from './supabase-client.service';
 import { SessionService } from './session.service';
+import { LoggerService } from './logger.service';
 
 export interface EventState {
   event_key: string;
@@ -14,6 +15,7 @@ export interface EventState {
 export class EventService {
   private readonly backend = inject(SupabaseClientService).client;
   private readonly session = inject(SessionService);
+  private readonly logger = inject(LoggerService);
   private readonly destroyRef = inject(DestroyRef);
   readonly state = signal<EventState | null>(this.readCache());
   readonly loading = signal(false);
@@ -22,6 +24,7 @@ export class EventService {
   readonly waiting = computed(() => this.state()?.uploads_open === false);
   private initialized = false;
   private refreshing: Promise<void> | null = null;
+  private lastFailure: 'offline' | 'cached' | 'unavailable' | null = null;
 
   async initialize(): Promise<void> {
     if (this.initialized) {
@@ -46,6 +49,7 @@ export class EventService {
         )
         .subscribe();
       const onOnline = () => {
+        this.logger.info('Connection restored; refreshing event state');
         void this.refresh();
       };
       const onVisibility = () => {
@@ -94,6 +98,13 @@ export class EventService {
         } catch {}
         throw new Error('Event not found');
       }
+      const previous = this.state();
+      if (!previous || previous.uploads_open !== data.uploads_open) {
+        this.logger.info('Event upload state changed', { uploadsOpen: data.uploads_open });
+      } else if (this.lastFailure) {
+        this.logger.info('Event state refresh recovered');
+      }
+      this.lastFailure = null;
       this.state.set(data as EventState);
       this.error.set(false);
       try {
@@ -101,8 +112,19 @@ export class EventService {
       } catch {
         /* Memory state still works. */
       }
-    } catch {
+    } catch (error) {
       this.error.set(true);
+      const failure = !navigator.onLine ? 'offline' : this.state() ? 'cached' : 'unavailable';
+      // The 30-second fallback must not produce repeated alerts for one outage.
+      // A successful refresh re-arms reporting for a later independent failure.
+      if (failure !== this.lastFailure) {
+        if (failure === 'unavailable') {
+          this.logger.critical('Event state unavailable without usable cache', error);
+        } else {
+          this.logger.warn('Event state refresh deferred', { reason: failure }, error);
+        }
+        this.lastFailure = failure;
+      }
       // A previously observed open event still allows durable offline captures.
       // The database, not this cache, authorizes actual publication.
     } finally {

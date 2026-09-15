@@ -1,29 +1,21 @@
-import { Injectable } from '@angular/core';
-import { environment } from '@environments/environment';
+import { Injectable, isDevMode } from '@angular/core';
+import { DiagnosticLogger } from '../logging/diagnostic-logger';
 
-/**
- * Thin logging facade. Stays silent in production builds (no console noise for
- * guests) and forwards to the console in development. Centralising logging here
- * means the sink can later be swapped for remote error reporting without
- * touching call sites.
- */
+let applicationLogger: DiagnosticLogger | undefined;
+
+// Shared with main.ts so even a failed Angular bootstrap can be reported.
+export function getApplicationLogger(): DiagnosticLogger {
+  return applicationLogger ??= new DiagnosticLogger({ production: !isDevMode() });
+}
+
+/** Five-level facade; production sends warn+ to the server, critical to Telegram. */
 @Injectable({ providedIn: 'root' })
 export class LoggerService {
-  error(message: string, ...details: unknown[]): void {
-    if (!environment.production) {
-      console.error(message, ...details);
-    }
-  }
-
-  warn(message: string, ...details: unknown[]): void {
-    if (!environment.production) {
-      console.warn(message, ...details);
-    }
-  }
-
-  debug(message: string, ...details: unknown[]): void {
-    if (!environment.production) {
-      console.debug(message, ...details);
-    }
-  }
+  private readonly logger = getApplicationLogger();
+  debug(message: string, ...details: unknown[]): void { this.logger.debug(message, ...details); }
+  info(message: string, ...details: unknown[]): void { this.logger.info(message, ...details); }
+  warn(message: string, ...details: unknown[]): void { this.logger.warn(message, ...details); }
+  error(message: string, ...details: unknown[]): void { this.logger.error(message, ...details); }
+  critical(message: string, ...details: unknown[]): void { this.logger.critical(message, ...details); }
+  getRecentEntries() { return this.logger.getRecentEntries(); }
 }

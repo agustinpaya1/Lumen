@@ -5,8 +5,8 @@ import { LoggerService } from './logger.service';
 export class GlobalErrorHandlerService implements ErrorHandler {
   private readonly logger = inject(LoggerService);
 
-  handleError(error: any): void {
-    this.logger.error('Lumen Global Error Caught:', error);
+  handleError(error: unknown): void {
+    this.logger.critical('Unhandled application error', error);
 
     // Manipulate DOM to prevent blank white screen
     document.body.innerHTML = `

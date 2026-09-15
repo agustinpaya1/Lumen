@@ -15,7 +15,7 @@ import { PhotoLimitService } from '@core/services/photo-limit.service';
 import { UploadQueueService } from '@core/services/upload-queue.service';
 import { FeedbackService } from '@core/services/feedback.service';
 import { LoggerService } from '@core/services/logger.service';
-import { triggerBrowserDownload } from '@core/utils/download';
+import { PHOTO_SAVE_HINT, savePhoto } from '@core/utils/save-photo';
 import { counterColorClass, detectDevicePlatform } from '@core/utils/capture';
 import { Router } from '@angular/router';
 import { EventService } from '@core/services/event.service';
@@ -243,7 +243,7 @@ export class CameraComponent implements OnInit, OnDestroy {
         }
       }, 100);
     } catch (error) {
-      this.logger.error('Camera access error:', error);
+      this.logger.warn('Camera access unavailable', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
           this.feedbackService.triggerError();
@@ -542,19 +542,22 @@ export class CameraComponent implements OnInit, OnDestroy {
 
   // PREVIEW — download & upload
 
-  /**
-   * Download the raw photo to the user's device.
-   * Creates a temporary <a download> element and triggers a click.
-   */
-  downloadPhoto(): void {
+  readonly isSavingPhoto = signal(false);
+  readonly saveMessage = signal(PHOTO_SAVE_HINT);
+
+  async downloadPhoto(): Promise<void> {
     const blob = this.rawPhotoBlob();
-    if (!blob) return;
-
-    const url = URL.createObjectURL(blob);
-    triggerBrowserDownload(url, 'lumen-photo.jpg');
-
-    // Cleanup the object URL after a short delay
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    if (!blob || this.isSavingPhoto()) return;
+    this.isSavingPhoto.set(true);
+    this.saveMessage.set(PHOTO_SAVE_HINT);
+    try {
+      this.saveMessage.set(await savePhoto(blob, 'lumen-photo.jpg'));
+    } catch (error) {
+      this.logger.error('Error saving photo:', error);
+      this.saveMessage.set('No se pudo guardar la foto. Vuelve a pulsar Guardar.');
+    } finally {
+      this.isSavingPhoto.set(false);
+    }
   }
 
   /** Discard photo and return to viewfinder (or home if from gallery) */
@@ -582,6 +585,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     }
     const rawBlob = this.rawPhotoBlob();
     if (!rawBlob) return;
+    let safelySaved = false;
 
     try {
       this.currentState.set('uploading');
@@ -618,6 +622,7 @@ export class CameraComponent implements OnInit, OnDestroy {
           this.retryMessage.set(`Guardando la foto. Reintentando (${attempt}/${maxAttempts})...`);
         },
       });
+      safelySaved = true;
 
       this.retryMessage.set(null);
       this.uploadProgress.set(100);
@@ -647,7 +652,11 @@ export class CameraComponent implements OnInit, OnDestroy {
         result === 'published' ? 1200 : 2200,
       );
     } catch (error) {
-      this.logger.error('Upload error:', error);
+      if (safelySaved || !this.event.canUpload()) {
+        this.logger.warn('Photo submission interrupted', { safelySaved }, error);
+      } else {
+        this.logger.critical('Photo could not be saved safely; original remains in preview', error);
+      }
       this.isUploading.set(false);
       this.retryMessage.set(null);
       this.errorMessage.set(

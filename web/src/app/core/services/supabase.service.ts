@@ -7,7 +7,7 @@ import {
   SIGNED_URL_TTL_SECONDS,
 } from '@core/constants';
 import { Photo } from '@core/models/photo';
-import { triggerBrowserDownload } from '@core/utils/download';
+import { PhotoSaver } from '@core/utils/save-photo';
 import { withRetry } from '@core/utils/retry';
 import { LoggerService } from './logger.service';
 import { SessionService } from './session.service';
@@ -205,23 +205,11 @@ export class SupabaseService {
     return data.signedUrl;
   }
 
-  /**
-   * Download an image as a Blob to force-save on mobile devices.
-   * Using <a download> with cross-origin Supabase URLs fails on mobile
-   * (opens in new tab). This fetches as Blob and triggers a real download.
-   * @param url - Public or signed URL of the image
-   * @param filename - Desired filename for the download
-   */
-  async downloadImageAsBlob(url: string, filename: string): Promise<void> {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.statusText}`);
-    }
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    triggerBrowserDownload(blobUrl, filename);
-    // Small delay before revoking to ensure the download has started.
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  private readonly photoSaver = new PhotoSaver();
+
+  /** Prepare the image and offer native photo actions on supported devices. */
+  downloadImageAsBlob(url: string, filename: string): Promise<string> {
+    return this.photoSaver.saveUrl(url, filename);
   }
 
   // GALLERY METHODS

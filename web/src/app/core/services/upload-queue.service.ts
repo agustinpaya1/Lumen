@@ -37,10 +37,14 @@ export class UploadQueueService {
 
   private readonly handleOnline = () => {
     this.isOnline.set(true);
+    this.logger.info('Connection restored; retrying pending uploads');
     void this.processPending();
   };
 
-  private readonly handleOffline = () => this.isOnline.set(false);
+  private readonly handleOffline = () => {
+    this.isOnline.set(false);
+    this.logger.info('Connection lost; photos will remain pending');
+  };
 
   private readonly handleVisibility = () => {
     if (document.visibilityState === 'visible') {
@@ -99,7 +103,10 @@ export class UploadQueueService {
     // following indexed read; the already-saved photo must still be accepted.
     if (persisted) await this.refreshCountsSafely();
 
-    if (!this.browserIsOnline()) return 'queued';
+    if (!this.browserIsOnline()) {
+      this.logger.info('Photo saved locally; publication pending');
+      return 'queued';
+    }
 
     if (!persisted) {
       await this.publishItem(item, false, { itemId: item.id, hooks });
@@ -107,8 +114,17 @@ export class UploadQueueService {
       return 'published';
     }
 
-    await this.processPendingInternal({ itemId: item.id, hooks });
-    return (await this.store.get(item.id)) ? 'queued' : 'published';
+    try {
+      await this.processPendingInternal({ itemId: item.id, hooks });
+      const result = (await this.store.get(item.id)) ? 'queued' : 'published';
+      if (result === 'queued') this.logger.info('Photo saved locally; publication pending');
+      return result;
+    } catch (error) {
+      // Durability already succeeded. An intermittent read failure must not
+      // report a lost photo (or encourage the guest to submit it twice).
+      this.logger.warn('Photo saved locally; publication confirmation unavailable', error);
+      return 'queued';
+    }
   }
 
   /** Flushes the active event in capture order and coalesces concurrent triggers. */
@@ -211,6 +227,7 @@ export class UploadQueueService {
 
     if (persisted) await this.store.delete(item.id);
     this.lastPublishedAt.set(Date.now());
+    this.logger.info('Photo published successfully');
   }
 
   private createItem(image: Blob, dedication: string): PendingUpload {

@@ -49,16 +49,22 @@ export class SessionService {
    * `auth.uid()` is available before any guest-facing action needs it.
    */
   async ensureAuthSession(): Promise<void> {
-    const { data: { session } } = await this.supabaseClient.client.auth.getSession();
-
-    if (session?.user) {
-      this.cachedUserId = session.user.id;
-    } else {
-      const { data, error } = await this.supabaseClient.client.auth.signInAnonymously();
+    try {
+      const { data: { session }, error } = await this.supabaseClient.client.auth.getSession();
       if (error) {
         throw error;
       }
-      this.cachedUserId = data.user?.id ?? null;
+
+      if (session?.user) {
+        this.cachedUserId = session.user.id;
+      } else {
+        const { data, error } = await this.supabaseClient.client.auth.signInAnonymously();
+        if (error) throw error;
+        this.cachedUserId = data.user?.id ?? null;
+      }
+    } catch (error) {
+      this.logAccessFailure('Anonymous authentication unavailable', error);
+      throw error;
     }
 
     // With the auth session ready, register this user as a member of the
@@ -147,7 +153,7 @@ export class SessionService {
     const eventKey = this.getStoredEventKey();
 
     if (!userId) {
-      this.logger.warn('ensureMembership skipped: no authenticated user id.');
+      this.logAccessFailure('Event membership unavailable: authentication did not return a user');
       return;
     }
 
@@ -162,14 +168,24 @@ export class SessionService {
         );
 
       if (error) {
-        this.logger.error('event_members upsert failed:', error);
+        this.logAccessFailure('Event membership registration failed', error);
         return;
       }
 
+      if (!this._membershipReady) this.logger.info('Authentication and event membership ready');
       this._membershipReady = true;
     } catch (err) {
       // Network / unexpected failure — fail open so the app still loads.
-      this.logger.error('event_members upsert threw:', err);
+      this.logAccessFailure('Event membership registration failed', err);
+    }
+  }
+
+  private logAccessFailure(message: string, error?: unknown): void {
+    this._membershipReady = false;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      this.logger.warn(message, error);
+    } else {
+      this.logger.critical(message, error);
     }
   }
 

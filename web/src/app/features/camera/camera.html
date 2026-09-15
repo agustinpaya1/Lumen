@@ -177,6 +177,9 @@
       </div>
     </div>
 
+    @if (saveMessage()) {
+    <p role="status">{{ saveMessage() }}</p>
+    }
     <!-- Action Buttons -->
     <div class="action-buttons">
       <!-- Retake (Trash icon) -->
@@ -188,7 +191,7 @@
       </button>
 
       <!-- Save to Gallery (Ghost button) -->
-      <button class="btn-save" (click)="downloadPhoto()">
+      <button class="btn-save" (click)="downloadPhoto()" [disabled]="isSavingPhoto()">
         <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

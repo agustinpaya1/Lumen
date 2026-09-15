@@ -48,9 +48,11 @@ describe('UploadQueueService', () => {
     getDeviceId: ReturnType<typeof vi.fn>;
   };
   let photoLimit: { decrementCount: ReturnType<typeof vi.fn> };
+  const logger = { warn: vi.fn(), error: vi.fn(), debug: vi.fn(), info: vi.fn(), critical: vi.fn() };
 
   beforeEach(() => {
     TestBed.resetTestingModule();
+    vi.clearAllMocks();
     store = new MemoryPendingUploadStore();
     supabase = {
       uploadPhotoWithRetry: vi.fn().mockResolvedValue({ error: null }),
@@ -71,7 +73,7 @@ describe('UploadQueueService', () => {
         { provide: SupabaseService, useValue: supabase },
         { provide: SessionService, useValue: session },
         { provide: PhotoLimitService, useValue: photoLimit },
-        { provide: LoggerService, useValue: { warn: vi.fn(), error: vi.fn(), debug: vi.fn() } },
+        { provide: LoggerService, useValue: logger },
       ],
     });
   });
@@ -87,6 +89,8 @@ describe('UploadQueueService', () => {
     expect(service.pendingCount()).toBe(1);
     expect(photoLimit.decrementCount).toHaveBeenCalledOnce();
     expect(supabase.uploadPhotoWithRetry).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith('Photo saved locally; publication pending');
+    expect(logger.critical).not.toHaveBeenCalled();
   });
 
   it('rejects new photos while the event is waiting', async () => {
@@ -139,6 +143,7 @@ describe('UploadQueueService', () => {
     expect(photoLimit.decrementCount).toHaveBeenCalledOnce();
     expect(supabase.uploadPhotoWithRetry).toHaveBeenCalledOnce();
     expect(supabase.savePhotoDataWithRetry).toHaveBeenCalledOnce();
+    expect(logger.info).toHaveBeenCalledWith('Photo published successfully');
   });
 
   it('resumes at metadata when Storage was already completed', async () => {
@@ -167,6 +172,24 @@ describe('UploadQueueService', () => {
     expect(remaining.stage).toBe('storage-uploaded');
     expect(remaining.attempts).toBe(1);
     expect(remaining.lastError).toBe('network unavailable');
+    expect(logger.warn).toHaveBeenCalledWith('Queued photo remains pending:', expect.any(Error));
+    expect(logger.critical).not.toHaveBeenCalled();
+  });
+
+  it('does not report a safely queued photo as lost when publication confirmation cannot be read', async () => {
+    setOnline(true);
+    supabase.uploadPhotoWithRetry.mockRejectedValue(new Error('temporary connection failure'));
+    vi.spyOn(store, 'get').mockRejectedValue(new Error('transient IndexedDB read failure'));
+    const service = TestBed.inject(UploadQueueService);
+
+    await expect(service.enqueueAndUpload(new Blob(['photo']), '')).resolves.toBe('queued');
+
+    expect(store.items.size).toBe(1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Photo saved locally; publication confirmation unavailable',
+      expect.any(Error),
+    );
+    expect(logger.critical).not.toHaveBeenCalled();
   });
 
   it('flushes a photo added while another queue pass is in progress', async () => {

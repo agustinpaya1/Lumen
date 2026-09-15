@@ -68,7 +68,7 @@ describe('Home gallery consistency', () => {
           },
         },
         { provide: FeedbackService, useValue: { triggerButtonPress: vi.fn() } },
-        { provide: LoggerService, useValue: { error: vi.fn(), warn: vi.fn() } },
+        { provide: LoggerService, useValue: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), critical: vi.fn() } },
         { provide: TourService, useValue: { maybeStart: vi.fn() } },
         { provide: AnalyticsService, useValue: { track } },
       ],

@@ -4,7 +4,7 @@ import { AdminAccessService } from '@core/services/admin-access.service';
 import { EventService } from '@core/services/event.service';
 import { SessionService } from '@core/services/session.service';
 import { Photo } from '@core/models/photo';
-import { triggerBrowserDownload } from '@core/utils/download';
+import { PHOTO_SAVE_HINT, PhotoSaver } from '@core/utils/save-photo';
 
 @Component({
   selector: 'app-admin',
@@ -155,14 +155,21 @@ export class AdminComponent implements OnInit {
   getPhotoUrl(path: string): string {
     return this.access.client.storage.from('photos').getPublicUrl(path).data.publicUrl;
   }
+  private readonly photoSaver = new PhotoSaver();
+  private saveUrl?: { id: number; url: string };
+
   async downloadPhoto(photo: Photo): Promise<void> {
     try {
-      const { data, error } = await this.access.client.storage
-        .from('photos')
-        .createSignedUrl(photo.url, 60, { download: 'lumen_' + photo.id + '.jpg' });
-      if (error || !data?.signedUrl) throw error ?? new Error('Missing URL');
-      triggerBrowserDownload(data.signedUrl, 'lumen_' + photo.id + '.jpg', '_blank');
+      this.message.set(PHOTO_SAVE_HINT);
+      if (this.saveUrl?.id !== photo.id) {
+        const { data, error } = await this.access.client.storage
+          .from('photos').createSignedUrl(photo.url, 60);
+        if (error || !data?.signedUrl) throw error ?? new Error('Missing URL');
+        this.saveUrl = { id: photo.id, url: data.signedUrl };
+      }
+      this.message.set(await this.photoSaver.saveUrl(this.saveUrl.url, 'lumen_' + photo.id + '.jpg'));
     } catch {
+      this.saveUrl = undefined;
       this.message.set('No se pudo preparar la descarga. Inténtalo con conexión.');
     }
   }
