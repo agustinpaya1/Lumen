@@ -1,0 +1,57 @@
+[
+  {
+    "aggregates": {
+      "photos": {
+        "rows": 160,
+        "null_owner": 77,
+        "event_scopes": 3,
+        "distinct_paths": 160,
+        "null_upload_id": 81,
+        "distinct_owner_ids": 22,
+        "distinct_device_ids": 38
+      },
+      "totals": {
+        "events": 3,
+        "open_events": 3
+      },
+      "members": {
+        "memberships": 271,
+        "distinct_auth_users": 265
+      },
+      "storage": {
+        "objects": 171,
+        "unreferenced_paths": 15,
+        "objects_without_owner": 88
+      },
+      "by_event": [
+        {
+          "label": "E1",
+          "photos": 4,
+          "owner_ids": 1,
+          "device_ids": 1,
+          "memberships": 167
+        },
+        {
+          "label": "E2",
+          "photos": 79,
+          "owner_ids": 21,
+          "device_ids": 21,
+          "memberships": 104
+        },
+        {
+          "label": "E3",
+          "photos": 77,
+          "owner_ids": 0,
+          "device_ids": 16,
+          "memberships": 0
+        }
+      ],
+      "checked_at": "2026-09-15T14:56:21.514054+00:00",
+      "admin_allowlist": {
+        "events": 0,
+        "entries": 0
+      },
+      "photos_without_matching_object": 4
+    }
+  }
+]

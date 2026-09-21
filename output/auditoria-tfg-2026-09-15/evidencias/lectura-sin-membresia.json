@@ -1,0 +1,10 @@
+[
+  {
+    "visibility": {
+      "role": "authenticated",
+      "visible_photos": 0,
+      "is_any_event_admin": false,
+      "visible_memberships": 0
+    }
+  }
+]

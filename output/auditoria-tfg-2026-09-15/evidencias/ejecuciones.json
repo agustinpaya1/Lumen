@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-15",
+  "timezone": "Europe/Madrid",
+  "revision": "592e729dc7e26a7686c57ee5cdf035ec3816b1d0",
+  "runs": [
+    {
+      "log": "angular-tests.log",
+      "exit": 0,
+      "tests_passed": 107
+    },
+    {
+      "log": "server-tests.log",
+      "exit": 0,
+      "tests_passed": 22
+    },
+    {
+      "log": "build.log",
+      "exit": 127,
+      "reason": "font download blocked by offline sandbox"
+    },
+    {
+      "log": "audit-probes.log",
+      "exit": 0,
+      "tests_passed": 13,
+      "additional_tests": 5
+    },
+    {
+      "log": "build-no-fonts.log",
+      "exit": 0,
+      "modified_copy_only": "optimization.fonts=false",
+      "warning": "initial bundle exceeds 700 kB warning budget"
+    }
+  ]
+}

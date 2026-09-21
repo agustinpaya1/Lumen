@@ -83,3 +83,4 @@ Salida: “Building...”
 EXIT: 134
 No se generó un resultado utilizable; esta única ejecución no demuestra que el
 proyecto no compile en un entorno soportado/configurado de CI.
+ 

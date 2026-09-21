@@ -1,0 +1,9 @@
+
+ RUN  v4.1.9 /Users/agustinpayaalamar/.codex/visualizations/2026/09/15/01a0a574-c61a-7333-acb5-55e573eebb4c/lumen-audit/isolated
+
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  16:55:08
+   Duration  160ms (transform 40ms, setup 20ms, import 32ms, tests 35ms, environment 0ms)
+

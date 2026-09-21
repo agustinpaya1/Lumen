@@ -1,0 +1,50 @@
+[
+  {
+    "functions": {
+      "functions": [
+        {
+          "name": "event_accepts_uploads",
+          "definition": "CREATE OR REPLACE FUNCTION public.event_accepts_uploads(p_event_key text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  SELECT coalesce((SELECT uploads_open FROM public.events WHERE event_key = p_event_key), false);\n$function$\n",
+          "configuration": [
+            "search_path=\"\""
+          ],
+          "security_definer": true
+        },
+        {
+          "name": "get_event_state",
+          "definition": "CREATE OR REPLACE FUNCTION public.get_event_state(p_event_key text)\n RETURNS jsonb\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  SELECT jsonb_build_object('event_key', event_key, 'name', name, 'event_date', event_date,\n    'uploads_open', uploads_open, 'opened_at', opened_at)\n  FROM public.events WHERE event_key = p_event_key;\n$function$\n",
+          "configuration": [
+            "search_path=\"\""
+          ],
+          "security_definer": true
+        },
+        {
+          "name": "get_my_event_keys",
+          "definition": "CREATE OR REPLACE FUNCTION public.get_my_event_keys()\n RETURNS SETOF text\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  SELECT event_key\n  FROM public.event_members\n  WHERE user_id = auth.uid();\n$function$\n",
+          "configuration": [
+            "search_path=\"\""
+          ],
+          "security_definer": true
+        },
+        {
+          "name": "is_event_admin",
+          "definition": "CREATE OR REPLACE FUNCTION public.is_event_admin(p_event_key text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  SELECT EXISTS (\n    SELECT 1 FROM public.event_admins a\n    JOIN auth.users u ON lower(u.email) = a.email\n    WHERE a.event_key = p_event_key AND u.id = auth.uid()\n      AND u.email_confirmed_at IS NOT NULL AND u.is_anonymous IS FALSE\n  );\n$function$\n",
+          "configuration": [
+            "search_path=\"\""
+          ],
+          "security_definer": true
+        },
+        {
+          "name": "set_event_uploads_open",
+          "definition": "CREATE OR REPLACE FUNCTION public.set_event_uploads_open(p_event_key text, p_open boolean)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nBEGIN\n  IF NOT public.is_event_admin(p_event_key) THEN\n    RAISE EXCEPTION 'Only the event administrator can open or pause uploads' USING ERRCODE = '42501';\n  END IF;\n  IF p_open IS NULL THEN RAISE EXCEPTION 'An explicit state is required'; END IF;\n  UPDATE public.events SET uploads_open = p_open,\n    opened_at = CASE WHEN p_open THEN coalesce(opened_at, now()) ELSE opened_at END\n    WHERE event_key = p_event_key;\n  RETURN public.get_event_state(p_event_key);\nEND;\n$function$\n",
+          "configuration": [
+            "search_path=\"\""
+          ],
+          "security_definer": true
+        }
+      ],
+      "checked_at": "2026-09-15T14:56:22.447672+00:00",
+      "observability_tables": null
+    }
+  }
+]

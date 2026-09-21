@@ -1,0 +1,32 @@
+❯ Building...
+✔ Building...
+Initial chunk files                       | Names                                  |  Raw size
+spec-app-features-camera-camera.js        | spec-app-features-camera-camera        | 149.08 kB | 
+chunk-PT64WMTZ.js                         | -                                      |  21.72 kB | 
+styles.css                                | styles                                 |  10.25 kB | 
+chunk-RSTWSNOR.js                         | -                                      |   4.75 kB | 
+spec-app-core-services-session.service.js | spec-app-core-services-session.service |   4.74 kB | 
+init-testbed.js                           | init-testbed                           |   1.21 kB | 
+
+                                          | Initial total                          | 191.76 kB
+
+Application bundle generation complete. [2.175 seconds] - 2026-09-15T14:55:33.251Z
+
+▲ [WARNING] TypeScript compiler options 'target' and 'useDefineForClassFields' are set to 'ES2022' and 'false' respectively by the Angular CLI. [plugin angular-compiler]
+
+    tsconfig.spec.json:0:0:
+      0 │ 
+        ╵ ^
+
+  To control ECMA version and features use the Browserslist configuration. For more information, see https://angular.dev/tools/cli/build#configuring-browser-compatibility
+
+
+
+ RUN  v4.1.9 /Users/agustinpayaalamar/.codex/visualizations/2026/09/15/01a0a574-c61a-7333-acb5-55e573eebb4c/lumen-audit/isolated
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  16:55:33
+   Duration  933ms (transform 164ms, setup 260ms, import 295ms, tests 208ms, environment 697ms)
+

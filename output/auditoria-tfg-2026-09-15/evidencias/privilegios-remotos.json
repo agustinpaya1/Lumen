@@ -1,0 +1,170 @@
+[
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "anon",
+    "privilege_type": "INSERT"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "anon",
+    "privilege_type": "SELECT"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "anon",
+    "privilege_type": "UPDATE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "anon",
+    "privilege_type": "DELETE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "anon",
+    "privilege_type": "TRUNCATE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "anon",
+    "privilege_type": "REFERENCES"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "anon",
+    "privilege_type": "TRIGGER"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "authenticated",
+    "privilege_type": "INSERT"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "authenticated",
+    "privilege_type": "SELECT"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "authenticated",
+    "privilege_type": "UPDATE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "authenticated",
+    "privilege_type": "DELETE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "authenticated",
+    "privilege_type": "TRUNCATE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "authenticated",
+    "privilege_type": "REFERENCES"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photos",
+    "grantee": "authenticated",
+    "privilege_type": "TRIGGER"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "anon",
+    "privilege_type": "INSERT"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "anon",
+    "privilege_type": "SELECT"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "anon",
+    "privilege_type": "UPDATE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "anon",
+    "privilege_type": "DELETE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "anon",
+    "privilege_type": "TRUNCATE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "anon",
+    "privilege_type": "REFERENCES"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "anon",
+    "privilege_type": "TRIGGER"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "authenticated",
+    "privilege_type": "INSERT"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "authenticated",
+    "privilege_type": "SELECT"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "authenticated",
+    "privilege_type": "UPDATE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "authenticated",
+    "privilege_type": "DELETE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "authenticated",
+    "privilege_type": "TRUNCATE"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "authenticated",
+    "privilege_type": "REFERENCES"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "event_members",
+    "grantee": "authenticated",
+    "privilege_type": "TRIGGER"
+  }
+]
