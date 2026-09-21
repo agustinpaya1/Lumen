@@ -1,1 +1,0 @@
-BEGIN READ ONLY; SELECT jsonb_build_object('checked_at',now(),'observability_tables',(SELECT jsonb_agg(c.relname) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='private' AND c.relname IN ('application_logs','application_log_rates','application_log_alerts'))) AS audit; ROLLBACK;

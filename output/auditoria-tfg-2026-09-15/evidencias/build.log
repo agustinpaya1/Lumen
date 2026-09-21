@@ -1,6 +1,0 @@
-❯ Building...
-✖ Building... [FAILED: Inlining of fonts failed. An error has occurred while retrieving https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap over the internet.
-getaddrinfo ENOTFOUND fonts.googleapis.com]
-An unhandled exception occurred: Inlining of fonts failed. An error has occurred while retrieving https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap over the internet.
-getaddrinfo ENOTFOUND fonts.googleapis.com
-See "/private/var/folders/vw/rd_qrsc919q588yy2zkj7lw00000gn/T/ng-s3YTBq/angular-errors.log" for further details.

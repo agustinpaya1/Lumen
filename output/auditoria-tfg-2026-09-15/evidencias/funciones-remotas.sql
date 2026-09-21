@@ -1,3 +1,0 @@
-BEGIN READ ONLY;
-SELECT jsonb_build_object('checked_at',now(),'functions',(SELECT jsonb_agg(jsonb_build_object('name',p.proname,'security_definer',p.prosecdef,'configuration',p.proconfig,'definition',pg_get_functiondef(p.oid))) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('get_my_event_keys','is_event_admin','event_accepts_uploads','get_event_state','set_event_uploads_open')), 'observability_tables',(SELECT jsonb_agg(table_name) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE '%log%')) AS functions;
-ROLLBACK;
