@@ -1,7 +1,75 @@
 import { Injectable, DestroyRef, computed, inject, signal } from '@angular/core';
+import { DEFAULT_PHOTO_LIMIT } from '@core/constants';
 import { SupabaseClientService } from './supabase-client.service';
 import { SessionService } from './session.service';
 import { LoggerService } from './logger.service';
+
+export interface EventThemePlace {
+  eyebrow?: string;
+  title: string;
+  address?: string;
+  mapUrl?: string;
+  linkLabel?: string;
+}
+
+export interface EventThemeColors {
+  accent?: string;
+  accentSoft?: string;
+  accentContrast?: string;
+  primary?: string;
+  surface?: string;
+  surfaceElevated?: string;
+  surfaceMuted?: string;
+  ink?: string;
+  inkSecondary?: string;
+  muted?: string;
+  border?: string;
+  focus?: string;
+  success?: string;
+  warning?: string;
+  danger?: string;
+  tvBg?: string;
+  tvSurface?: string;
+  tvText?: string;
+  tvHighlight?: string;
+}
+
+export interface EventTheme {
+  colors?: EventThemeColors;
+  accentColor?: string;
+  surfaceColor?: string;
+  inkColor?: string;
+  kicker?: string;
+  headline?: string;
+  invitationTitle?: string;
+  eyebrow?: string;
+  subtitle?: string;
+  illustrationAlt?: string;
+  photoPrompts?: string[];
+  places?: EventThemePlace[];
+}
+
+const COLOR_TOKEN_MAP: Record<keyof EventThemeColors, string> = {
+  accent: '--lumen-accent',
+  accentSoft: '--lumen-accent-soft',
+  accentContrast: '--lumen-accent-contrast',
+  primary: '--lumen-primary',
+  surface: '--lumen-surface',
+  surfaceElevated: '--lumen-surface-elevated',
+  surfaceMuted: '--lumen-surface-muted',
+  ink: '--lumen-ink',
+  inkSecondary: '--lumen-ink-secondary',
+  muted: '--lumen-muted',
+  border: '--lumen-line',
+  focus: '--lumen-focus',
+  success: '--lumen-success',
+  warning: '--lumen-warning',
+  danger: '--lumen-danger',
+  tvBg: '--lumen-tv-bg',
+  tvSurface: '--lumen-tv-surface',
+  tvText: '--lumen-tv-text',
+  tvHighlight: '--lumen-tv-highlight',
+};
 
 export interface EventState {
   event_key: string;
@@ -9,6 +77,10 @@ export interface EventState {
   event_date: string;
   uploads_open: boolean;
   opened_at: string | null;
+  brand_color?: string | null;
+  banner_url?: string | null;
+  photo_limit?: number | null;
+  theme?: EventTheme | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,7 +95,43 @@ export class EventService {
   readonly canUpload = computed(() => this.state()?.uploads_open === true);
   readonly waiting = computed(() => this.state()?.uploads_open === false);
   readonly name = computed(() => this.state()?.name ?? 'Álbum del evento');
-  readonly isReboda = this.session.getStoredEventKey() === 'jp-reboda-2026-k7m4q9x2';
+  readonly theme = computed<EventTheme>(() => this.state()?.theme ?? {});
+  readonly accentColor = computed(
+    () =>
+      this.theme().colors?.accent ||
+      this.theme().accentColor ||
+      this.state()?.brand_color ||
+      '#53653c',
+  );
+  readonly surfaceColor = computed(
+    () => this.theme().colors?.surface || this.theme().surfaceColor || '#faf9f3',
+  );
+  readonly inkColor = computed(
+    () => this.theme().colors?.ink || this.theme().inkColor || '#30372b',
+  );
+  readonly cssVariables = computed<Record<string, string | null>>(() => {
+    const colors = this.theme().colors ?? {};
+    const vars: Record<string, string | null> = {};
+    for (const [key, cssVar] of Object.entries(COLOR_TOKEN_MAP) as [
+      keyof EventThemeColors,
+      string,
+    ][]) {
+      vars[cssVar] = colors[key] ?? null;
+    }
+    vars['--lumen-accent'] = this.accentColor();
+    if (!vars['--lumen-surface'] && this.theme().surfaceColor) {
+      vars['--lumen-surface'] = this.theme().surfaceColor!;
+    }
+    if (!vars['--lumen-ink'] && this.theme().inkColor) {
+      vars['--lumen-ink'] = this.theme().inkColor!;
+    }
+    return vars;
+  });
+  readonly bannerUrl = computed(() => this.state()?.banner_url || null);
+  readonly photoLimit = computed(() => {
+    const limit = this.state()?.photo_limit;
+    return typeof limit === 'number' && limit > 0 ? limit : DEFAULT_PHOTO_LIMIT;
+  });
   readonly dateLabel = computed(() => {
     const date = this.state()?.event_date;
     return date ? new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date(`${date}T12:00:00`)) : '';

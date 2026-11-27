@@ -1,21 +1,19 @@
-@use 'sass:color';
-
 // ====================
-// Design System Tokens
+// Design System Tokens (backed by global CSS vars)
 // ====================
 
-// Colors
-$bg-soft-gray: #faf9f3;
-$bg-white: #fffdf9;
-$text-dark: #3b342f;
-$text-gray: #6d625b;
-$text-light-gray: #9c8e83;
-$border-gray: #e8ded3;
-$primary-black: #26354b;
-$primary-white: #fffdf9;
-$error-red: #ef4444;
-$success-green: #10b981;
-$reveal-red: #53653c;
+// Colors (defaults defined on :root in styles.scss)
+$bg-soft-gray: var(--lumen-surface);
+$bg-white: var(--lumen-surface-elevated);
+$text-dark: var(--lumen-ink);
+$text-gray: var(--lumen-ink-secondary);
+$text-light-gray: var(--lumen-muted);
+$border-gray: var(--lumen-line);
+$primary-black: var(--lumen-primary);
+$primary-white: var(--lumen-surface-elevated);
+$error-red: var(--lumen-danger);
+$success-green: var(--lumen-success);
+$reveal-red: var(--lumen-accent);
 
 // Shadows
 $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -461,7 +459,7 @@ $transition-base: all 0.3s ease;
 
         .shutter-inner {
             transform: scale(0.9);
-            background-color: color.adjust($primary-white, $lightness: -5%);
+            background-color: color-mix(in oklab, #{$primary-white} 90%, black);
         }
     }
 }
@@ -683,7 +681,7 @@ $transition-base: all 0.3s ease;
     }
 
     &:hover {
-        background-color: color.adjust($reveal-red, $lightness: -5%);
+        background-color: color-mix(in oklab, #{$reveal-red} 88%, black);
         box-shadow: 0 6px 18px rgba($reveal-red, 0.5);
     }
 
@@ -921,7 +919,7 @@ $transition-base: all 0.3s ease;
     box-shadow: $shadow-card;
 
     &:hover {
-        background-color: color.adjust($primary-black, $lightness: -5%);
+        background-color: color-mix(in oklab, #{$primary-black} 88%, black);
     }
 
     &:active {
@@ -934,7 +932,7 @@ $transition-base: all 0.3s ease;
     color: $text-dark;
 
     &:hover {
-        background-color: color.adjust(#f3f4f6, $lightness: -5%);
+        background-color: color-mix(in oklab, #f3f4f6 90%, black);
     }
 }
 
@@ -1166,7 +1164,7 @@ $transition-base: all 0.3s ease;
     font-weight: 700;
 
     &:hover {
-        background-color: color.adjust(#fbbf24, $lightness: -5%);
+        background-color: color-mix(in oklab, #fbbf24 90%, black);
     }
 
     &:active {

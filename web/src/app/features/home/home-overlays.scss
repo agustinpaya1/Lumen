@@ -1,19 +1,17 @@
-@use 'sass:color';
-
 // ====================
-// Design System Tokens
+// Design System Tokens (backed by global CSS vars)
 // ====================
 
-$bg-soft-gray: #f5f4ed;
-$bg-white: #fffdf9;
-$text-dark: #3b342f;
-$text-gray: #6d625b;
-$text-light-gray: #9c8e83;
-$border-gray: #e8ded3;
-$primary-black: #26354b;
-$primary-white: #fffdf9;
-$reveal-red: #53653c;
-$success-green: #788775;
+$bg-soft-gray: var(--lumen-surface-muted, #f5f4ed);
+$bg-white: var(--lumen-surface-elevated, #fffdf9);
+$text-dark: var(--lumen-ink, #3b342f);
+$text-gray: var(--lumen-ink-secondary, #6d625b);
+$text-light-gray: var(--lumen-muted, #9c8e83);
+$border-gray: var(--lumen-line, #e8ded3);
+$primary-black: var(--lumen-primary, #26354b);
+$primary-white: var(--lumen-surface-elevated, #fffdf9);
+$reveal-red: var(--lumen-accent, #53653c);
+$success-green: var(--lumen-success, #788775);
 
 $shadow-xl:
   0 20px 25px -5px rgba(78, 56, 43, 0.12),
@@ -691,7 +689,7 @@ $transition-base: all 0.3s ease;
 
   &:active {
     transform: scale(0.96);
-    background-color: color.adjust($reveal-red, $lightness: -5%);
+    background-color: color-mix(in oklab, #{$reveal-red} 88%, black);
   }
 }
 

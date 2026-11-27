@@ -3,6 +3,66 @@
 @tailwind utilities;
 
 // ============================================================
+// Global theme tokens — driven dynamically by EventService
+// from Supabase (`events.brand_color`, `events.theme`).
+// ============================================================
+
+:root {
+  --lumen-accent: #53653c;
+  --lumen-accent-soft: color-mix(in oklab, var(--lumen-accent) 42%, white);
+  --lumen-accent-contrast: #ffffff;
+  --lumen-primary: #26354b;
+  --lumen-surface: #faf9f3;
+  --lumen-surface-elevated: #fffdf9;
+  --lumen-surface-muted: color-mix(in oklab, var(--lumen-accent) 8%, var(--lumen-surface));
+  --lumen-ink: #30372b;
+  --lumen-ink-secondary: color-mix(in oklab, var(--lumen-ink) 78%, var(--lumen-surface));
+  --lumen-muted: color-mix(in oklab, var(--lumen-ink) 58%, var(--lumen-surface));
+  --lumen-line: color-mix(in oklab, var(--lumen-ink) 14%, var(--lumen-surface));
+  --lumen-focus: #a37b50;
+  --lumen-success: #10b981;
+  --lumen-warning: #d99a45;
+  --lumen-danger: #c83e3e;
+  --lumen-tv-bg: #080a07;
+  --lumen-tv-surface: #23291f;
+  --lumen-tv-text: #f7f5eb;
+  --lumen-tv-highlight: #e5c58d;
+}
+
+@supports (color: color(from red xyz-d65 1 1 1)) {
+  :root {
+    --wcag-y-threshold: 0.17913;
+    --lumen-accent-y: max(0, sign(var(--wcag-y-threshold) - y));
+    --lumen-accent-contrast: color(
+      from var(--lumen-accent) xyz-d65
+      calc(var(--lumen-accent-y) * 0.9505)
+      var(--lumen-accent-y)
+      calc(var(--lumen-accent-y) * 1.089)
+    );
+  }
+}
+
+@supports (color: contrast-color(red)) {
+  :root {
+    --lumen-accent-contrast: contrast-color(var(--lumen-accent));
+  }
+}
+
+.in-app-browser-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #ffcc00;
+  color: #000000;
+  padding: 15px;
+  font-weight: bold;
+  text-align: center;
+  z-index: 9999;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+// ============================================================
 // Guided demo tour (TourService) — global because the overlay
 // is attached to <body> and persists across route changes.
 // ============================================================
@@ -49,7 +109,7 @@
   height: 0;
   border-radius: 14px;
   box-shadow:
-    0 0 0 3px rgba(157, 79, 60, 0.85),
+    0 0 0 3px color-mix(in oklab, var(--lumen-accent) 85%, transparent),
     0 0 0 9999px rgba(17, 24, 39, 0.72);
   pointer-events: none;
   transition:
@@ -87,7 +147,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #9d4f3c;
+  color: var(--lumen-accent);
 }
 
 .lumen-tour__title {
@@ -95,7 +155,7 @@
   font-size: 1.18rem;
   font-weight: 700;
   line-height: 1.25;
-  color: #3b342f;
+  color: var(--lumen-ink);
 }
 
 .lumen-tour__body {
@@ -140,11 +200,11 @@
   &--next {
     margin-left: auto; // stays right whether or not "Saltar tour" is shown
     padding: 0 22px;
-    background: #26354b;
-    color: #ffffff;
+    background: var(--lumen-accent);
+    color: var(--lumen-accent-contrast);
 
     &:active {
-      background: #374151;
+      background: color-mix(in oklab, var(--lumen-accent) 82%, black);
     }
   }
 

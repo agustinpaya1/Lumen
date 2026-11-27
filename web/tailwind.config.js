@@ -6,7 +6,9 @@ export default {
     theme: {
         extend: {
             colors: {
-                'brand-accent': '#9d4f3c',
+                'brand-accent': 'var(--lumen-accent, #53653c)',
+                'brand-surface': 'var(--lumen-surface, #faf9f3)',
+                'brand-ink': 'var(--lumen-ink, #30372b)',
             },
             fontFamily: {
                 // "The Seasons" → mapped to Cormorant Garamond (closest free editorial serif)

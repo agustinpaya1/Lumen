@@ -19,12 +19,10 @@ coverage/
 .env
 .env.local
 .env.*.local
+/web/src/environments/environment.generated.ts
 auth_config.json
 *.sql.backup
 lumen_backup.sql
-
-# --- TestSprite (artefactos temporales) ---
-web/testsprite_tests/tmp/
 
 # --- IDEs y Editores ---
 .idea/

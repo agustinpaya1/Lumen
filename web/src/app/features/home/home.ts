@@ -81,20 +81,23 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   readonly promptIndex = signal(0);
-  readonly photoPrompts = this.event.isReboda ? [
+  private readonly defaultPhotoPrompts = [
     'Una sonrisa que merezca quedarse.',
-    'Junta a quienes llevan diez años en esta historia.',
-    'Ese abrazo que no necesita palabras.',
-    'Un detalle que los novios aún no hayan visto.',
-    'La foto de vuestra mesa. Sin posar demasiado.',
-    'Paula y Javier, desde tu mirada.',
-  ] : [
-    'Una sonrisa que merezca quedarse.',
-    'Una foto con quienes han compartido este curso.',
-    'Un recuerdo de todo lo que habéis aprendido.',
-    'El reencuentro, desde tu mirada.',
+    'Una foto con quienes han compartido este día.',
+    'Un recuerdo que no quieras olvidar.',
+    'El evento, desde tu mirada.',
   ];
-  readonly currentPrompt = computed(() => this.photoPrompts[this.promptIndex()]);
+  readonly photoPromptsList = computed(() => {
+    const custom = this.event.theme().photoPrompts;
+    return custom?.length ? custom : this.defaultPhotoPrompts;
+  });
+  get photoPrompts(): string[] {
+    return this.photoPromptsList();
+  }
+  readonly currentPrompt = computed(() => {
+    const prompts = this.photoPromptsList();
+    return prompts[this.promptIndex() % prompts.length] ?? prompts[0];
+  });
   private destroyed = false;
   private firstPhotoTracked = false;
 

@@ -10,8 +10,8 @@ import { environment } from '@environments/environment';
 @Injectable({ providedIn: 'root' })
 export class SupabaseClientService {
   readonly client: SupabaseClient = createClient(
-    environment.supabaseUrl,
-    environment.supabaseKey,
+    environment.supabaseUrl || 'https://placeholder.supabase.co',
+    environment.supabaseKey || 'placeholder-anon-key',
     { auth: { detectSessionInUrl: false } }
   );
 }

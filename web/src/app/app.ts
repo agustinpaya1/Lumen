@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject } from '@angular/core';
+import { Component, DOCUMENT, OnInit, effect, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { EventService } from '@core/services/event.service';
 import { RouterOutlet } from '@angular/router';
@@ -9,21 +9,36 @@ import { RouterOutlet } from '@angular/router';
   imports: [RouterOutlet],
   template: `
     @if (isInAppBrowser) {
-      <div style="position: fixed; top: 0; left: 0; right: 0; background: #ffcc00; color: #000; padding: 15px; font-weight: bold; text-align: center; z-index: 9999; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <div class="in-app-browser-banner" role="status">
         Para usar la cámara y ver las fotos correctamente, abre este enlace en Safari o Chrome (pulsa los 3 puntos arriba a la derecha).
       </div>
     }
     <router-outlet></router-outlet>
   `,
-  styleUrl: './app.scss'
 })
 export class AppComponent implements OnInit {
   isInAppBrowser = false;
   private readonly event = inject(EventService);
   private readonly title = inject(Title);
+  private readonly document = inject(DOCUMENT);
 
   constructor() {
-    effect(() => this.title.setTitle(`${this.event.name()} · Lumen`));
+    effect(() => {
+      this.title.setTitle(`${this.event.name()} · Lumen`);
+      const root = this.document.documentElement;
+      const vars = this.event.cssVariables();
+      for (const [cssVar, value] of Object.entries(vars)) {
+        if (value) {
+          root.style.setProperty(cssVar, value);
+        } else {
+          root.style.removeProperty(cssVar);
+        }
+      }
+      const themeMeta = this.document.querySelector('meta[name="theme-color"]');
+      if (themeMeta) {
+        themeMeta.setAttribute('content', this.event.accentColor());
+      }
+    });
   }
 
   ngOnInit() {

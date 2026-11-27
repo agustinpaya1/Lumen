@@ -73,16 +73,15 @@
         ← Volver a las fotos
       </button>
       }
-      @if (event.isReboda) {
-      <p class="eyebrow">12 SEPTIEMBRE 2026 · VILLARLUENGO</p>
-      <h1 id="invitation-title">Paula <em>&</em> Javier</h1>
+      @let theme = event.theme();
+      @let banner = event.bannerUrl();
+      <p class="eyebrow">{{ theme.eyebrow || event.dateLabel() }}</p>
+      <h1 id="invitation-title">{{ theme.invitationTitle || event.name() }}</h1>
+      @if (banner) {
       <figure class="couple-print">
-        <img src="/javier-paula-acuarela-v3.webp" alt="Acuarela de Paula y Javier el día de su boda" width="887"
+        <img [src]="banner" [alt]="theme.illustrationAlt || event.name()" width="887"
           height="1774" fetchpriority="high" />
       </figure>
-      } @else {
-      <p class="eyebrow">{{ event.dateLabel() }}</p>
-      <h1 id="invitation-title">{{ event.name() }}</h1>
       }
       <div class="invitation-message">
         <span class="eyebrow">ÁLBUM COMPARTIDO</span>
@@ -98,28 +97,27 @@
         </div>
         }
       </div>
-      @if (event.isReboda) {
+      @if (theme.places?.length) {
       <section class="event-places" aria-label="Dónde y cuándo">
+        @for (place of theme.places; track place.title) {
         <article>
-          <span class="eyebrow">SÁBADO 12 · 12:00 H</span>
-          <h3>Ceremonia</h3>
-          <p>Iglesia de la Asunción<br />Villarluengo, Teruel</p>
-          <a href="https://www.google.com/maps/search/?api=1&query=Iglesia+de+la+Asuncion+Villarluengo+Teruel"
-            target="_blank" rel="noopener noreferrer"><span>Cómo llegar a la iglesia</span>
+          @if (place.eyebrow) {
+          <span class="eyebrow">{{ place.eyebrow }}</span>
+          }
+          <h3>{{ place.title }}</h3>
+          @if (place.address) {
+          <p style="white-space: pre-line">{{ place.address }}</p>
+          }
+          @if (place.mapUrl) {
+          <a [href]="place.mapUrl" target="_blank" rel="noopener noreferrer">
+            <span>{{ place.linkLabel || 'Cómo llegar' }}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M9 18l6-6-6-6" />
-            </svg></a>
+            </svg>
+          </a>
+          }
         </article>
-        <article>
-          <span class="eyebrow">DESPUÉS</span>
-          <h3>Comida y celebración</h3>
-          <p>Hostal de la Trucha<br />Villarluengo, Teruel</p>
-          <a href="https://www.google.com/maps/search/?api=1&query=Hostal+de+la+Trucha+Villarluengo" target="_blank"
-            rel="noopener noreferrer"><span>Cómo llegar al hostal</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 18l6-6-6-6" />
-            </svg></a>
-        </article>
+        }
       </section>
       }
       <section class="how-it-works" aria-labelledby="how-title">

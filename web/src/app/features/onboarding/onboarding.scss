@@ -1,12 +1,12 @@
 // ===================================
-// DESIGN TOKENS
+// DESIGN TOKENS (backed by global CSS vars)
 // ===================================
-$brand-accent: #53653c;
-$brand-soft: #a8b48e;
-$bg-base: #faf9f3;
-$text-primary: #3b342f;
-$text-secondary: #655b54;
-$text-muted: #8f8278;
+$brand-accent: var(--lumen-accent, #53653c);
+$brand-soft: var(--lumen-accent-soft, #a8b48e);
+$bg-base: var(--lumen-surface, #faf9f3);
+$text-primary: var(--lumen-ink, #3b342f);
+$text-secondary: var(--lumen-ink-secondary, #655b54);
+$text-muted: var(--lumen-muted, #8f8278);
 $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
 
 // ===================================
@@ -17,7 +17,7 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     width: 100%;
     min-height: 100dvh;
     background:
-        radial-gradient(circle at 50% 18%, rgba($brand-soft, 0.09), transparent 34%),
+        radial-gradient(circle at 50% 18%, color-mix(in oklab, #{$brand-soft} 9%, transparent), transparent 34%),
         $bg-base;
     display: flex;
     flex-direction: column;
@@ -31,7 +31,7 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
         content: '';
         position: absolute;
         inset: 14px;
-        border: 1px dotted #a8b48e;
+        border: 1px dotted $brand-soft;
         pointer-events: none;
     }
 }
@@ -185,7 +185,7 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     border: 1px solid $brand-accent;
     border-radius: 9999px;
     background-color: $brand-accent;
-    color: #fffdf9;
+    color: var(--lumen-accent-contrast, #fffdf9);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 
@@ -197,8 +197,8 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 
     &:hover {
-        background-color: #854230;
-        border-color: #854230;
+        background-color: color-mix(in oklab, #{$brand-accent} 82%, black);
+        border-color: color-mix(in oklab, #{$brand-accent} 82%, black);
     }
 
     &:active {

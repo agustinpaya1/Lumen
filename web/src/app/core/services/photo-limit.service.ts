@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DEFAULT_PHOTO_LIMIT, PHOTOS_REMAINING_KEY } from '@core/constants';
+import { EventService } from './event.service';
 import { SessionService } from './session.service';
 
 /**
@@ -11,6 +12,7 @@ import { SessionService } from './session.service';
   providedIn: 'root'
 })
 export class PhotoLimitService {
+  private readonly event = inject(EventService);
   private readonly session = inject(SessionService);
   private readonly photoCountSignal = signal<number>(this.initializeCount());
 
@@ -20,8 +22,10 @@ export class PhotoLimitService {
   /** Whether the device still has upload quota left. */
   readonly canTakePhoto = computed(() => this.photoCountSignal() > 0);
 
-  /** Maximum photos allowed per device (sourced from constants). */
-  readonly maxPhotos = DEFAULT_PHOTO_LIMIT;
+  /** Maximum photos allowed per device (sourced from the active event or default). */
+  get maxPhotos(): number {
+    return this.event.photoLimit?.() ?? DEFAULT_PHOTO_LIMIT;
+  }
 
   /** Number of photos already uploaded from this device. */
   readonly photosTaken = computed(() => this.maxPhotos - this.photoCountSignal());

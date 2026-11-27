@@ -9,32 +9,25 @@
 
 } @else {
 
-    <div class="splash-screen" [class.event-welcome]="!event.isReboda">
+    @let theme = event.theme();
+    @let banner = event.bannerUrl();
+    <div class="splash-screen" [class.event-welcome]="!banner">
 
-        @if (event.isReboda) {
-        <!-- Watercolour illustration -->
+        @if (banner) {
+        <!-- Event illustration -->
         <div class="illustration-wrapper">
-            <img src="/javier-paula-acuarela-v3.webp" alt="Acuarela de Javier y Paula" class="illustration" />
+            <img [src]="banner" [alt]="theme.illustrationAlt || event.name()" class="illustration" />
         </div>
+        }
 
         <!-- Typography -->
         <div class="text-block">
-            <p class="kicker">Bienvenidos a la reboda de</p>
-            <h1 class="wedding-title">Javier y Paula</h1>
+            <p class="kicker">{{ theme.kicker || 'Bienvenidos a' }}</p>
+            <h1 class="wedding-title">{{ theme.headline || event.name() }}</h1>
             <div class="title-divider"></div>
-            <p class="anniversary-note">10 años después… Nos volvemos a casar.</p>
-            <p class="wedding-date">12 de septiembre de 2026</p>
-        </div>
-
-        } @else {
-        <div class="text-block">
-            <p class="kicker">Bienvenidos a</p>
-            <h1 class="wedding-title">{{ event.name() }}</h1>
-            <div class="title-divider"></div>
-            <p class="anniversary-note">Un lugar para compartir los recuerdos del evento.</p>
+            <p class="anniversary-note">{{ theme.subtitle || 'Un lugar para compartir los recuerdos del evento.' }}</p>
             <p class="wedding-date">{{ event.dateLabel() }}</p>
         </div>
-        }
         <!-- Manual skip — outline ghost button, no solid fill -->
         <div class="cta-area">
             <button class="cta-button" (click)="goToApp()">

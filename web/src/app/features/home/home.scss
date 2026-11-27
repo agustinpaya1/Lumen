@@ -1,10 +1,10 @@
 :host {
   display: block;
-  --olive: #55663e;
-  --ink: #30372b;
-  --muted: #727865;
-  --paper: #faf9f3;
-  --line: #dcded0;
+  --olive: var(--lumen-accent, #55663e);
+  --ink: var(--lumen-ink, #30372b);
+  --muted: var(--lumen-muted, #727865);
+  --paper: var(--lumen-surface, #faf9f3);
+  --line: var(--lumen-line, #dcded0);
   font-family: 'Lato', sans-serif;
   color: var(--ink);
 }
@@ -27,7 +27,7 @@ button:disabled {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 3px solid #a37b50;
+  outline: 3px solid var(--lumen-focus, #a37b50);
   outline-offset: 4px;
 }
 svg {

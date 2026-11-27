@@ -6,9 +6,13 @@ import { environment } from '@environments/environment';
 export class AdminAccessService {
   // A second storage key avoids replacing the guest's anonymous ownership or
   // invalidating queued offline photos when the operator signs in/out.
-  readonly client = createClient(environment.supabaseUrl, environment.supabaseKey, {
-    auth: { storageKey: 'lumen-admin-session', detectSessionInUrl: false },
-  });
+  readonly client = createClient(
+    environment.supabaseUrl || 'https://placeholder.supabase.co',
+    environment.supabaseKey || 'placeholder-anon-key',
+    {
+      auth: { storageKey: 'lumen-admin-session', detectSessionInUrl: false },
+    }
+  );
 
   async hasAccess(eventKey: string): Promise<boolean> {
     const {

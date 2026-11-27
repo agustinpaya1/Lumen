@@ -1,8 +1,8 @@
 :host {
   display: block;
   min-height: 100dvh;
-  background: #faf9f3;
-  color: #30372b;
+  background: var(--lumen-surface, #faf9f3);
+  color: var(--lumen-ink, #30372b);
   font-family: 'Lato', sans-serif;
 }
 * {
