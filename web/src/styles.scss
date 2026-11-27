@@ -213,3 +213,11 @@
     margin-left: 0;
   }
 }
+
+.leaders-event {
+  :is(button, a):focus-visible { outline: 3px solid #688ddc; outline-offset: 3px; }
+  button:enabled:active { opacity: .8; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+}

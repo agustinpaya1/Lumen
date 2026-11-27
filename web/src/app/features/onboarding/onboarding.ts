@@ -4,7 +4,10 @@ import { Router } from '@angular/router';
 import { SessionService } from '@core/services/session.service';
 import { LUMEN_CONSENT_KEY, TUTORIAL_SEEN_KEY } from '@core/constants';
 
+import { LeadersPosterComponent } from '../leaders/leaders-poster';
+
 @Component({
+  imports: [LeadersPosterComponent],
   selector: 'app-onboarding',
   standalone: true,
   templateUrl: './onboarding.html',
@@ -20,6 +23,8 @@ export class OnboardingComponent implements OnInit, OnDestroy {
   consentDeclined = false;
 
   ngOnInit(): void {
+    // Guests can read the ceremony invitation before choosing to enter the album.
+    if (this.event.isLeaders) return;
     if (localStorage.getItem(LUMEN_CONSENT_KEY) !== 'true') {
       this.showConsentModal = true;
       return;
@@ -37,14 +42,19 @@ export class OnboardingComponent implements OnInit, OnDestroy {
   acceptConsent(): void {
     localStorage.setItem(LUMEN_CONSENT_KEY, 'true');
     this.showConsentModal = false;
+    if (this.event.isLeaders) this.goToApp();
   }
 
   declineConsent(): void {
     this.showConsentModal = false;
-    this.consentDeclined = true;
+    this.consentDeclined = !this.event.isLeaders;
   }
 
   goToApp(): void {
+    if (this.event.isLeaders && localStorage.getItem(LUMEN_CONSENT_KEY) !== 'true') {
+      this.showConsentModal = true;
+      return;
+    }
     if (this.autoNavTimer) {
       clearTimeout(this.autoNavTimer);
       this.autoNavTimer = null;

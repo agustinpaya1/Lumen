@@ -14,7 +14,10 @@ import {
 import { GalleryPhoto } from '@core/models/photo';
 
 /** An opt-in presentation. It consumes the gallery's live data, never another subscription. */
+import { LeadersPosterComponent } from '../leaders/leaders-poster';
+
 @Component({
+  imports: [LeadersPosterComponent],
   selector: 'app-memories',
   templateUrl: './memories.html',
   styleUrl: './memories.scss',
@@ -22,6 +25,7 @@ import { GalleryPhoto } from '@core/models/photo';
 export class MemoriesComponent implements AfterViewInit, OnDestroy {
   readonly photos = input.required<GalleryPhoto[]>();
   readonly cinema = input(false);
+  readonly leaders = input(false);
   readonly live = input(false);
   readonly eventName = input('Álbum del evento');
   readonly eventDate = input('');

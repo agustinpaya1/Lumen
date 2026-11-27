@@ -13,6 +13,9 @@
     @let banner = event.bannerUrl();
     <div class="splash-screen" [class.event-welcome]="!banner">
 
+        @if (event.isLeaders) {
+        <app-leaders-poster [showAttendance]="true" />
+        } @else {
         @if (banner) {
         <!-- Event illustration -->
         <div class="illustration-wrapper">
@@ -28,6 +31,7 @@
             <p class="anniversary-note">{{ theme.subtitle || 'Un lugar para compartir los recuerdos del evento.' }}</p>
             <p class="wedding-date">{{ event.dateLabel() }}</p>
         </div>
+        }
         <!-- Manual skip — outline ghost button, no solid fill -->
         <div class="cta-area">
             <button class="cta-button" (click)="goToApp()">

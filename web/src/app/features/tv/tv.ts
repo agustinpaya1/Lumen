@@ -13,7 +13,7 @@ import { MemoriesComponent } from '@features/memories/memories';
   selector: 'app-tv',
   imports: [MemoriesComponent],
   template: `
-    <app-memories [photos]="photos()" [cinema]="true" [live]="true"
+    <app-memories [photos]="photos()" [cinema]="true" [live]="true" [leaders]="event.isLeaders"
       [eventName]="event.name()" [eventDate]="event.dateLabel()"
       [joinUrl]="joinUrl" [qrDataUrl]="qrDataUrl" [liveStatus]="status()"
       (closed)="leave()" />
@@ -38,7 +38,7 @@ export class TvComponent implements OnInit, OnDestroy {
   });
   readonly joinUrl = this.buildJoinUrl();
   readonly qrDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderSVG(this.joinUrl, {
-    border: 4, blackColor: '#000000', whiteColor: '#ffffff', ecc: 'M',
+    border: 4, blackColor: this.event.isLeaders ? '#163678' : '#000000', whiteColor: '#ffffff', ecc: 'M',
   }))}`;
   private channel: RealtimeChannel | null = null;
   private poll: ReturnType<typeof setInterval> | null = null;

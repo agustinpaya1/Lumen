@@ -462,3 +462,43 @@ figcaption p {
   .memories-shell.is-live { --join-height: 160px; }
   .tv-join { gap: 12px; padding: 12px; }
 }
+
+:host-context(.leaders-event) .is-live {
+  .tv-poster { max-width: min(78vw, 105vh); }
+  .memories-stage:has(.tv-poster) { background: #f4f6fa; }
+  .tv-event h3 { font-family: Rockwell, Georgia, serif; font-weight: bold; }
+  .tv-event p, .tv-live-status, .tv-invitation span { color: #e8edf7; }
+  .tv-logo { width: clamp(7rem, 13vw, 17rem); padding: .4rem; border-radius: .45rem; background: white; }
+  @media (max-width: 700px) { .tv-poster { max-width: 95vw; } .tv-logo { display: none; } }
+}
+
+:host-context(.leaders-event) .is-live {
+  .tv-qr {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    place-items: center;
+    border-radius: 15%;
+    background: #171744;
+  }
+  .tv-qr-rings {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background:
+      radial-gradient(circle, transparent 34%, #a7bd48 35% 58%, transparent 59%) -10% -12% / 59% 59% no-repeat,
+      radial-gradient(circle, transparent 34%, #ce8237 35% 58%, transparent 59%) 110% 15% / 59% 59% no-repeat,
+      radial-gradient(circle, transparent 34%, #5c943f 35% 58%, transparent 59%) 76% 112% / 59% 59% no-repeat,
+      radial-gradient(circle, transparent 34%, #6263a8 35% 58%, transparent 59%) -14% 95% / 59% 59% no-repeat;
+  }
+  .tv-qr img {
+    width: 84%;
+    height: auto;
+    border-radius: 5%;
+  }
+  .tv-qr:focus-visible {
+    outline: 3px solid white;
+    outline-offset: 4px;
+  }
+}

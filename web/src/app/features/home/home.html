@@ -7,10 +7,10 @@
 
 <div class="home-container">
   <header class="home-header">
-    <a class="wordmark" [href]="albumAnchor" aria-label="Lumen, ir al álbum">lumen<svg class="wordmark-star"
+    <a class="wordmark" [href]="albumAnchor" [attr.aria-label]="event.isLeaders ? 'Cátedra Líderes, ir al álbum' : 'Lumen, ir al álbum'">@if (event.isLeaders) {<img class="leaders-header-logo" src="/assets/catedra-lideres.png" alt="Cátedra Líderes" />} @else {lumen<svg class="wordmark-star"
         viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 2v20M2 12h20M5 5l14 14M5 19 14 5" />
-      </svg></a>
+      </svg>}</a>
     <span class="header-occasion">{{ event.name() }}</span>
     <div class="more-container">
       <button #menuToggle class="menu-toggle" (click)="extrasOpen.set(!extrasOpen())"
@@ -67,7 +67,7 @@
     }
 
     @if (event.waiting() || invitationOpen()) {
-    <section class="invitation" aria-labelledby="invitation-title">
+    <section class="invitation" aria-label="Invitación al evento">
       @if (event.canUpload()) {
       <button class="back-to-album" (click)="invitationOpen.set(false)">
         ← Volver a las fotos
@@ -75,6 +75,19 @@
       }
       @let theme = event.theme();
       @let banner = event.bannerUrl();
+      @if (event.isLeaders) {
+      <app-leaders-poster [showAttendance]="true" />
+      <div class="invitation-actions">
+        <p>
+          @if (event.waiting()) {
+            El álbum se abrirá el día del acto.
+          } @else {
+            Comparte una foto desde el álbum para que aparezca en la TV.
+          }
+        </p>
+        <button class="primary-link" (click)="shareAlbum($event)">Compartir invitación</button>
+      </div>
+      } @else {
       <p class="eyebrow">{{ theme.eyebrow || event.dateLabel() }}</p>
       <h1 id="invitation-title">{{ theme.invitationTitle || event.name() }}</h1>
       @if (banner) {
@@ -138,6 +151,7 @@
         </ol>
       </section>
       <button class="primary-link" (click)="shareAlbum($event)">Compartir la invitación</button>
+      }
     </section>
     } @else if (event.canUpload()) {
     <section id="album" class="gallery-section" aria-labelledby="gallery-title" data-tour="gallery">
@@ -264,7 +278,7 @@
 </div>
 @defer (when showMemories()) {
 @if (showMemories()) {
-<app-memories [photos]="globalPhotos()" [eventName]="event.name()" [eventDate]="event.dateLabel()" [cinema]="memoriesCinema()" (closed)="showMemories.set(false)" />
+<app-memories [leaders]="event.isLeaders" [photos]="globalPhotos()" [eventName]="event.name()" [eventDate]="event.dateLabel()" [cinema]="memoriesCinema()" (closed)="showMemories.set(false)" />
 }
 } @loading {
 <div class="share-notice" role="status">Preparando el pase de recuerdos…</div>
@@ -392,16 +406,16 @@
   <section #shareModal class="share-qr-modal" role="dialog" aria-modal="true" aria-labelledby="share-qr-title"
     aria-describedby="share-qr-description" (click)="$event.stopPropagation()">
     <button class="share-qr-close" (click)="closeShareQr()" aria-label="Cerrar código QR">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
         <path d="M6 6l12 12M18 6 6 18" />
       </svg>
     </button>
     <p class="eyebrow">{{ event.name() }}</p>
-    <h2 id="share-qr-title">Comparte el álbum</h2>
+    <h2 id="share-qr-title">{{ event.isLeaders ? 'Compartir invitación' : 'Comparte el álbum' }}</h2>
     <p id="share-qr-description">Escanea este código con la cámara de otro móvil.</p>
     <div class="share-qr-frame">
       @if (shareQrDataUrl()) {
-      <img [src]="shareQrDataUrl()" [alt]="'Código QR para abrir el álbum de ' + event.name()" />
+      <img [src]="shareQrDataUrl()" [alt]="event.isLeaders ? 'Código QR para abrir la invitación' : 'Código QR para abrir el álbum de ' + event.name()" />
       } @else {
       <p>El QR no está disponible. Puedes copiar el enlace.</p>
       }

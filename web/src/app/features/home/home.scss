@@ -681,3 +681,29 @@ h3 {
     transition: none !important;
   }
 }
+
+:host-context(.leaders-event) {
+  font-family: system-ui, sans-serif;
+  .home-container { background-image: none; }
+  .leaders-header-logo { width: 9rem; height: auto; }
+  .invitation { text-align: left; }
+  .invitation-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .85rem 1.25rem;
+    padding: 1.25rem 0;
+  }
+  .invitation-actions p {
+    flex: 1 1 14rem;
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  h2, h3 { font-family: Rockwell, Georgia, serif; font-weight: bold; }
+  .tab-btn--active { background: var(--lumen-surface-muted); border-color: var(--line); }
+  .action-dock { background: #fffffff0; border-color: var(--line); }
+  .photo-card, .action-btn-gallery, .opening-note, .share-notice,
+  .event-menu button:hover { background: var(--lumen-surface-muted); }
+}

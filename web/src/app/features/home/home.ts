@@ -28,10 +28,12 @@ import { MemoriesComponent } from '@features/memories/memories';
 import { EventService } from '@core/services/event.service';
 import { AnalyticsService } from '@core/services/analytics.service';
 
+import { LeadersPosterComponent } from '../leaders/leaders-poster';
+
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, MemoriesComponent],
+  imports: [LeadersPosterComponent, CommonModule, MemoriesComponent],
   templateUrl: './home.html',
   styleUrls: ['./home.scss', './home-overlays.scss'],
 })
@@ -358,8 +360,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     try {
       const svg = renderSVG(url.href, {
         border: 3,
-        blackColor: '#354b2e',
-        whiteColor: '#fffdf7',
+        blackColor: this.event.isLeaders ? '#163678' : '#354b2e',
+        whiteColor: this.event.isLeaders ? '#ffffff' : '#fffdf7',
         ecc: 'M',
       });
       this.shareQrDataUrl.set(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);

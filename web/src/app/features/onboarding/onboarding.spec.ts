@@ -24,6 +24,21 @@ describe('Onboarding consent flow', () => {
     }).overrideComponent(OnboardingComponent, { set: { template: '' } });
   });
 
+  it('shows the course invitation before requesting consent to enter the album', () => {
+    TestBed.overrideProvider(EventService, { useValue: { isLeaders: true } });
+    const component = TestBed.createComponent(OnboardingComponent).componentInstance;
+    component.ngOnInit();
+    expect(component.showConsentModal).toBe(false);
+    component.goToApp();
+    expect(component.showConsentModal).toBe(true);
+    component.declineConsent();
+    expect(component.consentDeclined).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+    component.goToApp();
+    component.acceptConsent();
+    expect(navigate).toHaveBeenCalledWith(['/home']);
+  });
+
   it('closes consent and keeps the opening visible after acceptance', () => {
     const component = TestBed.createComponent(OnboardingComponent).componentInstance;
     component.ngOnInit();

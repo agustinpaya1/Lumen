@@ -339,3 +339,25 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     .text-block { max-width: 36rem; }
     .wedding-title { font-size: clamp(2.5rem, 9vw, 5rem); overflow-wrap: anywhere; }
 }
+
+:host-context(.leaders-event) {
+  .splash-screen {
+    justify-content: center;
+    gap: 1.2rem;
+    padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+    background: var(--lumen-surface-muted);
+  }
+  .splash-screen::before { display: none; }
+  app-leaders-poster, .cta-area { max-width: 40rem; }
+  .cta-area { justify-content: flex-start; animation: none; }
+  .cta-button, .consent-accept {
+    background: var(--lumen-accent);
+    color: white;
+    border-radius: .8rem;
+    min-height: 48px;
+  }
+  .cta-label, .consent-title, .consent-body, .consent-actions button {
+    font-family: system-ui, sans-serif;
+    font-style: normal;
+  }
+}

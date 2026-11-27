@@ -26,6 +26,7 @@ export class AppComponent implements OnInit {
     effect(() => {
       this.title.setTitle(`${this.event.name()} · Lumen`);
       const root = this.document.documentElement;
+      root.classList.toggle('leaders-event', this.event.isLeaders);
       const vars = this.event.cssVariables();
       for (const [cssVar, value] of Object.entries(vars)) {
         if (value) {

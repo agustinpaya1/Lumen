@@ -90,6 +90,7 @@ export class EventService {
   private readonly logger = inject(LoggerService);
   private readonly destroyRef = inject(DestroyRef);
   readonly state = signal<EventState | null>(this.readCache());
+  readonly isLeaders = this.session.getStoredEventKey() === 'clausura-lideres-2026';
   readonly loading = signal(false);
   readonly error = signal(false);
   readonly canUpload = computed(() => this.state()?.uploads_open === true);
@@ -101,7 +102,7 @@ export class EventService {
       this.theme().colors?.accent ||
       this.theme().accentColor ||
       this.state()?.brand_color ||
-      '#53653c',
+      (this.isLeaders ? '#163678' : '#53653c'),
   );
   readonly surfaceColor = computed(
     () => this.theme().colors?.surface || this.theme().surfaceColor || '#faf9f3',
@@ -110,7 +111,15 @@ export class EventService {
     () => this.theme().colors?.ink || this.theme().inkColor || '#30372b',
   );
   readonly cssVariables = computed<Record<string, string | null>>(() => {
-    const colors = this.theme().colors ?? {};
+    const colors: EventThemeColors = {
+      ...(this.isLeaders ? {
+        accent: '#163678', primary: '#2a2966', accentSoft: '#dce4f4', surface: '#ffffff',
+        surfaceElevated: '#ffffff', surfaceMuted: '#eef2f9', ink: '#353535', muted: '#515e73',
+        border: '#c9d2e2', focus: '#373974', tvBg: '#11172d', tvSurface: '#2a2966',
+        tvText: '#ffffff', tvHighlight: '#ffffff',
+      } : {}),
+      ...this.theme().colors,
+    };
     const vars: Record<string, string | null> = {};
     for (const [key, cssVar] of Object.entries(COLOR_TOKEN_MAP) as [
       keyof EventThemeColors,

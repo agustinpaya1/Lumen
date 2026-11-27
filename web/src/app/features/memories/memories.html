@@ -14,7 +14,7 @@
   >
     <header class="memories-header">
       <div>
-        <span class="eyebrow">LUMEN · EL ÁLBUM VIVO</span>
+        <span class="eyebrow">{{ leaders() ? 'CÁTEDRA LÍDERES' : 'LUMEN · EL ÁLBUM VIVO' }}</span>
         <h2 id="memories-title">{{ live() ? eventName() : 'Pase de recuerdos' }}</h2>
       </div>
       <div class="view-options">
@@ -88,26 +88,38 @@
           </figcaption>
         </figure>
       } @empty {
+        @if (leaders() && live()) {
+          <app-leaders-poster class="tv-poster" />
+        } @else {
         <div class="no-memories">
           <span class="memory-mark">Lumen</span>
           <h3>{{ live() ? eventName() : 'Los recuerdos están por llegar.' }}</h3>
           <p>{{ live() ? 'Escanea el QR y comparte el primer recuerdo.' : 'Las nuevas fotos aparecerán aquí.' }}</p>
         </div>
+        }
       }
     </div>
 
     @if (live()) {
       <aside class="tv-join" aria-label="Participa en el evento">
+        @if (leaders() && photos().length) {
+          <img class="tv-logo" src="/assets/catedra-lideres.png" alt="Cátedra Líderes" />
+        }
         <div class="tv-event">
           <span class="tv-live-status" role="status">{{ liveStatus() }}</span>
-          <h3>{{ eventName() }}</h3>
-          <p>{{ eventDate() }} · {{ photos().length }} fotos en el pase</p>
+          <h3>{{ leaders() ? 'Curso Líderes 2026' : eventName() }}</h3>
+          @if (!leaders() || photos().length) {
+            <p>{{ eventDate() }} · {{ photos().length }} {{ photos().length === 1 ? 'foto' : 'fotos' }} en el pase</p>
+          }
         </div>
         <div class="tv-invitation">
           <strong>Tu foto, en esta pantalla.</strong>
-          <span>Escanea · Comparte · Mira</span>
+          <span>{{ leaders() ? 'Escanea el QR para entrar al álbum' : 'Escanea · Comparte · Mira' }}</span>
         </div>
         <a class="tv-qr" [href]="joinUrl()" aria-label="Abrir el álbum del evento">
+          @if (leaders()) {
+            <span class="tv-qr-rings" aria-hidden="true"></span>
+          }
           <img [src]="qrDataUrl()" alt="Código QR para participar en este evento" />
         </a>
       </aside>
