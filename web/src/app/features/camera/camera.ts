@@ -15,7 +15,7 @@ import { PhotoLimitService } from '@core/services/photo-limit.service';
 import { UploadQueueService } from '@core/services/upload-queue.service';
 import { FeedbackService } from '@core/services/feedback.service';
 import { LoggerService } from '@core/services/logger.service';
-import { PHOTO_SAVE_HINT, savePhoto } from '@core/utils/save-photo';
+import { savePhoto } from '@core/utils/save-photo';
 import { counterColorClass, detectDevicePlatform } from '@core/utils/capture';
 import { Router } from '@angular/router';
 import { EventService } from '@core/services/event.service';
@@ -62,8 +62,8 @@ export class CameraComponent implements OnInit, OnDestroy {
   /** Position of the temporary tap-to-focus indicator, as viewfinder percentages. */
   readonly focusPoint = signal<{ x: number; y: number } | null>(null);
 
-  /** Whether the camera is currently flipping (for animation) */
   readonly isFlipping = signal<boolean>(false);
+  readonly videoAspectRatio = signal<number | null>(null);
 
   /** Whether the photo in preview originated from a gallery upload */
   readonly isFromGallery = signal<boolean>(false);
@@ -230,9 +230,10 @@ export class CameraComponent implements OnInit, OnDestroy {
       this.mediaStream = stream;
       this.currentState.set('viewfinder');
 
+      this.videoAspectRatio.set(null);
       // Wait for the video element to render, then assign stream
       setTimeout(() => {
-        if (this.destroyed) return;
+        if (this.destroyed || this.mediaStream !== stream) return;
         const video = this.videoElement()?.nativeElement;
         if (video && stream) {
           video.srcObject = stream;
@@ -267,31 +268,26 @@ export class CameraComponent implements OnInit, OnDestroy {
 
   /**
    * Flip the camera between front and back (environment/user).
-   * Triggers a 3D flip animation and restarts the stream.
+   * Restart the stream with a flat fade so Safari can composite the video.
    */
-  flipCamera(): void {
+  async flipCamera(): Promise<void> {
     if (this.isFlipping()) return;
-
-    // 1. Start animation
     this.isFlipping.set(true);
-
-    // 2. Wait 300ms (halfway through animation) to swap content
-    setTimeout(async () => {
-      // Stop current stream
-      this.stopCamera();
-
-      // Toggle facing mode
-      const newMode = this.facingMode() === 'environment' ? 'user' : 'environment';
-      this.facingMode.set(newMode);
-
-      // Restart camera with new mode
+    this.stopCamera();
+    const video = this.videoElement()?.nativeElement;
+    if (video) video.srcObject = null;
+    this.facingMode.update((mode) => (mode === 'environment' ? 'user' : 'environment'));
+    try {
       await this.startCamera();
+    } finally {
+      this.isFlipping.set(false);
+    }
+  }
 
-      // 3. End animation after stream is ready (approx 600ms total)
-      setTimeout(() => {
-        this.isFlipping.set(false);
-      }, 300);
-    }, 300);
+  updateVideoAspectRatio(video: HTMLVideoElement): void {
+    if (video.videoWidth && video.videoHeight) {
+      this.videoAspectRatio.set(video.videoWidth / video.videoHeight);
+    }
   }
 
   /**
@@ -461,8 +457,13 @@ export class CameraComponent implements OnInit, OnDestroy {
       return;
     }
     const video = this.videoElement()?.nativeElement;
+    const viewfinder = video?.parentElement;
+    const stream = this.mediaStream;
 
-    if (!video) {
+    if (
+      !video || !viewfinder || !stream || video.srcObject !== stream ||
+      video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA
+    ) {
       this.errorMessage.set('Cámara no preparada. Por favor, inténtalo de nuevo.');
       return;
     }
@@ -478,13 +479,14 @@ export class CameraComponent implements OnInit, OnDestroy {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
+    if (this.mediaStream !== stream) return;
+
     // Create a temporary off-screen canvas to extract the frame
     const tempCanvas = document.createElement('canvas');
-    // The viewfinder uses object-fit: cover. Crop the sensor frame to the same
-    // aspect ratio so preview and final image exactly match what the guest saw.
+    // The video extends beyond the viewfinder. Crop to the visible frame.
     const sourceWidth = video.videoWidth;
     const sourceHeight = video.videoHeight;
-    const viewfinderRatio = video.clientWidth / video.clientHeight;
+    const viewfinderRatio = viewfinder.clientWidth / viewfinder.clientHeight;
     const sourceRatio = sourceWidth / sourceHeight;
     let sourceX = 0;
     let sourceY = 0;
@@ -529,7 +531,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     // Convert to blob and go STRAIGHT to preview
     tempCanvas.toBlob(
       (blob) => {
-        if (blob) {
+        if (blob && this.mediaStream === stream) {
           this.rawPhotoBlob.set(blob);
           this.currentState.set('preview');
           this.stopCamera();
@@ -543,13 +545,13 @@ export class CameraComponent implements OnInit, OnDestroy {
   // PREVIEW — download & upload
 
   readonly isSavingPhoto = signal(false);
-  readonly saveMessage = signal(PHOTO_SAVE_HINT);
+  readonly saveMessage = signal('');
 
   async downloadPhoto(): Promise<void> {
     const blob = this.rawPhotoBlob();
     if (!blob || this.isSavingPhoto()) return;
     this.isSavingPhoto.set(true);
-    this.saveMessage.set(PHOTO_SAVE_HINT);
+    this.saveMessage.set('');
     try {
       this.saveMessage.set(await savePhoto(blob, 'lumen-photo.jpg'));
     } catch (error) {
@@ -564,6 +566,7 @@ export class CameraComponent implements OnInit, OnDestroy {
   discardPhoto(): void {
     this.rawPhotoBlob.set(null);
     this.dedicationModel.set({ dedication: '' });
+    this.saveMessage.set('');
 
     if (this.isFromGallery()) {
       // If it came from the gallery, discarding should take the user back
@@ -576,7 +579,19 @@ export class CameraComponent implements OnInit, OnDestroy {
 
   // UPLOAD — with compression & retry
 
+  requestUpload(dialog: HTMLDialogElement, trigger: HTMLButtonElement): void {
+    if (!this.event.canUpload() || this.isUploading()) return;
+    if (this.dedicationModel().dedication.trim()) {
+      void this.uploadPhoto();
+    } else if (!dialog.open) {
+      // Safari does not focus buttons on click. Give the dialog a return target.
+      trigger.focus({ preventScroll: true });
+      dialog.showModal();
+    }
+  }
+
   async uploadPhoto(): Promise<void> {
+    if (this.isUploading()) return;
     if (!this.event.canUpload()) {
       this.errorMessage.set(
         'El álbum aún no admite fotos. Tu imagen sigue aquí; podrás compartirla cuando se abra.',
@@ -585,6 +600,7 @@ export class CameraComponent implements OnInit, OnDestroy {
     }
     const rawBlob = this.rawPhotoBlob();
     if (!rawBlob) return;
+    const dedication = this.dedicationModel().dedication.trim();
     let safelySaved = false;
 
     try {
@@ -609,7 +625,6 @@ export class CameraComponent implements OnInit, OnDestroy {
 
       this.uploadProgress.set(50);
 
-      const dedication = this.dedicationModel().dedication || '';
       const result = await this.uploadQueue.enqueueAndUpload(compressedFile, dedication, {
         onStorageRetry: (attempt, maxAttempts) => {
           this.retryMessage.set(`Conexión débil. Reintentando (${attempt}/${maxAttempts})...`);
@@ -664,12 +679,6 @@ export class CameraComponent implements OnInit, OnDestroy {
       );
       this.currentState.set('preview');
     }
-  }
-
-  /** Manually retry upload after all automatic retries fail */
-  retryUpload(): void {
-    this.errorMessage.set(null);
-    this.uploadPhoto();
   }
 
   // INTERNAL HELPERS

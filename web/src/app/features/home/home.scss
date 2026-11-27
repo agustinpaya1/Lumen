@@ -152,17 +152,20 @@ h3 {
 }
 .album-context {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 6px 12px;
 }
 .album-context .eyebrow {
+  flex: 1 1 12rem;
   margin: 0;
   font-family: 'Lato', sans-serif;
-  white-space: nowrap;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .photo-quota {
-  flex-shrink: 0;
+  max-width: 100%;
   padding: 5px 9px;
   border: 1px solid #d3d9c5;
   border-radius: 999px;
@@ -645,11 +648,6 @@ h3 {
 @media (max-width: 359px) {
   .header-occasion {
     display: none;
-  }
-  .album-context {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
   }
   .tab-btn {
     padding-inline: 10px;

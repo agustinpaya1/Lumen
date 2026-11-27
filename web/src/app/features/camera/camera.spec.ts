@@ -72,6 +72,34 @@ describe('Camera operational failures', () => {
     expect(logger.critical).not.toHaveBeenCalled();
   });
 
+  it('requires confirmation when the dedication is empty or only whitespace', () => {
+    const dialog = document.createElement('dialog');
+    dialog.showModal = vi.fn();
+    camera.dedicationForm.dedication().value.set('   ');
+
+    camera.requestUpload(dialog, document.createElement('button'));
+
+    expect(dialog.showModal).toHaveBeenCalledOnce();
+    expect(imageCompression).not.toHaveBeenCalled();
+    expect(enqueueAndUpload).not.toHaveBeenCalled();
+  });
+
+  it('uploads a written dedication directly', async () => {
+    const dialog = document.createElement('dialog');
+    dialog.showModal = vi.fn();
+    camera.dedicationForm.dedication().value.set('  Un gran recuerdo  ');
+
+    camera.requestUpload(dialog, document.createElement('button'));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(dialog.showModal).not.toHaveBeenCalled();
+    expect(enqueueAndUpload).toHaveBeenCalledExactlyOnceWith(
+      expect.any(File),
+      'Un gran recuerdo',
+      expect.any(Object),
+    );
+  });
+
   it('does not classify a post-save UI failure as an unsafe photo', async () => {
     triggerSuccess.mockImplementation(() => { throw new Error('Feedback unavailable'); });
 

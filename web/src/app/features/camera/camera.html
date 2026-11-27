@@ -114,11 +114,11 @@
 
     <!-- Immersive Video Feed (Full Screen) -->
     <div class="video-wrapper tap-to-flip" (pointerup)="handleViewfinderTap($event)">
-      <div class="flip-container" [class.is-flipping]="isFlipping()">
-        <video #videoRef class="video-feed" autoplay playsinline [class.mirrored]="facingMode() === 'user'"
-          [attr.aria-label]="'Live camera viewfinder'">
-        </video>
-      </div>
+      <video #videoRef class="video-feed" autoplay muted playsinline
+        [class.mirrored]="facingMode() === 'user'" [class.is-flipping]="isFlipping()"
+        (resize)="updateVideoAspectRatio(videoRef)" [style.--video-aspect-ratio]="videoAspectRatio()"
+        aria-label="Vista en directo de la cámara">
+      </video>
 
       <!-- 3×3 Rule of Thirds Grid Overlay -->
       @if (showGrid()) {
@@ -169,17 +169,13 @@
 
       <!-- Dedication input lives inside the card border, like writing on a print -->
       <div class="polaroid-input-area">
-        <label for="dedication-input" class="polaroid-label">
-          Añade un mensaje (opcional)
-        </label>
-        <input id="dedication-input" type="text" class="polaroid-input" placeholder="Escribe una dedicatoria..."
+        <label for="dedication-input" class="polaroid-label">Dedicatoria <span>(opcional)</span></label>
+        <input #dedicationInput id="dedication-input" type="text" class="polaroid-input"
+          placeholder="Escribe una dedicatoria…"
           [formField]="dedicationForm.dedication" />
       </div>
     </div>
 
-    @if (saveMessage()) {
-    <p role="status">{{ saveMessage() }}</p>
-    }
     <!-- Action Buttons -->
     <div class="action-buttons">
       <!-- Retake (Trash icon) -->
@@ -200,7 +196,8 @@
       </button>
 
       <!-- Revelar (Primary Red Button) -->
-      <button class="btn-reveal" (click)="uploadPhoto()" [disabled]="!event.canUpload()">
+      <button #shareButton class="btn-reveal" (click)="requestUpload(dedicationDialog, shareButton)"
+        [disabled]="!event.canUpload()">
         <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -209,10 +206,27 @@
       </button>
     </div>
 
+    @if (saveMessage()) {
+    <p class="save-message" role="status">{{ saveMessage() }}</p>
+    }
+
+    <dialog #dedicationDialog class="dedication-dialog" aria-labelledby="dedication-dialog-title">
+      <h2 id="dedication-dialog-title">¿Compartir sin dedicatoria?</h2>
+      <div class="dedication-dialog-actions">
+        <button type="button" class="btn-reveal" autofocus
+          (click)="dedicationDialog.close(); dedicationInput.focus()">
+          Escribir dedicatoria
+        </button>
+        <button type="button" class="btn-save" (click)="dedicationDialog.close(); uploadPhoto()">
+          Compartir sin dedicatoria
+        </button>
+      </div>
+    </dialog>
+
     <!-- Manual Retry Button (shown on error) -->
     @if (error) {
     <div class="retry-section">
-      <button class="btn-primary btn-retry" (click)="retryUpload()">
+      <button #retryButton class="btn-primary btn-retry" (click)="requestUpload(dedicationDialog, retryButton)">
         <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
