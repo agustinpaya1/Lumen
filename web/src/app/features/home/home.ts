@@ -23,7 +23,6 @@ import { PhotoLimitService } from '@core/services/photo-limit.service';
 import { FeedbackService } from '@core/services/feedback.service';
 import { TourService } from '@features/tour/tour.service';
 import { GalleryPhoto, Photo } from '@core/models/photo';
-import { DEFAULT_EVENT_KEY } from '@core/constants';
 import { UploadQueueService } from '@core/services/upload-queue.service';
 import { MemoriesComponent } from '@features/memories/memories';
 import { EventService } from '@core/services/event.service';
@@ -82,13 +81,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   readonly promptIndex = signal(0);
-  readonly photoPrompts = [
+  readonly photoPrompts = this.event.isReboda ? [
     'Una sonrisa que merezca quedarse.',
     'Junta a quienes llevan diez años en esta historia.',
     'Ese abrazo que no necesita palabras.',
     'Un detalle que los novios aún no hayan visto.',
     'La foto de vuestra mesa. Sin posar demasiado.',
     'Paula y Javier, desde tu mirada.',
+  ] : [
+    'Una sonrisa que merezca quedarse.',
+    'Una foto con quienes han compartido este curso.',
+    'Un recuerdo de todo lo que habéis aprendido.',
+    'El reencuentro, desde tu mirada.',
   ];
   readonly currentPrompt = computed(() => this.photoPrompts[this.promptIndex()]);
   private destroyed = false;
@@ -157,7 +161,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.previouslyOpen = open;
       if (open) {
         this.invitationOpen.set(false);
-        void this.loadPhotos();
+        void this.loadPhotos().then(() => this.startEventTour());
         if (!this.realtimeChannel) this.setupRealtimeSubscription();
         void this.uploadQueue.processPending();
       } else {
@@ -180,10 +184,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.event.canUpload()) this.setupRealtimeSubscription();
     // The gallery stays usable while a slow connection drains the upload queue.
     void this.uploadQueue.processPending();
-    // Demo mode (no ?e= param → event_key resolves to 'demo'): run the
-    // one-time guided tour. maybeStart() no-ops if it already ran or is active,
-    // so navigating back here mid-tour (step 5) won't restart it.
-    this.tourService.maybeStart(this.sessionService.getStoredEventKey() === DEFAULT_EVENT_KEY);
+    if (this.event.canUpload()) this.startEventTour();
+  }
+
+  private startEventTour(): void {
+    if (!this.destroyed && this.event.canUpload()) {
+      this.tourService.maybeStart(this.sessionService.getStoredEventKey(), this.event.name());
+    }
+  }
+
+  openTv(): void {
+    void this.router.navigate(['/tv'], { queryParams: { e: this.sessionService.getStoredEventKey() } });
   }
 
   /** User-triggered retry complements automatic online/focus processing. */
@@ -388,8 +399,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
     try {
       await navigator.share({
-        title: 'Paula y Javier · Nuestro álbum',
-        text: 'Comparte tus fotos en el álbum de Paula y Javier.',
+        title: `${this.event.name()} · Nuestro álbum`,
+        text: `Comparte tus fotos en el álbum de ${this.event.name()}.`,
         url: this.shareUrl(),
       });
       this.analytics.track('share_native_open', this.analyticsContext());

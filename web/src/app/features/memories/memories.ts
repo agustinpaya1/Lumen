@@ -22,6 +22,17 @@ import { GalleryPhoto } from '@core/models/photo';
 export class MemoriesComponent implements AfterViewInit, OnDestroy {
   readonly photos = input.required<GalleryPhoto[]>();
   readonly cinema = input(false);
+  readonly live = input(false);
+  readonly eventName = input('Álbum del evento');
+  readonly eventDate = input('');
+  readonly joinUrl = input('');
+  readonly qrDataUrl = input('');
+  readonly liveStatus = input('');
+  private knownIds = new Set<number>();
+  private pendingIds: number[] = [];
+  private playlistInitialized = false;
+  private wakeLock: WakeLockSentinel | null = null;
+  private disposed = false;
   readonly cinemaMode = signal(false);
   readonly controlsHidden = signal(false);
   readonly fullscreenMessage = signal('');
@@ -48,6 +59,8 @@ export class MemoriesComponent implements AfterViewInit, OnDestroy {
   readonly position = computed(
     () => this.orderedPhotos().findIndex((p) => p.id === this.current()?.id) + 1,
   );
+  readonly currentId = computed(() => this.current()?.id ?? null);
+  readonly multiplePhotos = computed(() => this.photos().length > 1);
   readonly frame = computed(() => (this.current() ? [this.current()!] : []));
   readonly ready = computed(() => !!this.current() && this.loadedId() === this.current()!.id);
   readonly failed = computed(() => !!this.current() && this.failedId() === this.current()!.id);
@@ -55,14 +68,36 @@ export class MemoriesComponent implements AfterViewInit, OnDestroy {
   private previousOverflow = '';
 
   constructor() {
+    effect(() => {
+      if (!this.live()) return;
+      const photos = this.orderedPhotos();
+      const ids = new Set(photos.map((photo) => photo.id));
+      if (this.playlistInitialized) {
+        const additions = photos.filter((photo) => !this.knownIds.has(photo.id)).map((photo) => photo.id);
+        this.pendingIds = [...this.pendingIds.filter((id) => ids.has(id)), ...additions];
+      }
+      this.knownIds = ids;
+      this.playlistInitialized = true;
+    });
+    // An unattended TV must not get stuck on a missing or indefinitely loading image.
     effect((onCleanup) => {
-      const current = this.current();
+      const current = this.currentId();
+      this.retryVersion();
+      if (!this.live() || !current || this.ready() || !this.playing() || !this.pageVisible()) return;
+      const timer = setTimeout(() => {
+        if (this.photos().length > 1) this.advance(1);
+        else this.retry();
+      }, this.failed() ? 2000 : 12000);
+      onCleanup(() => clearTimeout(timer));
+    });
+    effect((onCleanup) => {
+      const current = this.currentId();
       if (
         !current ||
         !this.playing() ||
         !this.ready() ||
         !this.pageVisible() ||
-        this.photos().length < 2
+        !this.multiplePhotos()
       )
         return;
       // A slow connection gets a full seven seconds AFTER the image loads.
@@ -73,6 +108,8 @@ export class MemoriesComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.cinemaMode.set(this.cinema());
+    this.controlsHidden.set(this.live());
+    if (this.live()) void this.keepAwake();
     this.previousFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     this.previousOverflow = document.body.style.overflow;
@@ -81,11 +118,24 @@ export class MemoriesComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.disposed = true;
+    void this.wakeLock?.release().catch(() => {});
     if (document.fullscreenElement === this.presentation().nativeElement) {
       void document.exitFullscreen().catch(() => {});
     }
     document.body.style.overflow = this.previousOverflow;
     this.previousFocus?.focus({ preventScroll: true });
+  }
+
+  private async keepAwake(): Promise<void> {
+    if (!this.live() || this.disposed || this.wakeLock || document.visibilityState === 'hidden') return;
+    try {
+      const lock = await navigator.wakeLock?.request('screen');
+      if (!lock) return;
+      if (this.disposed) { await lock.release(); return; }
+      this.wakeLock = lock;
+      lock.addEventListener('release', () => { if (this.wakeLock === lock) this.wakeLock = null; });
+    } catch { /* Optional: the presentation works without a screen wake lock. */ }
   }
 
   dismiss(): void {
@@ -117,6 +167,16 @@ export class MemoriesComponent implements AfterViewInit, OnDestroy {
   advance(direction: 1 | -1): void {
     const photos = this.orderedPhotos();
     if (photos.length < 2) return;
+    if (this.live() && direction === 1) {
+      this.pendingIds = this.pendingIds.filter((id) => id !== this.current()?.id && photos.some((p) => p.id === id));
+      const priority = this.pendingIds.shift();
+      if (priority !== undefined) {
+        this.loadedId.set(null);
+        this.failedId.set(null);
+        this.activeId.set(priority);
+        return;
+      }
+    }
     const next = (this.position() - 1 + direction + photos.length) % photos.length;
     this.loadedId.set(null);
     this.failedId.set(null);
@@ -134,7 +194,7 @@ export class MemoriesComponent implements AfterViewInit, OnDestroy {
   imageFailed(id: number): void {
     if (this.current()?.id === id) {
       this.failedId.set(id);
-      this.playing.set(false);
+      if (!this.live()) this.playing.set(false);
     }
   }
 
@@ -147,6 +207,7 @@ export class MemoriesComponent implements AfterViewInit, OnDestroy {
   @HostListener('document:visibilitychange')
   visibilityChanged(): void {
     this.pageVisible.set(document.visibilityState !== 'hidden');
+    if (this.pageVisible()) void this.keepAwake();
   }
 
   onKeydown(event: KeyboardEvent): void {

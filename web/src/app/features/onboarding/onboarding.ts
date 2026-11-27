@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { EventService } from '@core/services/event.service';
 import { Router } from '@angular/router';
 import { SessionService } from '@core/services/session.service';
 import { LUMEN_CONSENT_KEY, TUTORIAL_SEEN_KEY } from '@core/constants';
@@ -10,6 +11,7 @@ import { LUMEN_CONSENT_KEY, TUTORIAL_SEEN_KEY } from '@core/constants';
   styleUrl: './onboarding.scss',
 })
 export class OnboardingComponent implements OnInit, OnDestroy {
+  readonly event = inject(EventService);
   private readonly router = inject(Router);
   private readonly sessionService = inject(SessionService);
   private autoNavTimer: ReturnType<typeof setTimeout> | null = null;

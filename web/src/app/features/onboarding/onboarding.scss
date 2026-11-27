@@ -332,3 +332,10 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     max-width: 340px;
     margin: 0;
 }
+
+.splash-screen.event-welcome {
+    justify-content: center;
+    gap: 2rem;
+    .text-block { max-width: 36rem; }
+    .wedding-title { font-size: clamp(2.5rem, 9vw, 5rem); overflow-wrap: anywhere; }
+}

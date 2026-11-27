@@ -9,17 +9,20 @@
     #presentation
     class="memories-shell"
     [class.is-cinema]="cinemaMode()"
+    [class.is-live]="live()"
     [class.controls-hidden]="controlsHidden()"
   >
     <header class="memories-header">
       <div>
         <span class="eyebrow">LUMEN · EL ÁLBUM VIVO</span>
-        <h2 id="memories-title">Pase de recuerdos</h2>
+        <h2 id="memories-title">{{ live() ? eventName() : 'Pase de recuerdos' }}</h2>
       </div>
       <div class="view-options">
+        @if (!live()) {
         <button (click)="cinemaMode.set(!cinemaMode())">
           {{ cinemaMode() ? 'Ver marco' : 'Modo TV' }}
         </button>
+        }
         <button (click)="fullscreen()" aria-label="Alternar pantalla completa">⛶</button>
         @if (cinemaMode()) {
           <button (click)="controlsHidden.set(true)">Ocultar controles</button>
@@ -56,7 +59,7 @@
             <img
               class="memory-image"
               [src]="photo.publicUrl"
-              [alt]="photo.dedication || 'Un recuerdo de la reboda'"
+              [alt]="photo.dedication || 'Un recuerdo del evento'"
               (load)="imageLoaded(photo.id)"
               (error)="imageFailed(photo.id)"
             />
@@ -81,20 +84,36 @@
                   : 'Lo bonito es vivirlo juntos.'
               }}
             </p>
-            <span class="memory-mark" aria-hidden="true">P & J</span>
+            <span class="memory-mark" aria-hidden="true">Lumen</span>
           </figcaption>
         </figure>
       } @empty {
         <div class="no-memories">
-          <span class="memory-mark">P & J</span>
-          <h3>Los recuerdos están por llegar.</h3>
-          <p>Las nuevas fotos aparecerán aquí.</p>
+          <span class="memory-mark">Lumen</span>
+          <h3>{{ live() ? eventName() : 'Los recuerdos están por llegar.' }}</h3>
+          <p>{{ live() ? 'Escanea el QR y comparte el primer recuerdo.' : 'Las nuevas fotos aparecerán aquí.' }}</p>
         </div>
       }
     </div>
 
+    @if (live()) {
+      <aside class="tv-join" aria-label="Participa en el evento">
+        <div class="tv-event">
+          <span class="tv-live-status" role="status">{{ liveStatus() }}</span>
+          <h3>{{ eventName() }}</h3>
+          <p>{{ eventDate() }} · {{ photos().length }} fotos en el pase</p>
+        </div>
+        <div class="tv-invitation">
+          <strong>Tu foto, en esta pantalla.</strong>
+          <span>Escanea · Comparte · Mira</span>
+        </div>
+        <a class="tv-qr" [href]="joinUrl()" aria-label="Abrir el álbum del evento">
+          <img [src]="qrDataUrl()" alt="Código QR para participar en este evento" />
+        </a>
+      </aside>
+    }
     <footer class="memories-footer">
-      <div class="memory-context"><span>PAULA & JAVIER</span><span>12 · 09 · 2026</span></div>
+      <div class="memory-context"><span>{{ eventName() }}</span><span>{{ eventDate() }}</span></div>
       <div class="playback-controls" aria-label="Controles del pase">
         <button
           class="circle-button"
@@ -109,7 +128,7 @@
         <button
           class="play-button"
           (click)="togglePlayback()"
-          [disabled]="photos().length < 2 || failed()"
+          [disabled]="photos().length < 2 || (failed() && !live())"
           [attr.aria-label]="playing() ? 'Pausar pase' : 'Reproducir pase'"
         >
           @if (playing()) {

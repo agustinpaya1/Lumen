@@ -22,6 +22,12 @@ export class EventService {
   readonly error = signal(false);
   readonly canUpload = computed(() => this.state()?.uploads_open === true);
   readonly waiting = computed(() => this.state()?.uploads_open === false);
+  readonly name = computed(() => this.state()?.name ?? 'Álbum del evento');
+  readonly isReboda = this.session.getStoredEventKey() === 'jp-reboda-2026-k7m4q9x2';
+  readonly dateLabel = computed(() => {
+    const date = this.state()?.event_date;
+    return date ? new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date(`${date}T12:00:00`)) : '';
+  });
   private initialized = false;
   private refreshing: Promise<void> | null = null;
   private lastFailure: 'offline' | 'cached' | 'unavailable' | null = null;

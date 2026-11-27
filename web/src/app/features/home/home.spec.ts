@@ -38,7 +38,7 @@ describe('Home gallery consistency', () => {
       providers: [
         {
           provide: EventService,
-          useValue: { canUpload: signal(true), initialize: vi.fn().mockResolvedValue(undefined) },
+          useValue: { name: signal('Evento de prueba'), canUpload: signal(true), initialize: vi.fn().mockResolvedValue(undefined) },
         },
         { provide: Router, useValue: { navigate: vi.fn() } },
         {

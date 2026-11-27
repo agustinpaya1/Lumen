@@ -157,3 +157,88 @@ describe('MemoriesComponent playback', () => {
     expect(fixture.componentInstance.playing()).toBe(false);
   });
 });
+
+describe('Live TV playlist', () => {
+  let fixture: ComponentFixture<MemoriesComponent>;
+  let component: MemoriesComponent;
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    vi.useFakeTimers();
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: () => {} });
+    TestBed.configureTestingModule({ imports: [MemoriesComponent] });
+    fixture = TestBed.createComponent(MemoriesComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('live', true);
+    fixture.componentRef.setInput('cinema', true);
+    fixture.componentRef.setInput('photos', [photo(1), photo(2), photo(3)]);
+    fixture.componentRef.setInput('eventName', 'Clausura de Líderes');
+    fixture.componentRef.setInput('joinUrl', 'https://example.test/?e=clausura-lideres-2026');
+    fixture.detectChanges();
+  });
+  afterEach(() => {
+    fixture?.destroy();
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+  const render = () => { fixture.detectChanges(); TestBed.tick(); };
+
+  it('keeps the QR visible with hidden controls, even before the first photo', () => {
+    fixture.componentRef.setInput('photos', []);
+    render();
+    expect(component.controlsHidden()).toBe(true);
+    expect(fixture.nativeElement.querySelector('.tv-join .tv-qr').href).toContain('?e=clausura-lideres-2026');
+    expect(fixture.nativeElement.querySelector('.tv-join').textContent).toContain('Clausura de Líderes');
+  });
+
+  it('shows an incoming photo next without interrupting or restarting the current frame', () => {
+    component.imageLoaded(1);
+    render();
+    vi.advanceTimersByTime(4000);
+    fixture.componentRef.setInput('photos', [photo(4), photo(1), photo(2), photo(3)]);
+    render();
+    expect(component.current()?.id).toBe(1);
+    vi.advanceTimersByTime(3000);
+    expect(component.current()?.id).toBe(4);
+    component.imageLoaded(4);
+    render();
+    component.advance(1);
+    expect(component.current()?.id).toBe(1);
+  });
+
+  it('does not prioritize a deleted incoming photo or replay duplicate notifications', () => {
+    component.imageLoaded(1);
+    render();
+    fixture.componentRef.setInput('photos', [photo(4), photo(1), photo(2), photo(3)]);
+    render();
+    fixture.componentRef.setInput('photos', [photo(1), photo(2), photo(3)]);
+    render();
+    component.advance(1);
+    expect(component.current()?.id).toBe(2);
+  });
+
+  it('skips broken or stalled photos automatically without pausing the TV', () => {
+    component.imageFailed(1);
+    render();
+    expect(component.playing()).toBe(true);
+    vi.advanceTimersByTime(2000);
+    render();
+    expect(component.current()?.id).toBe(2);
+    vi.advanceTimersByTime(12000);
+    expect(component.current()?.id).toBe(3);
+  });
+
+  it('automatically retries a single unavailable photo', () => {
+    fixture.componentRef.setInput('photos', [photo(1)]);
+    component.imageFailed(1);
+    render();
+    vi.advanceTimersByTime(2000);
+    render();
+    expect(component.retryVersion()).toBe(1);
+    vi.advanceTimersByTime(12000);
+    expect(component.retryVersion()).toBe(2);
+  });
+});

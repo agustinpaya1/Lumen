@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { LUMEN_TOUR_KEY } from '@core/constants';
+import { DEFAULT_EVENT_KEY, LUMEN_TOUR_KEY } from '@core/constants';
 import { isLastTourStep, nextTourIndex } from './tour-sequence';
 
 /** Side of the target the tooltip prefers; it is clamped to stay on-screen. */
@@ -91,7 +91,8 @@ export class TourService {
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
 
-  private readonly steps = DEMO_TOUR_STEPS;
+  private steps: readonly TourStep[] = DEMO_TOUR_STEPS;
+  private completionKey = LUMEN_TOUR_KEY;
 
   private active = false;
   private currentIndex = 0;
@@ -119,7 +120,7 @@ export class TourService {
   /** True once the visitor has finished or skipped the tour on this device. */
   hasCompleted(): boolean {
     if (typeof localStorage === 'undefined') return false;
-    return localStorage.getItem(LUMEN_TOUR_KEY) === 'true';
+    try { return localStorage.getItem(this.completionKey) === 'true'; } catch { return false; }
   }
 
   /** Whether the tour is currently on screen. */
@@ -127,13 +128,21 @@ export class TourService {
     return this.active;
   }
 
-  /**
-   * Starts the tour only on a genuine first demo-mode visit: a no-op when not
-   * in demo mode, already running, or already completed on this device.
-   * @param isDemoMode Whether the active event resolved to the demo event.
-   */
-  maybeStart(isDemoMode: boolean): void {
-    if (!isDemoMode || this.active || this.hasCompleted()) return;
+  /** Completion is scoped to the event; demo completion never skips a real event. */
+  maybeStart(eventKey: string, eventName: string): void {
+    if (this.active) return;
+    this.completionKey = eventKey === DEFAULT_EVENT_KEY ? LUMEN_TOUR_KEY : `${LUMEN_TOUR_KEY}:${eventKey}`;
+    if (this.hasCompleted()) return;
+    this.steps = eventKey === DEFAULT_EVENT_KEY ? DEMO_TOUR_STEPS : [
+      { target: '[data-tour="gallery"]', title: `Bienvenido a ${eventName}`,
+        body: 'Aquí verás las fotos de este evento, incluidas las que se compartan durante la celebración.' },
+      { target: '[data-tour="upload"]', placement: 'top', title: 'Comparte tu primera foto',
+        body: 'Elige una foto del móvil o usa Hacer foto. Después pulsa Compartir: aparecerá en el álbum y en la televisión.' },
+      { target: '[data-tour="tabs"]', title: 'Tus fotos, siempre a mano',
+        body: 'En Mis fotos puedes ver y gestionar lo que has compartido. Toca cualquier foto para ampliarla.' },
+      { title: 'Mira la pantalla', body: 'Las nuevas fotos se incorporan automáticamente al pase. ¡Comparte un recuerdo y búscalo en la televisión!',
+        nextLabel: 'Empezar' },
+    ];
     this.start();
   }
 
@@ -227,7 +236,7 @@ export class TourService {
     const currentPath = this.router.url.split('?')[0];
     if (step.route && step.route !== currentPath) {
       this.applyCentered(); // keep the bubble visible while the next view loads
-      await this.router.navigate([step.route]);
+      await this.router.navigate([step.route], { queryParamsHandling: 'preserve' });
       if (token !== this.runToken) return;
     }
 
@@ -401,7 +410,7 @@ export class TourService {
   private persistCompleted(): void {
     if (typeof localStorage === 'undefined') return;
     try {
-      localStorage.setItem(LUMEN_TOUR_KEY, 'true');
+      localStorage.setItem(this.completionKey, 'true');
     } catch {
       // Private-mode / storage disabled — the tour simply runs again next time.
     }

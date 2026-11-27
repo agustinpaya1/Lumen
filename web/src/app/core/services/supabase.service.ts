@@ -270,6 +270,30 @@ export class SupabaseService {
     return data || [];
   }
 
+  /** A bounded live playlist keeps a long-running TV's memory and requests stable. */
+  async fetchTvPhotos(): Promise<Photo[]> {
+    const { data, error } = await this.supabase
+      .from(PHOTOS_TABLE)
+      .select('*')
+      .eq('event_key', this.session.getStoredEventKey())
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(200)
+      .abortSignal(AbortSignal.timeout(10000));
+    if (error) throw error;
+    return data || [];
+  }
+
+  subscribeToTvPhotos(onChange: () => void) {
+    const eventKey = this.session.getStoredEventKey();
+    return this.supabase.channel(`tv:photos:${eventKey}`)
+      .on('postgres_changes', this.photoChangeFilter('INSERT', eventKey), onChange)
+      .on('postgres_changes', this.photoChangeFilter('UPDATE', eventKey), onChange)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: PHOTOS_TABLE }, onChange)
+      // Reconcile any changes missed before the subscription or during reconnect.
+      .subscribe((status) => { if (status === 'SUBSCRIBED') onChange(); });
+  }
+
   /**
    * Subscribe to real-time INSERT and DELETE events for the active event.
    * Filtered by event_key so guests only receive updates from their event.

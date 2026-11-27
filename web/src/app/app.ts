@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect, inject } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { EventService } from '@core/services/event.service';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
@@ -17,6 +19,12 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent implements OnInit {
   isInAppBrowser = false;
+  private readonly event = inject(EventService);
+  private readonly title = inject(Title);
+
+  constructor() {
+    effect(() => this.title.setTitle(`${this.event.name()} · Lumen`));
+  }
 
   ngOnInit() {
     // TODO(compat): User-Agent sniffing is brittle and breaks as in-app browsers

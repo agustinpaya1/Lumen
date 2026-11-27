@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LUMEN_CONSENT_KEY, TUTORIAL_SEEN_KEY } from '@core/constants';
 import { SessionService } from '@core/services/session.service';
+import { EventService } from '@core/services/event.service';
 import { OnboardingComponent } from './onboarding';
 
 describe('Onboarding consent flow', () => {
@@ -16,6 +17,7 @@ describe('Onboarding consent flow', () => {
     TestBed.configureTestingModule({
       imports: [OnboardingComponent],
       providers: [
+        { provide: EventService, useValue: {} },
         { provide: Router, useValue: { navigate } },
         { provide: SessionService, useValue: { getDeviceId } },
       ],
