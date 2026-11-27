@@ -194,6 +194,35 @@ describe('Live TV playlist', () => {
     expect(fixture.nativeElement.querySelector('.tv-join').textContent).toContain('Clausura de Líderes');
   });
 
+  it('shows each loaded photo’s dedication with controls hidden and skips placeholder captions', () => {
+    const photos = [
+      { ...photo(1), dedication: 'Anitín' },
+      { ...photo(2), dedication: 'Porcelanosa' },
+      { ...photo(3), dedication: 'gallery-upload' },
+    ];
+    fixture.componentRef.setInput('photos', photos);
+    render();
+    const dedication = () => fixture.nativeElement.querySelector('.live-dedication');
+    expect(dedication()).toBeNull();
+    expect(component.controlsHidden()).toBe(true);
+    component.imageLoaded(1);
+    render();
+    expect(dedication()?.textContent).toBe('Anitín');
+    component.advance(1);
+    render();
+    expect(dedication()).toBeNull();
+    component.imageLoaded(2);
+    render();
+    expect(dedication()?.textContent).toBe('Porcelanosa');
+    component.advance(1);
+    component.imageLoaded(3);
+    render();
+    expect(dedication()).toBeNull();
+    fixture.componentRef.setInput('photos', [photos[0], photos[1], photo(3)]);
+    render();
+    expect(dedication()).toBeNull();
+  });
+
   it('shows an incoming photo next without interrupting or restarting the current frame', () => {
     component.imageLoaded(1);
     render();

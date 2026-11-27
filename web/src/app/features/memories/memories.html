@@ -75,17 +75,25 @@
               </div>
             }
           </div>
-          <figcaption>
-            <span class="memory-number">{{ position().toString().padStart(2, '0') }}</span>
-            <p>
-              {{
-                photo.dedication && photo.dedication !== 'gallery-upload'
-                  ? photo.dedication
-                  : 'Lo bonito es vivirlo juntos.'
-              }}
-            </p>
-            <span class="memory-mark" aria-hidden="true">Lumen</span>
-          </figcaption>
+          @if (live()) {
+            @if (ready() && photo.dedication?.trim(); as dedication) {
+              @if (dedication !== 'gallery-upload') {
+                <figcaption class="live-dedication"><p>{{ dedication }}</p></figcaption>
+              }
+            }
+          } @else {
+            <figcaption>
+              <span class="memory-number">{{ position().toString().padStart(2, '0') }}</span>
+              <p>
+                {{
+                  photo.dedication && photo.dedication !== 'gallery-upload'
+                    ? photo.dedication
+                    : 'Lo bonito es vivirlo juntos.'
+                }}
+              </p>
+              <span class="memory-mark" aria-hidden="true">Lumen</span>
+            </figcaption>
+          }
         </figure>
       } @empty {
         @if (leaders() && live()) {

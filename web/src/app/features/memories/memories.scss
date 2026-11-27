@@ -422,6 +422,19 @@ figcaption p {
   height: 100dvh;
   .memories-stage { bottom: var(--join-height); padding: 2vh 3vw; }
   .memories-footer { bottom: var(--join-height); }
+  &:not(.controls-hidden) .memories-stage { padding-bottom: calc(2vh + 84px + env(safe-area-inset-bottom)); }
+  .memory-image-wrap { flex: 1; }
+  .live-dedication {
+    display: block;
+    min-height: 0;
+    padding: 0.35em 0.7em;
+    margin-top: 0.5em;
+    color: var(--lumen-tv-text);
+  }
+  .live-dedication p {
+    font: 600 clamp(18px, 3vmin, 48px) / 1.2 system-ui, sans-serif;
+    white-space: pre-wrap;
+  }
   .no-memories { padding: 3vw; }
   .no-memories h3 { font-size: clamp(32px, 4vw, 80px); }
   .no-memories p { font-size: clamp(18px, 2vw, 36px); }

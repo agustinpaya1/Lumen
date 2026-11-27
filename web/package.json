@@ -5,6 +5,7 @@
     "env": "node scripts/generate-env.mjs",
     "prestart": "npm run env",
     "prebuild": "npm run env",
+    "postbuild": "node scripts/generate-share-page.mjs",
     "pretest": "npm run env",
     "ng": "ng",
     "start": "ng serve",

@@ -1,10 +1,17 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
   "outputDirectory": "dist/web/browser",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/((?!api(?:/|$))(?!.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|woff|woff2|ttf|eot|json|map)$).*)",
-      "destination": "/index.html"
+      "src": "^/$",
+      "has": [{ "type": "query", "key": "e", "value": "clausura-lideres-2026" }],
+      "dest": "/clausura-lideres-2026.html"
+    },
+    { "handle": "filesystem" },
+    {
+      "src": "^/(?!api(?:/|$))(?!.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|woff|woff2|ttf|eot|json|map)$).*$",
+      "dest": "/index.html"
     }
   ],
   "functions": {
