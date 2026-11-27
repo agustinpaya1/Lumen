@@ -30,6 +30,9 @@ export class AdminComponent implements OnInit {
   readonly email = signal('');
   readonly password = signal('');
   readonly registering = signal(false);
+  readonly resetRequest = signal(false);
+  readonly recovering = signal(false);
+  readonly passwordConfirmation = signal('');
   readonly photos = signal<Photo[]>([]);
   readonly confirmLaunch = signal(false);
   readonly deleteConfirmId = signal<number | null>(null);
@@ -41,8 +44,14 @@ export class AdminComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
+      this.recovering.set(await this.access.beginPasswordRecovery());
+    } catch {
+      this.resetRequest.set(true);
+      this.notify('El enlace ya no es válido. Solicita un correo de recuperación nuevo.', true);
+    }
+    try {
       await this.event.initialize();
-      await this.checkAccess();
+      if (!this.recovering() && !this.resetRequest()) await this.checkAccess();
     } catch {
       this.notify('No se pudo cargar el panel. Puedes volver a intentarlo.', true);
     } finally {
@@ -101,6 +110,53 @@ export class AdminComponent implements OnInit {
     }
   }
 
+  showPasswordReset(): void {
+    this.registering.set(false);
+    this.resetRequest.update(value => !value);
+    this.password.set('');
+    this.message.set('');
+  }
+
+  async requestPasswordReset(valid: boolean | null): Promise<void> {
+    if (this.busy() || !valid) return;
+    this.busy.set(true);
+    this.message.set('');
+    try {
+      await this.access.requestPasswordReset(this.email(), this.eventKey);
+      this.notify('Si hay una cuenta con ese correo, recibirás un enlace para elegir una contraseña nueva.');
+    } catch (error) {
+      this.showAuthError(error);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  async savePassword(valid: boolean | null): Promise<void> {
+    if (this.busy() || !valid || !this.recovering()) return;
+    if (this.password() !== this.passwordConfirmation()) {
+      this.notify('Las dos contraseñas deben coincidir.', true);
+      return;
+    }
+    this.busy.set(true);
+    this.message.set('');
+    try {
+      await this.access.updatePassword(this.password());
+      this.password.set('');
+      this.passwordConfirmation.set('');
+      this.recovering.set(false);
+      this.notify('Contraseña actualizada. Ya puedes entrar con la nueva.');
+      try {
+        await this.checkAccess();
+      } catch {
+        this.notify('Contraseña actualizada. Vuelve a iniciar sesión para abrir el panel.');
+      }
+    } catch (error) {
+      this.showAuthError(error);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
   private showAuthError(error: unknown): void {
     const code = isAuthError(error) ? error.code : undefined;
     switch (code) {
@@ -116,7 +172,10 @@ export class AdminComponent implements OnInit {
         this.notify('Has hecho demasiados intentos. Espera unos minutos antes de volver a probar.', true);
         break;
       case 'email_address_not_authorized':
-        this.notify('Supabase no pudo enviar el correo de confirmación a esta dirección.', true);
+        this.notify('Supabase no pudo enviar el correo a esta dirección.', true);
+        break;
+      case 'same_password':
+        this.notify('Elige una contraseña distinta de la anterior.', true);
         break;
       case 'weak_password':
         this.notify('La contraseña no cumple los requisitos. Elige una más segura.', true);

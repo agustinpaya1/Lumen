@@ -14,29 +14,55 @@
         @if (event.dateLabel()) { <p>{{ event.dateLabel() }}</p> }
       </div>
       <div class="login-form">
-        <h2 id="login-title">{{ registering() ? 'Crea tu cuenta' : 'Entra a tu panel' }}</h2>
-        <p class="muted">Usa el correo autorizado para organizar este evento.</p>
+        <h2 id="login-title">
+          {{ recovering() ? 'Elige una contraseña nueva' : resetRequest() ? 'Recupera tu contraseña' : registering() ? 'Crea tu cuenta' : 'Entra a tu panel' }}
+        </h2>
+        @if (!recovering()) {
+          <p class="muted">Usa el correo autorizado para organizar este evento.</p>
+        }
         @if (message()) {
           <p class="notice" [class.notice-error]="messageIsError()" [attr.role]="messageIsError() ? 'alert' : 'status'">{{ message() }}</p>
         }
-        <form #loginForm="ngForm" (ngSubmit)="authenticate(loginForm.valid)">
+        @if (recovering()) {
+          <form #newPasswordForm="ngForm" (ngSubmit)="savePassword(newPasswordForm.valid)">
+            <label for="new-password">Contraseña nueva</label>
+            <input id="new-password" name="newPassword" type="password" required minlength="8"
+              autocomplete="new-password" [ngModel]="password()" (ngModelChange)="password.set($event)" />
+            <small>Usa al menos 8 caracteres.</small>
+            <label for="confirm-password">Repite la contraseña</label>
+            <input id="confirm-password" name="confirmation" type="password" required
+              autocomplete="new-password" [ngModel]="passwordConfirmation()" (ngModelChange)="passwordConfirmation.set($event)" />
+            <button class="primary login-submit" type="submit" [disabled]="busy() || newPasswordForm.invalid">
+              {{ busy() ? 'Guardando…' : 'Guardar contraseña' }}
+            </button>
+          </form>
+        } @else {
+        <form #loginForm="ngForm" (ngSubmit)="resetRequest() ? requestPasswordReset(loginForm.valid) : authenticate(loginForm.valid)">
           <label for="email">Correo electrónico</label>
           <input id="email" name="email" type="email" required email autocomplete="username"
             [ngModel]="email()" (ngModelChange)="email.set($event)" #address="ngModel" />
           @if (address.touched && address.invalid) {
             <small>Introduce un correo válido.</small>
           }
-          <label for="password">Contraseña</label>
-          <input id="password" name="password" type="password" required
-            [minlength]="registering() ? 8 : 0"
-            [autocomplete]="registering() ? 'new-password' : 'current-password'"
-            [ngModel]="password()" (ngModelChange)="password.set($event)" />
-          @if (registering()) { <small>Usa al menos 8 caracteres. Te enviaremos un correo de confirmación.</small> }
+          @if (!resetRequest()) {
+            <label for="password">Contraseña</label>
+            <input id="password" name="password" type="password" required
+              [minlength]="registering() ? 8 : 0"
+              [autocomplete]="registering() ? 'new-password' : 'current-password'"
+              [ngModel]="password()" (ngModelChange)="password.set($event)" />
+            @if (registering()) { <small>Usa al menos 8 caracteres. Te enviaremos un correo de confirmación.</small> }
+          }
           <button class="primary login-submit" type="submit" [disabled]="busy() || loginForm.invalid">
-            {{ busy() ? 'Un momento…' : registering() ? 'Crear cuenta' : 'Entrar al panel' }}
+            {{ busy() ? 'Un momento…' : resetRequest() ? 'Enviar enlace de recuperación' : registering() ? 'Crear cuenta' : 'Entrar al panel' }}
           </button>
         </form>
         <div class="login-actions">
+          @if (resetRequest() || !registering()) {
+            <button class="text-button" type="button" (click)="showPasswordReset()" [disabled]="busy()">
+              {{ resetRequest() ? 'Volver a iniciar sesión' : 'Olvidé mi contraseña' }}
+            </button>
+          }
+          @if (!resetRequest()) {
           <button class="text-button" type="button" (click)="toggleRegistration()" [disabled]="busy()">
             {{ registering() ? 'Volver a iniciar sesión' : 'Crear una cuenta' }}
           </button>
@@ -44,7 +70,9 @@
             <button class="text-button" type="button" (click)="resendConfirmation()"
               [disabled]="busy() || address.invalid">Reenviar confirmación</button>
           }
+          }
         </div>
+        }
       </div>
     </section>
   } @else {
