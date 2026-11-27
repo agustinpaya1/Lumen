@@ -87,6 +87,7 @@
         </p>
         <button class="primary-link" (click)="shareAlbum($event)">Compartir invitación</button>
       </div>
+      <app-leaders-letter />
       } @else {
       <p class="eyebrow">{{ theme.eyebrow || event.dateLabel() }}</p>
       <h1 id="invitation-title">{{ theme.invitationTitle || event.name() }}</h1>

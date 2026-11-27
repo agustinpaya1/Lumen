@@ -1,0 +1,65 @@
+:host {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: system-ui, sans-serif;
+}
+
+.invitation-letter {
+  border-top: 1px solid var(--lumen-line);
+  padding-top: .35rem;
+
+  summary {
+    width: fit-content;
+    max-width: 100%;
+    padding: .75rem .35rem;
+    color: var(--lumen-muted);
+    cursor: pointer;
+    font-size: .875rem;
+    line-height: 1.25rem;
+  }
+
+  summary span {
+    margin-inline: .25rem;
+  }
+
+  summary:hover,
+  summary:focus-visible {
+    color: var(--lumen-accent);
+  }
+
+  summary:focus-visible {
+    outline: 3px solid var(--lumen-focus);
+    outline-offset: 3px;
+  }
+
+  article {
+    margin-top: .5rem;
+    padding: clamp(1rem, 4vw, 2.25rem);
+    border: 1px solid var(--lumen-line);
+    border-radius: 1rem;
+    background: var(--lumen-surface);
+    color: var(--lumen-ink);
+    line-height: 1.65;
+  }
+
+  h2 {
+    margin: 0 0 1rem;
+    color: var(--lumen-accent);
+    font-family: Rockwell, Georgia, serif;
+    font-weight: bold;
+    font-size: clamp(1.35rem, 4vw, 1.75rem);
+    line-height: 1.2;
+  }
+
+  p {
+    margin: 0 0 1rem;
+  }
+
+  img {
+    display: block;
+    width: 10rem;
+    max-width: 100%;
+    height: auto;
+  }
+}

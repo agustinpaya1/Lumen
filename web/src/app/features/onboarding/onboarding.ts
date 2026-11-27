@@ -4,10 +4,11 @@ import { Router } from '@angular/router';
 import { SessionService } from '@core/services/session.service';
 import { LUMEN_CONSENT_KEY, TUTORIAL_SEEN_KEY } from '@core/constants';
 
+import { LeadersLetterComponent } from '../leaders/leaders-letter';
 import { LeadersPosterComponent } from '../leaders/leaders-poster';
 
 @Component({
-  imports: [LeadersPosterComponent],
+  imports: [LeadersLetterComponent, LeadersPosterComponent],
   selector: 'app-onboarding',
   standalone: true,
   templateUrl: './onboarding.html',

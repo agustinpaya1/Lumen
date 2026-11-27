@@ -348,7 +348,7 @@ $font-seasons: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     background: var(--lumen-surface-muted);
   }
   .splash-screen::before { display: none; }
-  app-leaders-poster, .cta-area { max-width: 40rem; }
+  app-leaders-poster, app-leaders-letter, .cta-area { max-width: 40rem; }
   .cta-area { justify-content: flex-start; animation: none; }
   .cta-button, .consent-accept {
     background: var(--lumen-accent);

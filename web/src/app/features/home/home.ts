@@ -28,12 +28,13 @@ import { MemoriesComponent } from '@features/memories/memories';
 import { EventService } from '@core/services/event.service';
 import { AnalyticsService } from '@core/services/analytics.service';
 
+import { LeadersLetterComponent } from '../leaders/leaders-letter';
 import { LeadersPosterComponent } from '../leaders/leaders-poster';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [LeadersPosterComponent, CommonModule, MemoriesComponent],
+  imports: [LeadersLetterComponent, LeadersPosterComponent, CommonModule, MemoriesComponent],
   templateUrl: './home.html',
   styleUrls: ['./home.scss', './home-overlays.scss'],
 })
