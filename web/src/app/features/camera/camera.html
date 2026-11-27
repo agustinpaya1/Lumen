@@ -169,9 +169,11 @@
 
       <!-- Dedication input lives inside the card border, like writing on a print -->
       <div class="polaroid-input-area">
-        <label for="dedication-input" class="polaroid-label">Dedicatoria <span>(opcional)</span></label>
+        <label for="dedication-input" class="polaroid-label">
+          ¿Qué te llevas de este curso? <span>(opcional)</span>
+        </label>
         <input #dedicationInput id="dedication-input" type="text" class="polaroid-input"
-          placeholder="Escribe una dedicatoria…"
+          placeholder="Escribe tu dedicatoria en una frase…"
           [formField]="dedicationForm.dedication" />
       </div>
     </div>
