@@ -7,7 +7,8 @@ evidencias_vitest_2026-09-07.txt
 web/.angular/
 web/coverage/
 web/docs/
-web/scripts/
+web/scripts/*
+!web/scripts/generate-env.mjs
 web/testsprite_tests/
 
 # Local illustration variants retained for comparison, but not deployed.

@@ -1,130 +1,200 @@
 <main class="admin-page">
-  <header><a [href]="albumUrl">← Volver al evento</a><span>LUMEN · ANFITRIONES</span></header>
-  @if (message()) {
-    <p class="notice" role="status">{{ message() }}</p>
-  }
-  @if (!isAuthenticated()) {
-    <section class="login">
-      <p class="eyebrow">EL CONTROL DEL GRAN DÍA</p>
-      <h1>Entre bastidores.</h1>
-      <p>Los invitados no necesitan cuenta. Este acceso es sólo para quien organiza el evento.</p>
-      <form (ngSubmit)="authenticate()">
-        <label for="email">Correo del administrador</label
-        ><input
-          id="email"
-          type="email"
-          required
-          autocomplete="username"
-          [ngModel]="email()"
-          (ngModelChange)="email.set($event)"
-          name="email"
-        />
-        <label for="password">Contraseña</label
-        ><input
-          id="password"
-          type="password"
-          required
-          minlength="8"
-          [autocomplete]="registering() ? 'new-password' : 'current-password'"
-          [ngModel]="password()"
-          (ngModelChange)="password.set($event)"
-          name="password"
-        />
-        <button class="primary" type="submit" [disabled]="busy()">
-          {{
-            busy() ? 'Un momento…' : registering() ? 'Crear cuenta de anfitrión' : 'Entrar al panel'
-          }}
-        </button>
-      </form>
-      <button class="text-button" (click)="registering.set(!registering()); message.set('')">
-        {{ registering() ? 'Ya tengo cuenta' : 'Primera vez: crear mi cuenta' }}
-      </button>
-      <small
-        >Crear una cuenta no concede permisos: el correo debe estar autorizado para este
-        evento.</small
-      >
+  <header class="topbar">
+    <a class="wordmark" [href]="albumUrl">Lumen</a>
+    <a [href]="albumUrl">Ver álbum <span aria-hidden="true">↗</span></a>
+  </header>
+
+  @if (checkingSession()) {
+    <p class="loading" role="status">Comprobando tu sesión…</p>
+  } @else if (!isAuthenticated()) {
+    <section class="login" aria-labelledby="login-title">
+      <div class="login-intro">
+        <span class="eyebrow">Lumen para anfitriones</span>
+        <h1>{{ event.name() }}</h1>
+        @if (event.dateLabel()) { <p>{{ event.dateLabel() }}</p> }
+      </div>
+      <div class="login-form">
+        <h2 id="login-title">{{ registering() ? 'Crea tu cuenta' : 'Entra a tu panel' }}</h2>
+        <p class="muted">Usa el correo autorizado para organizar este evento.</p>
+        @if (message()) {
+          <p class="notice" [class.notice-error]="messageIsError()" [attr.role]="messageIsError() ? 'alert' : 'status'">{{ message() }}</p>
+        }
+        <form #loginForm="ngForm" (ngSubmit)="authenticate(loginForm.valid)">
+          <label for="email">Correo electrónico</label>
+          <input id="email" name="email" type="email" required email autocomplete="username"
+            [ngModel]="email()" (ngModelChange)="email.set($event)" #address="ngModel" />
+          @if (address.touched && address.invalid) {
+            <small>Introduce un correo válido.</small>
+          }
+          <label for="password">Contraseña</label>
+          <input id="password" name="password" type="password" required
+            [minlength]="registering() ? 8 : 0"
+            [autocomplete]="registering() ? 'new-password' : 'current-password'"
+            [ngModel]="password()" (ngModelChange)="password.set($event)" />
+          @if (registering()) { <small>Usa al menos 8 caracteres. Te enviaremos un correo de confirmación.</small> }
+          <button class="primary login-submit" type="submit" [disabled]="busy() || loginForm.invalid">
+            {{ busy() ? 'Un momento…' : registering() ? 'Crear cuenta' : 'Entrar al panel' }}
+          </button>
+        </form>
+        <div class="login-actions">
+          <button class="text-button" type="button" (click)="toggleRegistration()" [disabled]="busy()">
+            {{ registering() ? 'Volver a iniciar sesión' : 'Crear una cuenta' }}
+          </button>
+          @if (canResendConfirmation()) {
+            <button class="text-button" type="button" (click)="resendConfirmation()"
+              [disabled]="busy() || address.invalid">Reenviar confirmación</button>
+          }
+        </div>
+      </div>
     </section>
   } @else {
-    <section class="dashboard">
+    <section class="dashboard" aria-labelledby="dashboard-title">
       <div class="dashboard-title">
         <div>
-          <p class="eyebrow">PAULA & JAVIER</p>
-          <h1>El pistoletazo de salida.</h1>
+          <p class="eyebrow">Panel del evento</p>
+          <h1 id="dashboard-title">{{ event.name() }}</h1>
         </div>
-        <button class="text-button" (click)="logout()">Cerrar sesión</button>
+        <button class="secondary" type="button" (click)="logout()" [disabled]="busy()">Cerrar sesión</button>
       </div>
-      <article class="launch-card">
-        <span class="eyebrow">{{
-          event.canUpload() ? 'ÁLBUM ABIERTO' : 'INVITACIÓN · ANTES DEL EVENTO'
-        }}</span>
-        <h2>
-          {{
-            event.canUpload() ? 'Ya estamos creando recuerdos.' : 'Todo listo para vuestro «sí».'
-          }}
-        </h2>
-        <p>
-          {{
-            event.canUpload()
-              ? 'Los invitados ven la galería y pueden añadir fotos. Puedes volver al modo invitación sin borrar ninguna imagen.'
-              : 'Los invitados ven dónde, cuándo y cómo participar. Tú decides cuándo se abren la galería y las subidas.'
-          }}
-        </p>
-        @if (confirmLaunch()) {
-          <div class="confirmation">
-            <p>
-              {{
-                event.canUpload()
-                  ? '¿Volver a la invitación y pausar las subidas? Las fotos guardadas en los móviles esperarán a la reapertura.'
-                  : '¿Abrir ahora? Todos los que tengan el enlace podrán empezar a compartir fotos.'
-              }}
-            </p>
-            <button class="primary" (click)="setOpen()" [disabled]="busy()">
-              {{ busy() ? 'Aplicando…' : 'Sí, confirmar' }}</button
-            ><button class="text-button" (click)="confirmLaunch.set(false)" [disabled]="busy()">
-              Cancelar
+      <nav class="sections" aria-label="Panel del evento">
+        <button type="button" [attr.aria-current]="section() === 'photos' ? 'page' : null"
+          (click)="showSection('photos')" [disabled]="busy()">Moderación</button>
+        <button type="button" [attr.aria-current]="section() === 'settings' ? 'page' : null"
+          (click)="showSection('settings')" [disabled]="busy()">Configuración</button>
+      </nav>
+      @if (message() && (section() === 'photos' || !event.state())) {
+        <p class="notice" [class.notice-error]="messageIsError()" [attr.role]="messageIsError() ? 'alert' : 'status'">{{ message() }}</p>
+      }
+
+      @if (section() === 'photos') {
+        <article class="launch-card">
+          <div>
+            <span class="status" [class.open]="event.canUpload()">
+              {{ !event.state() ? 'Estado sin conexión' : event.canUpload() ? 'Álbum abierto' : 'Álbum cerrado' }}
+            </span>
+            <h2>Acceso al álbum</h2>
+            <p>{{ event.canUpload() ? 'Los invitados pueden ver y añadir fotos.' : 'Al abrir el álbum, los invitados podrán ver y añadir fotos.' }}</p>
+          </div>
+          @if (confirmLaunch()) {
+            <div class="confirmation">
+              <p>{{ event.canUpload() ? '¿Cerrar el álbum y pausar las subidas? Las fotos ya publicadas se conservan.' : '¿Abrir el álbum a quienes tengan el enlace?' }}</p>
+              <div class="actions">
+                <button class="primary" type="button" (click)="setOpen()" [disabled]="busy()">Confirmar</button>
+                <button class="secondary" type="button" (click)="confirmLaunch.set(false)" [disabled]="busy()">Cancelar</button>
+              </div>
+            </div>
+          } @else {
+            <button class="primary" type="button" (click)="confirmLaunch.set(true)" [disabled]="busy() || !event.state()">
+              {{ event.canUpload() ? 'Cerrar el álbum' : 'Abrir el álbum' }}
             </button>
+          }
+        </article>
+        <div class="photos-heading">
+          <div>
+            <h2>Fotos del evento</h2>
+            <p class="muted">{{ photos().length === 1 ? '1 foto' : photos().length + ' fotos' }}</p>
+          </div>
+          <button class="secondary" type="button" (click)="refresh()" [disabled]="busy()">Actualizar</button>
+        </div>
+        @if (photos().length) {
+          <div class="admin-grid">
+            @for (photo of photos(); track photo.id) {
+              <article>
+                <img [src]="getPhotoUrl(photo.url)" alt="Foto del evento" loading="lazy" />
+                <div class="photo-body">
+                  <p>{{ photo.dedication && photo.dedication !== 'gallery-upload' ? photo.dedication : 'Sin dedicatoria' }}</p>
+                  @if (deleteConfirmId() === photo.id) {
+                    <p>¿Borrar esta foto definitivamente?</p>
+                    <div class="actions">
+                      <button class="danger" type="button" (click)="deletePhoto(photo.id)" [disabled]="busy()">Confirmar borrado</button>
+                      <button class="text-button" type="button" (click)="deleteConfirmId.set(null)" [disabled]="busy()">Cancelar</button>
+                    </div>
+                  } @else {
+                    <div class="actions">
+                      <button class="text-button" type="button" (click)="downloadPhoto(photo)" [disabled]="busy()" [attr.aria-label]="'Descargar foto ' + photo.id">Descargar</button>
+                      <button class="text-button danger-text" type="button" (click)="deleteConfirmId.set(photo.id)" [disabled]="busy()" [attr.aria-label]="'Borrar foto ' + photo.id">Borrar</button>
+                    </div>
+                  }
+                </div>
+              </article>
+            }
           </div>
         } @else {
-          <button
-            class="primary"
-            (click)="confirmLaunch.set(true)"
-            [disabled]="busy() || !event.state()"
-          >
-            {{ event.canUpload() ? 'Volver al modo invitación' : 'Dar el pistoletazo de salida' }}
-          </button>
+          <p class="empty">Aún no hay fotos para moderar.</p>
         }
-      </article>
-      <div class="photos-heading">
-        <h2>Fotos del evento · {{ photos().length }}</h2>
-        <button class="text-button" (click)="refresh()" [disabled]="busy()">Actualizar</button>
-      </div>
-      <div class="admin-grid">
-        @for (photo of photos(); track photo.id) {
-          <article>
-            <img [src]="getPhotoUrl(photo.url)" alt="Foto del evento" loading="lazy" />
-            <p>
-              {{
-                photo.dedication && photo.dedication !== 'gallery-upload'
-                  ? photo.dedication
-                  : 'Un recuerdo compartido'
-              }}
-            </p>
-            @if (deleteConfirmId() === photo.id) {
-              <p>Se borrará definitivamente, sin recuperación desde Lumen.</p>
-              <button class="danger" (click)="deletePhoto(photo.id)" [disabled]="busy()">
-                Borrar definitivamente</button
-              ><button class="text-button" (click)="deleteConfirmId.set(null)">Cancelar</button>
-            } @else {
-              <button class="text-button" (click)="downloadPhoto(photo)">Descargar</button
-              ><button class="text-button" (click)="deleteConfirmId.set(photo.id)">
-                Borrar foto
-              </button>
+      } @else if (event.state()) {
+        <form class="settings" #settingsForm="ngForm" (ngSubmit)="saveSettings()">
+          <fieldset [disabled]="busy()">
+            <legend>Datos del evento</legend>
+            <div class="form-grid">
+              <label>Nombre <input required maxlength="150" name="eventName" [(ngModel)]="draft.name" /></label>
+              <label>Fecha <input type="date" required name="eventDate" [(ngModel)]="draft.event_date" /></label>
+              <label>URL de la imagen de portada <input maxlength="2048" name="bannerUrl" [(ngModel)]="draft.banner_url" placeholder="https://…" /></label>
+              <label>Límite de fotos por dispositivo <input type="number" min="1" max="1000" step="1" required name="photoLimit" [(ngModel)]="draft.photo_limit" /></label>
+            </div>
+          </fieldset>
+          <fieldset [disabled]="busy()">
+            <legend>Invitación y bienvenida</legend>
+            <div class="form-grid">
+              @for (field of textFields; track field[0]) {
+                <label>{{ field[1] }} <input maxlength="300" [name]="field[0]" [(ngModel)]="draft.theme[field[0]]" /></label>
+              }
+            </div>
+            <label class="prompts">Sugerencias de fotos
+              <textarea rows="4" maxlength="4000" name="prompts" [(ngModel)]="prompts" aria-describedby="prompt-help"></textarea>
+              <small id="prompt-help">Escribe una sugerencia por línea.</small>
+            </label>
+          </fieldset>
+          <fieldset [disabled]="busy()">
+            <legend>Lugares</legend>
+            @for (place of draft.theme.places; track place; let i = $index) {
+              <div class="place">
+                <div class="place-heading">
+                  <h3>{{ place.title || 'Nuevo lugar' }}</h3>
+                  <button class="text-button danger-text" type="button" (click)="removePlace(i)">Quitar</button>
+                </div>
+                <div class="form-grid">
+                  <label>Título <input required maxlength="150" [name]="'place-title-' + i" [(ngModel)]="place.title" /></label>
+                  <label>Horario o encabezado <input maxlength="150" [name]="'place-eyebrow-' + i" [(ngModel)]="place.eyebrow" /></label>
+                  <label>Dirección <textarea rows="2" maxlength="300" [name]="'place-address-' + i" [(ngModel)]="place.address"></textarea></label>
+                  <label>Enlace del mapa <input type="url" maxlength="2048" [name]="'place-url-' + i" [(ngModel)]="place.mapUrl" /></label>
+                  <label>Texto del enlace <input maxlength="100" [name]="'place-label-' + i" [(ngModel)]="place.linkLabel" /></label>
+                </div>
+              </div>
             }
-          </article>
-        } @empty {
-          <p>Todavía no hay fotos. Aquí podrás moderarlas cuando lleguen.</p>
-        }
-      </div>
+            <button class="secondary" type="button" (click)="addPlace()">Añadir lugar</button>
+          </fieldset>
+          <fieldset [disabled]="busy()">
+            <legend>Paleta de colores</legend>
+            <p class="muted">Deja un campo vacío para usar el color predeterminado.</p>
+            @if (draft.theme.colors; as colors) {
+              <div class="color-grid">
+                @for (field of colorFields; track field[0]) {
+                  <div class="color-field">
+                    <label [for]="'color-' + field[0]">{{ field[1] }}</label>
+                    <div>
+                      <input type="color" [attr.aria-label]="'Elegir color: ' + field[1]"
+                        [value]="pickerValue(colors[field[0]])" (input)="colors[field[0]] = $any($event.target).value" />
+                      <input [id]="'color-' + field[0]" [name]="field[0]" maxlength="100"
+                        [(ngModel)]="colors[field[0]]" placeholder="Predeterminado" />
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </fieldset>
+          <div class="actions save-actions">
+            <button class="primary" type="submit" [disabled]="busy() || settingsForm.invalid">{{ busy() ? 'Guardando…' : 'Publicar cambios' }}</button>
+            <button class="secondary" type="button" (click)="resetDraft()" [disabled]="busy()">Descartar cambios</button>
+          </div>
+          @if (message()) {
+            <p class="notice" [class.notice-error]="messageIsError()" [attr.role]="messageIsError() ? 'alert' : 'status'">{{ message() }}</p>
+          }
+        </form>
+      } @else {
+        <p class="empty">No se pudo cargar la configuración de este evento.</p>
+        <button class="secondary" type="button" (click)="refresh()" [disabled]="busy()">Reintentar</button>
+      }
     </section>
   }
 </main>

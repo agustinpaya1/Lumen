@@ -96,6 +96,7 @@ SET
       )
     )
   )
-WHERE event_key = 'jp-reboda-2026-k7m4q9x2';
+WHERE event_key = 'jp-reboda-2026-k7m4q9x2'
+  AND theme = '{}'::jsonb;
 
 COMMIT;

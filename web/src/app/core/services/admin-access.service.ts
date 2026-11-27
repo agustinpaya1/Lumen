@@ -30,13 +30,26 @@ export class AdminAccessService {
   }
 
   async register(email: string, password: string, eventKey: string): Promise<void> {
-    const redirect = new URL('/admin', window.location.origin);
-    redirect.searchParams.set('e', eventKey);
     const { error } = await this.client.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: redirect.href },
+      options: { emailRedirectTo: this.confirmationUrl(eventKey) },
     });
     if (error) throw error;
+  }
+
+  async resendConfirmation(email: string, eventKey: string): Promise<void> {
+    const { error } = await this.client.auth.resend({
+      type: 'signup',
+      email: email.trim(),
+      options: { emailRedirectTo: this.confirmationUrl(eventKey) },
+    });
+    if (error) throw error;
+  }
+
+  private confirmationUrl(eventKey: string): string {
+    const redirect = new URL('/admin', window.location.origin);
+    redirect.searchParams.set('e', eventKey);
+    return redirect.href;
   }
 }

@@ -47,7 +47,7 @@
 }
 .memories-shell.is-cinema {
   display: block;
-  background: #080a07;
+  background: var(--lumen-tv-bg);
   height: 100dvh;
   .memories-stage {
     position: absolute;
@@ -125,12 +125,12 @@
   margin: 0;
   padding: 0;
   border: 0;
-  color: #f7f5eb;
-  background: #23291f;
+  color: var(--lumen-tv-text);
+  background: var(--lumen-tv-surface);
   font-family: system-ui, sans-serif;
 }
 .memories::backdrop {
-  background: #23291f;
+  background: var(--lumen-tv-surface);
 }
 .memories-shell {
   height: 100%;
@@ -144,7 +144,7 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 button:focus-visible {
-  outline: 2px solid #e5c58d;
+  outline: 2px solid var(--lumen-tv-highlight);
   outline-offset: 5px;
 }
 button:disabled {
@@ -436,12 +436,13 @@ figcaption p {
   align-items: center;
   gap: 3vw;
   padding: 1.5vh 4vw 2vh;
-  background: #17241e;
+  background: var(--lumen-tv-surface);
   border-top: 1px solid #ffffff24;
-  color: #fffdf4;
+  color: var(--lumen-tv-text);
 }
 .tv-event { flex: 1; min-width: 0; }
 .tv-event h3 {
+  color: var(--lumen-tv-highlight);
   margin: 0.25em 0;
   font: 400 clamp(22px, 2.5vw, 54px) / 1.1 Georgia, serif;
   overflow-wrap: anywhere;
